@@ -15,7 +15,7 @@ public class DocumentoConvertido {
     @JoinColumn(name = "archivo_id")
     private Archivo archivo;
 
-    // Emisor del comprobante
+    // Emisor del comprobante (1.1)
     private String cuit;
     private String razonSocial;
     private String situacionIva;
@@ -26,6 +26,13 @@ public class DocumentoConvertido {
     private String pais;
     private String telefono;
     private String mail;
+
+    // Datos del comprobante (1.2)
+    private String codigoArca;
+    private String letra;
+    private String centroEmision;
+    private String numeroComprobante;
+    private String fechaEmision;
 
     @Column(length = 5000)
     private String jsonResultado;
@@ -62,6 +69,16 @@ public class DocumentoConvertido {
     public void setTelefono(String telefono) { this.telefono = telefono; }
     public String getMail() { return mail; }
     public void setMail(String mail) { this.mail = mail; }
+    public String getCodigoArca() { return codigoArca; }
+    public void setCodigoArca(String codigoArca) { this.codigoArca = codigoArca; }
+    public String getLetra() { return letra; }
+    public void setLetra(String letra) { this.letra = letra; }
+    public String getCentroEmision() { return centroEmision; }
+    public void setCentroEmision(String centroEmision) { this.centroEmision = centroEmision; }
+    public String getNumeroComprobante() { return numeroComprobante; }
+    public void setNumeroComprobante(String numeroComprobante) { this.numeroComprobante = numeroComprobante; }
+    public String getFechaEmision() { return fechaEmision; }
+    public void setFechaEmision(String fechaEmision) { this.fechaEmision = fechaEmision; }
     public String getJsonResultado() { return jsonResultado; }
     public void setJsonResultado(String jsonResultado) { this.jsonResultado = jsonResultado; }
     public LocalDateTime getFechaConversion() { return fechaConversion; }

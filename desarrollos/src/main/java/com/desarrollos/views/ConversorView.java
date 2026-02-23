@@ -154,6 +154,16 @@ public class ConversorView extends FormView {
 			    notas.append("• No se encontró la provincia.\n");
 			if (estaVacio(resultado.getPais()))
 			    notas.append("• No se encontró el país.\n");
+			if (estaVacio(resultado.getCodigoArca()))
+			    notas.append("• No se encontró el código ARCA.\n");
+			if (estaVacio(resultado.getLetra()))
+			    notas.append("• No se encontró la letra del comprobante.\n");
+			if (estaVacio(resultado.getCentroEmision()))
+			    notas.append("• No se encontró el centro de emisión (punto de venta).\n");
+			if (estaVacio(resultado.getNumeroComprobante()))
+			    notas.append("• No se encontró el número de comprobante.\n");
+			if (estaVacio(resultado.getFechaEmision()))
+			    notas.append("• No se encontró la fecha de emisión.\n");
 
 			if (notas.length() > 0) {
 			    parrafoNotas.setText("⚠ Campos no encontrados:\n" + notas.toString());

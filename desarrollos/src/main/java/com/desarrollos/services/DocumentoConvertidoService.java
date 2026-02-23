@@ -46,6 +46,11 @@ public class DocumentoConvertidoService {
         doc.setPais(json.path("pais").asText(null));
         doc.setTelefono(json.path("telefono").asText(null));
         doc.setMail(json.path("mail").asText(null));
+        doc.setCodigoArca(json.path("codigoArca").asText(null));
+        doc.setLetra(json.path("letra").asText(null));
+        doc.setCentroEmision(json.path("centroEmision").asText(null));
+        doc.setNumeroComprobante(json.path("numeroComprobante").asText(null));
+        doc.setFechaEmision(json.path("fechaEmision").asText(null));
         doc.setJsonResultado(jsonTexto);
 
         repository.save(doc);
