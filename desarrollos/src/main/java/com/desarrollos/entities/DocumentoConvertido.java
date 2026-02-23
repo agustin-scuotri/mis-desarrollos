@@ -33,6 +33,12 @@ public class DocumentoConvertido {
     private String centroEmision;
     private String numeroComprobante;
     private String fechaEmision;
+    private String cae;
+    private String fechaVencimientoCae;
+
+    // Moneda y cotización
+    private String moneda;
+    private String cotizacion;
 
     @Column(length = 5000)
     private String jsonResultado;
@@ -79,6 +85,14 @@ public class DocumentoConvertido {
     public void setNumeroComprobante(String numeroComprobante) { this.numeroComprobante = numeroComprobante; }
     public String getFechaEmision() { return fechaEmision; }
     public void setFechaEmision(String fechaEmision) { this.fechaEmision = fechaEmision; }
+    public String getCae() { return cae; }
+    public void setCae(String cae) { this.cae = cae; }
+    public String getFechaVencimientoCae() { return fechaVencimientoCae; }
+    public void setFechaVencimientoCae(String fechaVencimientoCae) { this.fechaVencimientoCae = fechaVencimientoCae; }
+    public String getMoneda() { return moneda; }
+    public void setMoneda(String moneda) { this.moneda = moneda; }
+    public String getCotizacion() { return cotizacion; }
+    public void setCotizacion(String cotizacion) { this.cotizacion = cotizacion; }
     public String getJsonResultado() { return jsonResultado; }
     public void setJsonResultado(String jsonResultado) { this.jsonResultado = jsonResultado; }
     public LocalDateTime getFechaConversion() { return fechaConversion; }

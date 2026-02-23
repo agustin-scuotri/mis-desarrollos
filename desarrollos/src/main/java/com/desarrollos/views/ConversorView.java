@@ -164,6 +164,14 @@ public class ConversorView extends FormView {
 			    notas.append("• No se encontró el número de comprobante.\n");
 			if (estaVacio(resultado.getFechaEmision()))
 			    notas.append("• No se encontró la fecha de emisión.\n");
+			if (estaVacio(resultado.getCae()))
+			    notas.append("• No se encontró el CAE.\n");
+			if (estaVacio(resultado.getFechaVencimientoCae()))
+			    notas.append("• No se encontró la fecha de vencimiento del CAE.\n");
+			if (estaVacio(resultado.getMoneda()))
+			    notas.append("• No se encontró la moneda.\n");
+			if (estaVacio(resultado.getCotizacion()))
+			    notas.append("• No se encontró la cotización.\n");
 
 			if (notas.length() > 0) {
 			    parrafoNotas.setText("⚠ Campos no encontrados:\n" + notas.toString());

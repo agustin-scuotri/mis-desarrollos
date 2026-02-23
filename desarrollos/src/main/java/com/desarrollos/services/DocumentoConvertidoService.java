@@ -51,6 +51,10 @@ public class DocumentoConvertidoService {
         doc.setCentroEmision(json.path("centroEmision").asText(null));
         doc.setNumeroComprobante(json.path("numeroComprobante").asText(null));
         doc.setFechaEmision(json.path("fechaEmision").asText(null));
+        doc.setCae(json.path("cae").asText(null));
+        doc.setFechaVencimientoCae(json.path("fechaVencimientoCae").asText(null));
+        doc.setMoneda(json.path("moneda").asText(null));
+        doc.setCotizacion(json.path("cotizacion").asText(null));
         doc.setJsonResultado(jsonTexto);
 
         repository.save(doc);
