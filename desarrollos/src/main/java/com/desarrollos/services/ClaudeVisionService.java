@@ -8,65 +8,86 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
-public class GroqVisionService {
+public class ClaudeVisionService {
 
-    @Value("${groq.api.key}")
+    @Value("${claude.api.key}")
     private String apiKey;
 
-    @Value("${groq.api.url}")
+    @Value("${claude.api.url}")
     private String apiUrl;
 
-    @Value("${groq.api.model}")
+    @Value("${claude.api.model}")
     private String model;
 
     private final WebClient webClient = WebClient.create();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public String extraerDatos(byte[] imagen, String mimeType) throws Exception {
-        String imagenBase64 = Base64.getEncoder().encodeToString(imagen);
+    public String extraerDatos(byte[] contenido, String mimeType) throws Exception {
+        String contenidoBase64 = Base64.getEncoder().encodeToString(contenido);
+
+        String contentBlock = buildContentBlock(mimeType, contenidoBase64);
 
         String requestBody = String.format("""
                 {
                   "model": "%s",
+                  "max_tokens": 500,
                   "messages": [
                     {
                       "role": "user",
                       "content": [
+                        %s,
                         {
                           "type": "text",
                           "text": "Analizá esta imagen y extraé los siguientes datos si están presentes: nombre, apellido, dni. Respondé ÚNICAMENTE con un JSON con este formato exacto, sin explicaciones ni texto adicional: { \\"nombre\\": \\"valor\\", \\"apellido\\": \\"valor\\", \\"dni\\": \\"valor\\" }"
-                        },
-                        {
-                          "type": "image_url",
-                          "image_url": {
-                            "url": "data:%s;base64,%s"
-                          }
                         }
                       ]
                     }
-                  ],
-                  "max_tokens": 500
+                  ]
                 }
-                """, model, mimeType, imagenBase64);
+                """, model, contentBlock);
 
         String respuesta = webClient.post()
                 .uri(apiUrl)
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + apiKey)
+                .header("x-api-key", apiKey)
+                .header("anthropic-version", "2023-06-01")
                 .bodyValue(requestBody)
                 .retrieve()
                 .onStatus(status -> status.isError(), clientResponse ->
                         clientResponse.bodyToMono(String.class)
-                                .map(body -> new RuntimeException("Error Groq: " + body)))
+                                .map(body -> new RuntimeException("Error Claude: " + body)))
                 .bodyToMono(String.class)
                 .block();
 
-        // Extraemos el texto de la respuesta formato OpenAI
+        // Extraemos el texto de la respuesta formato Anthropic
         JsonNode root = objectMapper.readTree(respuesta);
-        return root.path("choices")
+        return root.path("content")
                    .get(0)
-                   .path("message")
-                   .path("content")
+                   .path("text")
                    .asText();
+    }
+
+    private String buildContentBlock(String mimeType, String base64Data) {
+        if ("application/pdf".equals(mimeType)) {
+            return String.format("""
+                    {
+                      "type": "document",
+                      "source": {
+                        "type": "base64",
+                        "media_type": "application/pdf",
+                        "data": "%s"
+                      }
+                    }""", base64Data);
+        } else {
+            return String.format("""
+                    {
+                      "type": "image",
+                      "source": {
+                        "type": "base64",
+                        "media_type": "%s",
+                        "data": "%s"
+                      }
+                    }""", mimeType, base64Data);
+        }
     }
 }

@@ -17,7 +17,7 @@ public class DocumentoConvertidoService {
     private DocumentoConvertidoRepository repository;
 
     @Autowired
-    private GroqVisionService groqVisionService;
+    private ClaudeVisionService claudeVisionService;
 
     @Autowired
     private ArchivoService archivoService;
@@ -28,7 +28,7 @@ public class DocumentoConvertidoService {
     public DocumentoConvertido convertir(Archivo archivo) throws Exception {
         Archivo archivoCompleto = archivoService.buscarPorIdConContenido(archivo.getId());
         String mimeType = detectarMimeType(archivoCompleto.getNombreOriginal());
-        String jsonTexto = groqVisionService.extraerDatos(archivoCompleto.getContenido(), mimeType);
+        String jsonTexto = claudeVisionService.extraerDatos(archivoCompleto.getContenido(), mimeType);
 
         jsonTexto = limpiarJson(jsonTexto);
 
