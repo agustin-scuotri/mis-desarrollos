@@ -9,7 +9,9 @@ import com.desarrollos.entities.Archivo;
 import com.desarrollos.entities.DocumentoConvertido;
 import com.desarrollos.entities.NetoGravado;
 import com.desarrollos.entities.PercepcionIIBB;
+import com.desarrollos.entities.PercepcionIVA;
 import com.desarrollos.entities.ProductoConcepto;
+import com.desarrollos.entities.Vencimiento;
 import com.desarrollos.services.ArchivoService;
 import com.desarrollos.services.DocumentoConvertidoService;
 import com.vaadin.flow.component.button.Button;
@@ -55,6 +57,8 @@ public class ConversorView extends FormView {
 	private final Grid<ProductoConcepto> gridProductos = new Grid<>(ProductoConcepto.class, false);
 	private final Grid<NetoGravado> gridNetosGravados = new Grid<>(NetoGravado.class, false);
 	private final Grid<PercepcionIIBB> gridPercepcionesIIBB = new Grid<>(PercepcionIIBB.class, false);
+	private final Grid<PercepcionIVA> gridPercepcionesIVA = new Grid<>(PercepcionIVA.class, false);
+	private final Grid<Vencimiento> gridVencimientos = new Grid<>(Vencimiento.class, false);
 
 	public ConversorView(ArchivoService archivoService, DocumentoConvertidoService documentoConvertidoService) {
 		this.archivoService = archivoService;
@@ -147,10 +151,30 @@ public class ConversorView extends FormView {
 		gridPercepcionesIIBB.getStyle().set("margin-top", "4px");
 		gridPercepcionesIIBB.setVisible(false);
 
+		// ── Grid de percepciones IVA ──────────────────────────────────────────
+		H4 tituloPercepcionesIVA = new H4("Percepciones IVA");
+		tituloPercepcionesIVA.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
+		gridPercepcionesIVA.addColumn(PercepcionIVA::getAlicuota).setHeader("Alícuota").setWidth("150px").setFlexGrow(0);
+		gridPercepcionesIVA.addColumn(PercepcionIVA::getImporte).setHeader("Importe").setFlexGrow(1);
+		gridPercepcionesIVA.setAllRowsVisible(true);
+		gridPercepcionesIVA.getStyle().set("margin-top", "4px");
+		gridPercepcionesIVA.setVisible(false);
+
+		// ── Grid de vencimientos ──────────────────────────────────────────────
+		H4 tituloVencimientos = new H4("Vencimientos");
+		tituloVencimientos.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
+		gridVencimientos.addColumn(Vencimiento::getFecha).setHeader("Fecha").setWidth("150px").setFlexGrow(0);
+		gridVencimientos.addColumn(Vencimiento::getImporte).setHeader("Importe").setFlexGrow(1);
+		gridVencimientos.setAllRowsVisible(true);
+		gridVencimientos.getStyle().set("margin-top", "4px");
+		gridVencimientos.setVisible(false);
+
 		panelResultado.add(tituloResultado, jsonViewer,
 				tituloProductos, gridProductos,
 				tituloNetos, gridNetosGravados,
 				tituloPercepcionesIIBB, gridPercepcionesIIBB,
+				tituloPercepcionesIVA, gridPercepcionesIVA,
+				tituloVencimientos, gridVencimientos,
 				parrafoNotas, barraDescarga);
 		panelResultado.setPadding(false);
 		panelResultado.setSpacing(true);
@@ -201,6 +225,18 @@ public class ConversorView extends FormView {
 			} else {
 				gridPercepcionesIIBB.setVisible(false);
 			}
+			if (!resultado.getPercepcionesIVA().isEmpty()) {
+				gridPercepcionesIVA.setItems(resultado.getPercepcionesIVA());
+				gridPercepcionesIVA.setVisible(true);
+			} else {
+				gridPercepcionesIVA.setVisible(false);
+			}
+			if (!resultado.getVencimientos().isEmpty()) {
+				gridVencimientos.setItems(resultado.getVencimientos());
+				gridVencimientos.setVisible(true);
+			} else {
+				gridVencimientos.setVisible(false);
+			}
 
 			// Generamos botón de descarga
 			generarBotonDescarga(resultado);
@@ -222,6 +258,10 @@ public class ConversorView extends FormView {
 			    notas.append("• No se encontró la provincia.\n");
 			if (estaVacio(resultado.getPais()))
 			    notas.append("• No se encontró el país.\n");
+			if (estaVacio(resultado.getTelefono()))
+			    notas.append("• No se encontró el teléfono.\n");
+			if (estaVacio(resultado.getMail()))
+			    notas.append("• No se encontró el mail.\n");
 			if (estaVacio(resultado.getCodigoArca()))
 			    notas.append("• No se encontró el código ARCA.\n");
 			if (estaVacio(resultado.getLetra()))
@@ -240,14 +280,22 @@ public class ConversorView extends FormView {
 			    notas.append("• No se encontró la moneda.\n");
 			if (estaVacio(resultado.getCotizacion()))
 			    notas.append("• No se encontró la cotización.\n");
+			if (estaVacio(resultado.getOrdenCompra()))
+			    notas.append("• No se encontró la orden de compra.\n");
 			if (resultado.getProductosConceptos().isEmpty())
 			    notas.append("• No se encontraron productos/conceptos en la factura.\n");
 			if (resultado.getNetosGravados().isEmpty())
 			    notas.append("• No se encontraron netos gravados e IVA.\n");
 			if (estaVacio(resultado.getSubTotalNoGravado()))
 			    notas.append("• No se encontró el importe neto no gravado.\n");
+			if (resultado.getPercepcionesIIBB().isEmpty())
+			    notas.append("• No se encontraron percepciones de IIBB.\n");
+			if (resultado.getPercepcionesIVA().isEmpty())
+			    notas.append("• No se encontraron percepciones de IVA.\n");
 			if (estaVacio(resultado.getTotal()))
 			    notas.append("• No se encontró el total del comprobante.\n");
+			if (resultado.getVencimientos().isEmpty())
+			    notas.append("• No se encontraron vencimientos.\n");
 
 			if (notas.length() > 0) {
 			    parrafoNotas.setText("⚠ Campos no encontrados:\n" + notas.toString());
@@ -314,6 +362,10 @@ public class ConversorView extends FormView {
 		gridNetosGravados.setVisible(false);
 		gridPercepcionesIIBB.setItems(java.util.Collections.emptyList());
 		gridPercepcionesIIBB.setVisible(false);
+		gridPercepcionesIVA.setItems(java.util.Collections.emptyList());
+		gridPercepcionesIVA.setVisible(false);
+		gridVencimientos.setItems(java.util.Collections.emptyList());
+		gridVencimientos.setVisible(false);
 		barraDescarga.removeAll();
 		parrafoNotas.setVisible(false);
 		parrafoNotas.setText("");

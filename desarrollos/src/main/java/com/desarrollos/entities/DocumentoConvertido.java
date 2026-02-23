@@ -60,12 +60,16 @@ public class DocumentoConvertido {
     @OneToMany(mappedBy = "documento", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PercepcionIIBB> percepcionesIIBB = new ArrayList<>();
 
-    // Percepción IVA (1.8)
-    private String percepcionIVAAlicuota;
-    private String percepcionIVAImporte;
+    // Percepciones IVA (1.8)
+    @OneToMany(mappedBy = "documento", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PercepcionIVA> percepcionesIVA = new ArrayList<>();
 
     // Total (1.9)
     private String total;
+
+    // Vencimientos
+    @OneToMany(mappedBy = "documento", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Vencimiento> vencimientos = new ArrayList<>();
 
     @Column(length = 20000)
     private String jsonResultado;
@@ -130,12 +134,12 @@ public class DocumentoConvertido {
     public void setSubTotalNoGravado(String subTotalNoGravado) { this.subTotalNoGravado = subTotalNoGravado; }
     public List<PercepcionIIBB> getPercepcionesIIBB() { return percepcionesIIBB; }
     public void setPercepcionesIIBB(List<PercepcionIIBB> percepcionesIIBB) { this.percepcionesIIBB = percepcionesIIBB; }
-    public String getPercepcionIVAAlicuota() { return percepcionIVAAlicuota; }
-    public void setPercepcionIVAAlicuota(String percepcionIVAAlicuota) { this.percepcionIVAAlicuota = percepcionIVAAlicuota; }
-    public String getPercepcionIVAImporte() { return percepcionIVAImporte; }
-    public void setPercepcionIVAImporte(String percepcionIVAImporte) { this.percepcionIVAImporte = percepcionIVAImporte; }
+    public List<PercepcionIVA> getPercepcionesIVA() { return percepcionesIVA; }
+    public void setPercepcionesIVA(List<PercepcionIVA> percepcionesIVA) { this.percepcionesIVA = percepcionesIVA; }
     public String getTotal() { return total; }
     public void setTotal(String total) { this.total = total; }
+    public List<Vencimiento> getVencimientos() { return vencimientos; }
+    public void setVencimientos(List<Vencimiento> vencimientos) { this.vencimientos = vencimientos; }
     public String getJsonResultado() { return jsonResultado; }
     public void setJsonResultado(String jsonResultado) { this.jsonResultado = jsonResultado; }
     public LocalDateTime getFechaConversion() { return fechaConversion; }

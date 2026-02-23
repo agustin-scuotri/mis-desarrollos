@@ -8,7 +8,9 @@ import com.desarrollos.entities.Archivo;
 import com.desarrollos.entities.DocumentoConvertido;
 import com.desarrollos.entities.NetoGravado;
 import com.desarrollos.entities.PercepcionIIBB;
+import com.desarrollos.entities.PercepcionIVA;
 import com.desarrollos.entities.ProductoConcepto;
+import com.desarrollos.entities.Vencimiento;
 import com.desarrollos.repositories.DocumentoConvertidoRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -60,8 +62,6 @@ public class DocumentoConvertidoService {
         doc.setCotizacion(json.path("cotizacion").asText(null));
         doc.setOrdenCompra(json.path("ordenCompra").asText(null));
         doc.setSubTotalNoGravado(json.path("subTotalNoGravado").asText(null));
-        doc.setPercepcionIVAAlicuota(json.path("percepcionIVAAlicuota").asText(null));
-        doc.setPercepcionIVAImporte(json.path("percepcionIVAImporte").asText(null));
         doc.setTotal(json.path("total").asText(null));
         doc.setJsonResultado(jsonTexto);
 
@@ -104,6 +104,28 @@ public class DocumentoConvertidoService {
                 perc.setAlicuota(percNode.path("alicuota").asText(null));
                 perc.setImporte(percNode.path("importe").asText(null));
                 doc.getPercepcionesIIBB().add(perc);
+            }
+        }
+
+        JsonNode percepcionesIVANode = json.path("percepcionesIVA");
+        if (percepcionesIVANode.isArray()) {
+            for (JsonNode percNode : percepcionesIVANode) {
+                PercepcionIVA perc = new PercepcionIVA();
+                perc.setDocumento(doc);
+                perc.setAlicuota(percNode.path("alicuota").asText(null));
+                perc.setImporte(percNode.path("importe").asText(null));
+                doc.getPercepcionesIVA().add(perc);
+            }
+        }
+
+        JsonNode vencimientosNode = json.path("vencimientos");
+        if (vencimientosNode.isArray()) {
+            for (JsonNode vencNode : vencimientosNode) {
+                Vencimiento venc = new Vencimiento();
+                venc.setDocumento(doc);
+                venc.setFecha(vencNode.path("fecha").asText(null));
+                venc.setImporte(vencNode.path("importe").asText(null));
+                doc.getVencimientos().add(venc);
             }
         }
 
