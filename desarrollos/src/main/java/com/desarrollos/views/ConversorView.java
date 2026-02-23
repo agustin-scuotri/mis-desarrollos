@@ -103,7 +103,7 @@ public class ConversorView extends FormView {
 				.set("font-size", "0.9rem").set("margin-top", "10px").set("white-space", "pre-line");
 		parrafoNotas.setVisible(false);
 
-		panelResultado.add(tituloResultado, jsonViewer, barraDescarga, parrafoNotas);
+		panelResultado.add(tituloResultado, jsonViewer, parrafoNotas, barraDescarga);
 		panelResultado.setPadding(false);
 		panelResultado.setSpacing(true);
 		panelResultado.setVisible(false);
@@ -144,8 +144,16 @@ public class ConversorView extends FormView {
 			    notas.append("• No se encontró la razón social.\n");
 			if (estaVacio(resultado.getSituacionIva()))
 			    notas.append("• No se encontró la situación ante IVA.\n");
-			if (estaVacio(resultado.getDomicilio()))
-			    notas.append("• No se encontró el domicilio.\n");
+			if (estaVacio(resultado.getDireccion()))
+			    notas.append("• No se encontró la dirección.\n");
+			if (estaVacio(resultado.getCiudad()))
+			    notas.append("• No se encontró la ciudad/localidad.\n");
+			if (estaVacio(resultado.getCodigoPostal()))
+			    notas.append("• No se encontró el código postal.\n");
+			if (estaVacio(resultado.getProvincia()))
+			    notas.append("• No se encontró la provincia.\n");
+			if (estaVacio(resultado.getPais()))
+			    notas.append("• No se encontró el país.\n");
 
 			if (notas.length() > 0) {
 			    parrafoNotas.setText("⚠ Campos no encontrados:\n" + notas.toString());

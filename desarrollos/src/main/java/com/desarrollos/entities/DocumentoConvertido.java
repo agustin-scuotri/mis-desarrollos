@@ -19,7 +19,11 @@ public class DocumentoConvertido {
     private String cuit;
     private String razonSocial;
     private String situacionIva;
-    private String domicilio;
+    private String direccion;
+    private String ciudad;
+    private String codigoPostal;
+    private String provincia;
+    private String pais;
     private String telefono;
     private String mail;
 
@@ -44,8 +48,16 @@ public class DocumentoConvertido {
     public void setRazonSocial(String razonSocial) { this.razonSocial = razonSocial; }
     public String getSituacionIva() { return situacionIva; }
     public void setSituacionIva(String situacionIva) { this.situacionIva = situacionIva; }
-    public String getDomicilio() { return domicilio; }
-    public void setDomicilio(String domicilio) { this.domicilio = domicilio; }
+    public String getDireccion() { return direccion; }
+    public void setDireccion(String direccion) { this.direccion = direccion; }
+    public String getCiudad() { return ciudad; }
+    public void setCiudad(String ciudad) { this.ciudad = ciudad; }
+    public String getCodigoPostal() { return codigoPostal; }
+    public void setCodigoPostal(String codigoPostal) { this.codigoPostal = codigoPostal; }
+    public String getProvincia() { return provincia; }
+    public void setProvincia(String provincia) { this.provincia = provincia; }
+    public String getPais() { return pais; }
+    public void setPais(String pais) { this.pais = pais; }
     public String getTelefono() { return telefono; }
     public void setTelefono(String telefono) { this.telefono = telefono; }
     public String getMail() { return mail; }

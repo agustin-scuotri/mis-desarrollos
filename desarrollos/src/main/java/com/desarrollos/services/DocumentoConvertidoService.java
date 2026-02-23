@@ -39,7 +39,11 @@ public class DocumentoConvertidoService {
         doc.setCuit(json.path("cuit").asText(null));
         doc.setRazonSocial(json.path("razonSocial").asText(null));
         doc.setSituacionIva(json.path("situacionIva").asText(null));
-        doc.setDomicilio(json.path("domicilio").asText(null));
+        doc.setDireccion(json.path("direccion").asText(null));
+        doc.setCiudad(json.path("ciudad").asText(null));
+        doc.setCodigoPostal(json.path("codigoPostal").asText(null));
+        doc.setProvincia(json.path("provincia").asText(null));
+        doc.setPais(json.path("pais").asText(null));
         doc.setTelefono(json.path("telefono").asText(null));
         doc.setMail(json.path("mail").asText(null));
         doc.setJsonResultado(jsonTexto);
