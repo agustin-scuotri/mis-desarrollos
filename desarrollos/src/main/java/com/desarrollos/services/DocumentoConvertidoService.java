@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.desarrollos.entities.Archivo;
 import com.desarrollos.entities.DocumentoConvertido;
-import com.desarrollos.entities.ItemFactura;
+import com.desarrollos.entities.ProductoConcepto;
 import com.desarrollos.repositories.DocumentoConvertidoRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,20 +56,32 @@ public class DocumentoConvertidoService {
         doc.setFechaVencimientoCae(json.path("fechaVencimientoCae").asText(null));
         doc.setMoneda(json.path("moneda").asText(null));
         doc.setCotizacion(json.path("cotizacion").asText(null));
+        doc.setOrdenCompra(json.path("ordenCompra").asText(null));
+        doc.setSubTotalNeto21(json.path("subTotalNeto21").asText(null));
+        doc.setSubTotalNeto105(json.path("subTotalNeto105").asText(null));
+        doc.setSubTotalNoGravado(json.path("subTotalNoGravado").asText(null));
+        doc.setIva21(json.path("iva21").asText(null));
+        doc.setIva105(json.path("iva105").asText(null));
+        doc.setPercepcionIIBBProvincia(json.path("percepcionIIBBProvincia").asText(null));
+        doc.setPercepcionIIBBAlicuota(json.path("percepcionIIBBAlicuota").asText(null));
+        doc.setPercepcionIIBBImporte(json.path("percepcionIIBBImporte").asText(null));
+        doc.setPercepcionIVAAlicuota(json.path("percepcionIVAAlicuota").asText(null));
+        doc.setPercepcionIVAImporte(json.path("percepcionIVAImporte").asText(null));
+        doc.setTotal(json.path("total").asText(null));
         doc.setJsonResultado(jsonTexto);
 
-        JsonNode itemsNode = json.path("items");
-        if (itemsNode.isArray()) {
-            for (JsonNode itemNode : itemsNode) {
-                ItemFactura item = new ItemFactura();
-                item.setDocumento(doc);
-                item.setSku(itemNode.path("sku").asText(null));
-                item.setDescripcion(itemNode.path("descripcion").asText(null));
-                item.setCantidad(itemNode.path("cantidad").asText(null));
-                item.setPrecioUnitario(itemNode.path("precioUnitario").asText(null));
-                item.setDescuento(itemNode.path("descuento").asText(null));
-                item.setSubTotal(itemNode.path("subTotal").asText(null));
-                doc.getItems().add(item);
+        JsonNode productosNode = json.path("productosConceptos");
+        if (productosNode.isArray()) {
+            for (JsonNode itemNode : productosNode) {
+                ProductoConcepto producto = new ProductoConcepto();
+                producto.setDocumento(doc);
+                producto.setSku(itemNode.path("sku").asText(null));
+                producto.setDescripcion(itemNode.path("descripcion").asText(null));
+                producto.setCantidad(itemNode.path("cantidad").asText(null));
+                producto.setPrecioUnitario(itemNode.path("precioUnitario").asText(null));
+                producto.setDescuento(itemNode.path("descuento").asText(null));
+                producto.setSubTotal(itemNode.path("subTotal").asText(null));
+                doc.getProductosConceptos().add(producto);
             }
         }
 

@@ -3,8 +3,8 @@ package com.desarrollos.entities;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "items_factura")
-public class ItemFactura {
+@Table(name = "productos_conceptos")
+public class ProductoConcepto {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

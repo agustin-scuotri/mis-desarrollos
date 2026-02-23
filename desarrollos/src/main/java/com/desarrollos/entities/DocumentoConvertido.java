@@ -42,9 +42,31 @@ public class DocumentoConvertido {
     private String moneda;
     private String cotizacion;
 
+    // Orden de compra (1.4)
+    private String ordenCompra;
+
     // Productos / conceptos (1.3)
     @OneToMany(mappedBy = "documento", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ItemFactura> items = new ArrayList<>();
+    private List<ProductoConcepto> productosConceptos = new ArrayList<>();
+
+    // Netos gravados e IVA por alícuota (1.5)
+    private String subTotalNeto21;
+    private String subTotalNeto105;
+    private String subTotalNoGravado;
+    private String iva21;
+    private String iva105;
+
+    // Percepciones IIBB (1.7)
+    private String percepcionIIBBProvincia;
+    private String percepcionIIBBAlicuota;
+    private String percepcionIIBBImporte;
+
+    // Percepción IVA (1.8)
+    private String percepcionIVAAlicuota;
+    private String percepcionIVAImporte;
+
+    // Total (1.9)
+    private String total;
 
     @Column(length = 20000)
     private String jsonResultado;
@@ -99,8 +121,32 @@ public class DocumentoConvertido {
     public void setMoneda(String moneda) { this.moneda = moneda; }
     public String getCotizacion() { return cotizacion; }
     public void setCotizacion(String cotizacion) { this.cotizacion = cotizacion; }
-    public List<ItemFactura> getItems() { return items; }
-    public void setItems(List<ItemFactura> items) { this.items = items; }
+    public String getOrdenCompra() { return ordenCompra; }
+    public void setOrdenCompra(String ordenCompra) { this.ordenCompra = ordenCompra; }
+    public List<ProductoConcepto> getProductosConceptos() { return productosConceptos; }
+    public void setProductosConceptos(List<ProductoConcepto> productosConceptos) { this.productosConceptos = productosConceptos; }
+    public String getSubTotalNeto21() { return subTotalNeto21; }
+    public void setSubTotalNeto21(String subTotalNeto21) { this.subTotalNeto21 = subTotalNeto21; }
+    public String getSubTotalNeto105() { return subTotalNeto105; }
+    public void setSubTotalNeto105(String subTotalNeto105) { this.subTotalNeto105 = subTotalNeto105; }
+    public String getSubTotalNoGravado() { return subTotalNoGravado; }
+    public void setSubTotalNoGravado(String subTotalNoGravado) { this.subTotalNoGravado = subTotalNoGravado; }
+    public String getIva21() { return iva21; }
+    public void setIva21(String iva21) { this.iva21 = iva21; }
+    public String getIva105() { return iva105; }
+    public void setIva105(String iva105) { this.iva105 = iva105; }
+    public String getPercepcionIIBBProvincia() { return percepcionIIBBProvincia; }
+    public void setPercepcionIIBBProvincia(String percepcionIIBBProvincia) { this.percepcionIIBBProvincia = percepcionIIBBProvincia; }
+    public String getPercepcionIIBBAlicuota() { return percepcionIIBBAlicuota; }
+    public void setPercepcionIIBBAlicuota(String percepcionIIBBAlicuota) { this.percepcionIIBBAlicuota = percepcionIIBBAlicuota; }
+    public String getPercepcionIIBBImporte() { return percepcionIIBBImporte; }
+    public void setPercepcionIIBBImporte(String percepcionIIBBImporte) { this.percepcionIIBBImporte = percepcionIIBBImporte; }
+    public String getPercepcionIVAAlicuota() { return percepcionIVAAlicuota; }
+    public void setPercepcionIVAAlicuota(String percepcionIVAAlicuota) { this.percepcionIVAAlicuota = percepcionIVAAlicuota; }
+    public String getPercepcionIVAImporte() { return percepcionIVAImporte; }
+    public void setPercepcionIVAImporte(String percepcionIVAImporte) { this.percepcionIVAImporte = percepcionIVAImporte; }
+    public String getTotal() { return total; }
+    public void setTotal(String total) { this.total = total; }
     public String getJsonResultado() { return jsonResultado; }
     public void setJsonResultado(String jsonResultado) { this.jsonResultado = jsonResultado; }
     public LocalDateTime getFechaConversion() { return fechaConversion; }
