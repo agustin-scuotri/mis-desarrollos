@@ -15,9 +15,13 @@ public class DocumentoConvertido {
     @JoinColumn(name = "archivo_id")
     private Archivo archivo;
 
-    private String nombre;
-    private String apellido;
-    private String dni;
+    // Emisor del comprobante
+    private String cuit;
+    private String razonSocial;
+    private String situacionIva;
+    private String domicilio;
+    private String telefono;
+    private String mail;
 
     @Column(length = 5000)
     private String jsonResultado;
@@ -34,12 +38,18 @@ public class DocumentoConvertido {
     public void setId(Long id) { this.id = id; }
     public Archivo getArchivo() { return archivo; }
     public void setArchivo(Archivo archivo) { this.archivo = archivo; }
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
-    public String getApellido() { return apellido; }
-    public void setApellido(String apellido) { this.apellido = apellido; }
-    public String getDni() { return dni; }
-    public void setDni(String dni) { this.dni = dni; }
+    public String getCuit() { return cuit; }
+    public void setCuit(String cuit) { this.cuit = cuit; }
+    public String getRazonSocial() { return razonSocial; }
+    public void setRazonSocial(String razonSocial) { this.razonSocial = razonSocial; }
+    public String getSituacionIva() { return situacionIva; }
+    public void setSituacionIva(String situacionIva) { this.situacionIva = situacionIva; }
+    public String getDomicilio() { return domicilio; }
+    public void setDomicilio(String domicilio) { this.domicilio = domicilio; }
+    public String getTelefono() { return telefono; }
+    public void setTelefono(String telefono) { this.telefono = telefono; }
+    public String getMail() { return mail; }
+    public void setMail(String mail) { this.mail = mail; }
     public String getJsonResultado() { return jsonResultado; }
     public void setJsonResultado(String jsonResultado) { this.jsonResultado = jsonResultado; }
     public LocalDateTime getFechaConversion() { return fechaConversion; }

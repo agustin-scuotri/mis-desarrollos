@@ -36,9 +36,12 @@ public class DocumentoConvertidoService {
 
         DocumentoConvertido doc = new DocumentoConvertido();
         doc.setArchivo(archivoCompleto);
-        doc.setNombre(json.path("nombre").asText());
-        doc.setApellido(json.path("apellido").asText());
-        doc.setDni(json.path("dni").asText());
+        doc.setCuit(json.path("cuit").asText(null));
+        doc.setRazonSocial(json.path("razonSocial").asText(null));
+        doc.setSituacionIva(json.path("situacionIva").asText(null));
+        doc.setDomicilio(json.path("domicilio").asText(null));
+        doc.setTelefono(json.path("telefono").asText(null));
+        doc.setMail(json.path("mail").asText(null));
         doc.setJsonResultado(jsonTexto);
 
         repository.save(doc);

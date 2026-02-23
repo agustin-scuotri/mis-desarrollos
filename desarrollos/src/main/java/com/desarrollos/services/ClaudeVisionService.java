@@ -38,7 +38,7 @@ public class ClaudeVisionService {
                         %s,
                         {
                           "type": "text",
-                          "text": "Analizá esta imagen y extraé los siguientes datos si están presentes: nombre, apellido, dni. Respondé ÚNICAMENTE con un JSON con este formato exacto, sin explicaciones ni texto adicional: { \\"nombre\\": \\"valor\\", \\"apellido\\": \\"valor\\", \\"dni\\": \\"valor\\" }"
+                          "text": "Analizá esta factura y extraé los datos del emisor del comprobante (proveedor). Respondé ÚNICAMENTE con un JSON con este formato exacto, sin explicaciones ni texto adicional: { \\"cuit\\": \\"valor\\", \\"razonSocial\\": \\"valor\\", \\"situacionIva\\": \\"valor\\", \\"domicilio\\": \\"valor\\", \\"telefono\\": \\"valor\\", \\"mail\\": \\"valor\\" }. Si algún campo no está presente, usá null como valor."
                         }
                       ]
                     }

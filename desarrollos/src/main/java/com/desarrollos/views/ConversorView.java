@@ -138,12 +138,14 @@ public class ConversorView extends FormView {
 			generarBotonDescarga(resultado);
 
 			StringBuilder notas = new StringBuilder();
-			if (resultado.getNombre() == null || resultado.getNombre().isEmpty() || resultado.getNombre().equals("null")) 
-			    notas.append("• No se encontró el nombre.\n");
-			if (resultado.getApellido() == null || resultado.getApellido().isEmpty() || resultado.getApellido().equals("null")) 
-			    notas.append("• No se encontró el apellido.\n");
-			if (resultado.getDni() == null || resultado.getDni().isEmpty() || resultado.getDni().equals("null")) 
-			    notas.append("• No se encontró el DNI.\n");
+			if (estaVacio(resultado.getCuit()))
+			    notas.append("• No se encontró el CUIT.\n");
+			if (estaVacio(resultado.getRazonSocial()))
+			    notas.append("• No se encontró la razón social.\n");
+			if (estaVacio(resultado.getSituacionIva()))
+			    notas.append("• No se encontró la situación ante IVA.\n");
+			if (estaVacio(resultado.getDomicilio()))
+			    notas.append("• No se encontró el domicilio.\n");
 
 			if (notas.length() > 0) {
 			    parrafoNotas.setText("⚠ Campos no encontrados:\n" + notas.toString());
@@ -191,6 +193,10 @@ public class ConversorView extends FormView {
 	@Override
 	protected void accionGuardar() {
 		// El guardar está integrado dentro de ejecutarConversion()
+	}
+
+	private boolean estaVacio(String valor) {
+		return valor == null || valor.isEmpty() || valor.equals("null");
 	}
 
 	@Override
