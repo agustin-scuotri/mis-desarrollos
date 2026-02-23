@@ -2,6 +2,8 @@ package com.desarrollos.entities;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "documentos_convertidos")
@@ -40,7 +42,11 @@ public class DocumentoConvertido {
     private String moneda;
     private String cotizacion;
 
-    @Column(length = 5000)
+    // Productos / conceptos (1.3)
+    @OneToMany(mappedBy = "documento", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ItemFactura> items = new ArrayList<>();
+
+    @Column(length = 20000)
     private String jsonResultado;
 
     @Column(name = "fecha_conversion")
@@ -93,6 +99,8 @@ public class DocumentoConvertido {
     public void setMoneda(String moneda) { this.moneda = moneda; }
     public String getCotizacion() { return cotizacion; }
     public void setCotizacion(String cotizacion) { this.cotizacion = cotizacion; }
+    public List<ItemFactura> getItems() { return items; }
+    public void setItems(List<ItemFactura> items) { this.items = items; }
     public String getJsonResultado() { return jsonResultado; }
     public void setJsonResultado(String jsonResultado) { this.jsonResultado = jsonResultado; }
     public LocalDateTime getFechaConversion() { return fechaConversion; }

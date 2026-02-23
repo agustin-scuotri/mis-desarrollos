@@ -7,10 +7,12 @@ import com.desarrollos.base.FormView;
 import com.desarrollos.combos.ArchivoCombo;
 import com.desarrollos.entities.Archivo;
 import com.desarrollos.entities.DocumentoConvertido;
+import com.desarrollos.entities.ItemFactura;
 import com.desarrollos.services.ArchivoService;
 import com.desarrollos.services.DocumentoConvertidoService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
@@ -47,6 +49,7 @@ public class ConversorView extends FormView {
 	private final HorizontalLayout barraDescarga = new HorizontalLayout();
 
 	private final Paragraph parrafoNotas = new Paragraph();
+	private final Grid<ItemFactura> gridItems = new Grid<>(ItemFactura.class, false);
 
 	public ConversorView(ArchivoService archivoService, DocumentoConvertidoService documentoConvertidoService) {
 		this.archivoService = archivoService;
@@ -103,7 +106,18 @@ public class ConversorView extends FormView {
 				.set("font-size", "0.9rem").set("margin-top", "10px").set("white-space", "pre-line");
 		parrafoNotas.setVisible(false);
 
-		panelResultado.add(tituloResultado, jsonViewer, parrafoNotas, barraDescarga);
+		// ── Grid de items ─────────────────────────────────────────────────────
+		gridItems.addColumn(ItemFactura::getSku).setHeader("SKU / Código").setWidth("150px").setFlexGrow(0);
+		gridItems.addColumn(ItemFactura::getDescripcion).setHeader("Descripción").setFlexGrow(1);
+		gridItems.addColumn(ItemFactura::getCantidad).setHeader("Cantidad").setWidth("90px").setFlexGrow(0);
+		gridItems.addColumn(ItemFactura::getPrecioUnitario).setHeader("Precio Unit.").setWidth("110px").setFlexGrow(0);
+		gridItems.addColumn(ItemFactura::getDescuento).setHeader("Descuento").setWidth("100px").setFlexGrow(0);
+		gridItems.addColumn(ItemFactura::getSubTotal).setHeader("Subtotal").setWidth("110px").setFlexGrow(0);
+		gridItems.setAllRowsVisible(true);
+		gridItems.getStyle().set("margin-top", "12px");
+		gridItems.setVisible(false);
+
+		panelResultado.add(tituloResultado, jsonViewer, gridItems, parrafoNotas, barraDescarga);
 		panelResultado.setPadding(false);
 		panelResultado.setSpacing(true);
 		panelResultado.setVisible(false);
@@ -133,6 +147,14 @@ public class ConversorView extends FormView {
 
 			// Mostramos JSON
 			jsonViewer.setText(resultado.getJsonResultado());
+
+			// Cargamos grid de items
+			if (!resultado.getItems().isEmpty()) {
+				gridItems.setItems(resultado.getItems());
+				gridItems.setVisible(true);
+			} else {
+				gridItems.setVisible(false);
+			}
 
 			// Generamos botón de descarga
 			generarBotonDescarga(resultado);
@@ -172,6 +194,8 @@ public class ConversorView extends FormView {
 			    notas.append("• No se encontró la moneda.\n");
 			if (estaVacio(resultado.getCotizacion()))
 			    notas.append("• No se encontró la cotización.\n");
+			if (resultado.getItems().isEmpty())
+			    notas.append("• No se encontraron productos/conceptos en la factura.\n");
 
 			if (notas.length() > 0) {
 			    parrafoNotas.setText("⚠ Campos no encontrados:\n" + notas.toString());
@@ -232,6 +256,8 @@ public class ConversorView extends FormView {
 		panelResultado.setVisible(false);
 		panelProgreso.setVisible(false);
 		jsonViewer.setText("");
+		gridItems.setItems(java.util.Collections.emptyList());
+		gridItems.setVisible(false);
 		barraDescarga.removeAll();
 		parrafoNotas.setVisible(false);
 		parrafoNotas.setText("");

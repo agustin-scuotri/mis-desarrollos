@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.desarrollos.entities.Archivo;
 import com.desarrollos.entities.DocumentoConvertido;
+import com.desarrollos.entities.ItemFactura;
 import com.desarrollos.repositories.DocumentoConvertidoRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,6 +57,21 @@ public class DocumentoConvertidoService {
         doc.setMoneda(json.path("moneda").asText(null));
         doc.setCotizacion(json.path("cotizacion").asText(null));
         doc.setJsonResultado(jsonTexto);
+
+        JsonNode itemsNode = json.path("items");
+        if (itemsNode.isArray()) {
+            for (JsonNode itemNode : itemsNode) {
+                ItemFactura item = new ItemFactura();
+                item.setDocumento(doc);
+                item.setSku(itemNode.path("sku").asText(null));
+                item.setDescripcion(itemNode.path("descripcion").asText(null));
+                item.setCantidad(itemNode.path("cantidad").asText(null));
+                item.setPrecioUnitario(itemNode.path("precioUnitario").asText(null));
+                item.setDescuento(itemNode.path("descuento").asText(null));
+                item.setSubTotal(itemNode.path("subTotal").asText(null));
+                doc.getItems().add(item);
+            }
+        }
 
         repository.save(doc);
 

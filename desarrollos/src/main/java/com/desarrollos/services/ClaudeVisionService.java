@@ -30,7 +30,7 @@ public class ClaudeVisionService {
         String requestBody = String.format("""
                 {
                   "model": "%s",
-                  "max_tokens": 500,
+                  "max_tokens": 4000,
                   "messages": [
                     {
                       "role": "user",
@@ -38,7 +38,7 @@ public class ClaudeVisionService {
                         %s,
                         {
                           "type": "text",
-                          "text": "Analizá esta factura argentina y extraé los siguientes datos. Respondé ÚNICAMENTE con un JSON con este formato exacto, sin explicaciones ni texto adicional: { \\"cuit\\": \\"valor\\", \\"razonSocial\\": \\"valor\\", \\"situacionIva\\": \\"valor\\", \\"direccion\\": \\"calle + numero + piso + departamento u oficina concatenados en un solo texto\\", \\"ciudad\\": \\"valor\\", \\"codigoPostal\\": \\"valor\\", \\"provincia\\": \\"valor\\", \\"pais\\": \\"valor\\", \\"telefono\\": \\"valor\\", \\"mail\\": \\"valor\\", \\"codigoArca\\": \\"codigo ARCA que aparece debajo de la letra del comprobante (ej: COD 001)\\", \\"letra\\": \\"letra del comprobante (A, B, C, etc.)\\", \\"centroEmision\\": \\"primer bloque numerico del numero de comprobante (punto de venta)\\", \\"numeroComprobante\\": \\"segundo bloque numerico del numero de comprobante\\", \\"fechaEmision\\": \\"fecha de emision del comprobante\\", \\"cae\\": \\"numero CAE\\", \\"fechaVencimientoCae\\": \\"fecha de vencimiento del CAE\\", \\"moneda\\": \\"moneda en que se expresan los importes (ej: ARS, USD)\\", \\"cotizacion\\": \\"cotizacion o tasa de cambio de la moneda\\" }. Si algún campo no está presente en el documento, usá null como valor."
+                          "text": "Analizá esta factura argentina y extraé los siguientes datos. Respondé ÚNICAMENTE con un JSON con este formato exacto, sin explicaciones ni texto adicional: { \\"cuit\\": \\"valor\\", \\"razonSocial\\": \\"valor\\", \\"situacionIva\\": \\"valor\\", \\"direccion\\": \\"calle + numero + piso + departamento u oficina concatenados en un solo texto\\", \\"ciudad\\": \\"valor\\", \\"codigoPostal\\": \\"valor\\", \\"provincia\\": \\"valor\\", \\"pais\\": \\"valor\\", \\"telefono\\": \\"valor\\", \\"mail\\": \\"valor\\", \\"codigoArca\\": \\"codigo ARCA que aparece debajo de la letra del comprobante (ej: COD 001)\\", \\"letra\\": \\"letra del comprobante (A, B, C, etc.)\\", \\"centroEmision\\": \\"primer bloque numerico del numero de comprobante (punto de venta)\\", \\"numeroComprobante\\": \\"segundo bloque numerico del numero de comprobante\\", \\"fechaEmision\\": \\"fecha de emision del comprobante\\", \\"cae\\": \\"numero CAE\\", \\"fechaVencimientoCae\\": \\"fecha de vencimiento del CAE\\", \\"moneda\\": \\"moneda en que se expresan los importes (ej: ARS, USD)\\", \\"cotizacion\\": \\"cotizacion o tasa de cambio de la moneda\\", \\"items\\": [ { \\"sku\\": \\"codigo o SKU del producto\\", \\"descripcion\\": \\"descripcion del producto o concepto\\", \\"cantidad\\": \\"cantidad\\", \\"precioUnitario\\": \\"precio unitario\\", \\"descuento\\": \\"descuento o bonificacion\\", \\"subTotal\\": \\"subtotal de la linea\\" } ] }. El campo items debe ser un array con todos los productos o conceptos de la factura. Si un campo no está presente en el documento, usá null como valor."
                         }
                       ]
                     }
