@@ -7,6 +7,8 @@ import com.desarrollos.base.FormView;
 import com.desarrollos.combos.ArchivoCombo;
 import com.desarrollos.entities.Archivo;
 import com.desarrollos.entities.DocumentoConvertido;
+import com.desarrollos.entities.NetoGravado;
+import com.desarrollos.entities.PercepcionIIBB;
 import com.desarrollos.entities.ProductoConcepto;
 import com.desarrollos.services.ArchivoService;
 import com.desarrollos.services.DocumentoConvertidoService;
@@ -15,6 +17,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Pre;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -50,6 +53,8 @@ public class ConversorView extends FormView {
 
 	private final Paragraph parrafoNotas = new Paragraph();
 	private final Grid<ProductoConcepto> gridProductos = new Grid<>(ProductoConcepto.class, false);
+	private final Grid<NetoGravado> gridNetosGravados = new Grid<>(NetoGravado.class, false);
+	private final Grid<PercepcionIIBB> gridPercepcionesIIBB = new Grid<>(PercepcionIIBB.class, false);
 
 	public ConversorView(ArchivoService archivoService, DocumentoConvertidoService documentoConvertidoService) {
 		this.archivoService = archivoService;
@@ -107,17 +112,46 @@ public class ConversorView extends FormView {
 		parrafoNotas.setVisible(false);
 
 		// ── Grid de productos/conceptos ───────────────────────────────────────
-		gridProductos.addColumn(ProductoConcepto::getSku).setHeader("SKU / Código").setWidth("150px").setFlexGrow(0);
+		H4 tituloProductos = new H4("Productos / Conceptos");
+		tituloProductos.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
+		gridProductos.addColumn(ProductoConcepto::getSku).setHeader("SKU").setWidth("130px").setFlexGrow(0);
 		gridProductos.addColumn(ProductoConcepto::getDescripcion).setHeader("Descripción").setFlexGrow(1);
-		gridProductos.addColumn(ProductoConcepto::getCantidad).setHeader("Cantidad").setWidth("90px").setFlexGrow(0);
-		gridProductos.addColumn(ProductoConcepto::getPrecioUnitario).setHeader("Precio Unit.").setWidth("110px").setFlexGrow(0);
-		gridProductos.addColumn(ProductoConcepto::getDescuento).setHeader("Descuento").setWidth("100px").setFlexGrow(0);
-		gridProductos.addColumn(ProductoConcepto::getSubTotal).setHeader("Subtotal").setWidth("110px").setFlexGrow(0);
+		gridProductos.addColumn(ProductoConcepto::getCantidad).setHeader("Cant.").setWidth("70px").setFlexGrow(0);
+		gridProductos.addColumn(ProductoConcepto::getPrecioUnitario).setHeader("P. Unit.").setWidth("95px").setFlexGrow(0);
+		gridProductos.addColumn(ProductoConcepto::getDescuento).setHeader("Desc.").setWidth("80px").setFlexGrow(0);
+		gridProductos.addColumn(ProductoConcepto::getSubTotal).setHeader("Subtotal").setWidth("95px").setFlexGrow(0);
+		gridProductos.addColumn(ProductoConcepto::getAlicuotaIva).setHeader("IVA").setWidth("75px").setFlexGrow(0);
+		gridProductos.addColumn(ProductoConcepto::getOrdenCompra).setHeader("OC").setWidth("90px").setFlexGrow(0);
+		gridProductos.addColumn(ProductoConcepto::getRemito).setHeader("Remito").setWidth("130px").setFlexGrow(0);
 		gridProductos.setAllRowsVisible(true);
-		gridProductos.getStyle().set("margin-top", "12px");
+		gridProductos.getStyle().set("margin-top", "4px");
 		gridProductos.setVisible(false);
 
-		panelResultado.add(tituloResultado, jsonViewer, gridProductos, parrafoNotas, barraDescarga);
+		// ── Grid de netos gravados ────────────────────────────────────────────
+		H4 tituloNetos = new H4("Netos Gravados e IVA");
+		tituloNetos.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
+		gridNetosGravados.addColumn(NetoGravado::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
+		gridNetosGravados.addColumn(NetoGravado::getImporteNetoGravado).setHeader("Importe Neto Gravado").setFlexGrow(1);
+		gridNetosGravados.addColumn(NetoGravado::getIva).setHeader("IVA").setWidth("130px").setFlexGrow(0);
+		gridNetosGravados.setAllRowsVisible(true);
+		gridNetosGravados.getStyle().set("margin-top", "4px");
+		gridNetosGravados.setVisible(false);
+
+		// ── Grid de percepciones IIBB ─────────────────────────────────────────
+		H4 tituloPercepcionesIIBB = new H4("Percepciones IIBB");
+		tituloPercepcionesIIBB.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
+		gridPercepcionesIIBB.addColumn(PercepcionIIBB::getProvincia).setHeader("Provincia").setFlexGrow(1);
+		gridPercepcionesIIBB.addColumn(PercepcionIIBB::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
+		gridPercepcionesIIBB.addColumn(PercepcionIIBB::getImporte).setHeader("Importe").setWidth("130px").setFlexGrow(0);
+		gridPercepcionesIIBB.setAllRowsVisible(true);
+		gridPercepcionesIIBB.getStyle().set("margin-top", "4px");
+		gridPercepcionesIIBB.setVisible(false);
+
+		panelResultado.add(tituloResultado, jsonViewer,
+				tituloProductos, gridProductos,
+				tituloNetos, gridNetosGravados,
+				tituloPercepcionesIIBB, gridPercepcionesIIBB,
+				parrafoNotas, barraDescarga);
 		panelResultado.setPadding(false);
 		panelResultado.setSpacing(true);
 		panelResultado.setVisible(false);
@@ -148,12 +182,24 @@ public class ConversorView extends FormView {
 			// Mostramos JSON
 			jsonViewer.setText(resultado.getJsonResultado());
 
-			// Cargamos grid de productos/conceptos
+			// Cargamos grids
 			if (!resultado.getProductosConceptos().isEmpty()) {
 				gridProductos.setItems(resultado.getProductosConceptos());
 				gridProductos.setVisible(true);
 			} else {
 				gridProductos.setVisible(false);
+			}
+			if (!resultado.getNetosGravados().isEmpty()) {
+				gridNetosGravados.setItems(resultado.getNetosGravados());
+				gridNetosGravados.setVisible(true);
+			} else {
+				gridNetosGravados.setVisible(false);
+			}
+			if (!resultado.getPercepcionesIIBB().isEmpty()) {
+				gridPercepcionesIIBB.setItems(resultado.getPercepcionesIIBB());
+				gridPercepcionesIIBB.setVisible(true);
+			} else {
+				gridPercepcionesIIBB.setVisible(false);
 			}
 
 			// Generamos botón de descarga
@@ -196,10 +242,10 @@ public class ConversorView extends FormView {
 			    notas.append("• No se encontró la cotización.\n");
 			if (resultado.getProductosConceptos().isEmpty())
 			    notas.append("• No se encontraron productos/conceptos en la factura.\n");
-			if (estaVacio(resultado.getSubTotalNeto21()))
-			    notas.append("• No se encontró el subtotal neto al 21%.\n");
-			if (estaVacio(resultado.getIva21()))
-			    notas.append("• No se encontró el importe de IVA 21%.\n");
+			if (resultado.getNetosGravados().isEmpty())
+			    notas.append("• No se encontraron netos gravados e IVA.\n");
+			if (estaVacio(resultado.getSubTotalNoGravado()))
+			    notas.append("• No se encontró el importe neto no gravado.\n");
 			if (estaVacio(resultado.getTotal()))
 			    notas.append("• No se encontró el total del comprobante.\n");
 
@@ -264,6 +310,10 @@ public class ConversorView extends FormView {
 		jsonViewer.setText("");
 		gridProductos.setItems(java.util.Collections.emptyList());
 		gridProductos.setVisible(false);
+		gridNetosGravados.setItems(java.util.Collections.emptyList());
+		gridNetosGravados.setVisible(false);
+		gridPercepcionesIIBB.setItems(java.util.Collections.emptyList());
+		gridPercepcionesIIBB.setVisible(false);
 		barraDescarga.removeAll();
 		parrafoNotas.setVisible(false);
 		parrafoNotas.setText("");

@@ -23,6 +23,9 @@ public class ProductoConcepto {
     private String precioUnitario;
     private String descuento;
     private String subTotal;
+    private String alicuotaIva;
+    private String ordenCompra;
+    private String remito;
 
     // Getters y Setters
     public Long getId() { return id; }
@@ -41,4 +44,10 @@ public class ProductoConcepto {
     public void setDescuento(String descuento) { this.descuento = descuento; }
     public String getSubTotal() { return subTotal; }
     public void setSubTotal(String subTotal) { this.subTotal = subTotal; }
+    public String getAlicuotaIva() { return alicuotaIva; }
+    public void setAlicuotaIva(String alicuotaIva) { this.alicuotaIva = alicuotaIva; }
+    public String getOrdenCompra() { return ordenCompra; }
+    public void setOrdenCompra(String ordenCompra) { this.ordenCompra = ordenCompra; }
+    public String getRemito() { return remito; }
+    public void setRemito(String remito) { this.remito = remito; }
 }

@@ -6,6 +6,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.desarrollos.entities.Archivo;
 import com.desarrollos.entities.DocumentoConvertido;
+import com.desarrollos.entities.NetoGravado;
+import com.desarrollos.entities.PercepcionIIBB;
 import com.desarrollos.entities.ProductoConcepto;
 import com.desarrollos.repositories.DocumentoConvertidoRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -57,14 +59,7 @@ public class DocumentoConvertidoService {
         doc.setMoneda(json.path("moneda").asText(null));
         doc.setCotizacion(json.path("cotizacion").asText(null));
         doc.setOrdenCompra(json.path("ordenCompra").asText(null));
-        doc.setSubTotalNeto21(json.path("subTotalNeto21").asText(null));
-        doc.setSubTotalNeto105(json.path("subTotalNeto105").asText(null));
         doc.setSubTotalNoGravado(json.path("subTotalNoGravado").asText(null));
-        doc.setIva21(json.path("iva21").asText(null));
-        doc.setIva105(json.path("iva105").asText(null));
-        doc.setPercepcionIIBBProvincia(json.path("percepcionIIBBProvincia").asText(null));
-        doc.setPercepcionIIBBAlicuota(json.path("percepcionIIBBAlicuota").asText(null));
-        doc.setPercepcionIIBBImporte(json.path("percepcionIIBBImporte").asText(null));
         doc.setPercepcionIVAAlicuota(json.path("percepcionIVAAlicuota").asText(null));
         doc.setPercepcionIVAImporte(json.path("percepcionIVAImporte").asText(null));
         doc.setTotal(json.path("total").asText(null));
@@ -81,7 +76,34 @@ public class DocumentoConvertidoService {
                 producto.setPrecioUnitario(itemNode.path("precioUnitario").asText(null));
                 producto.setDescuento(itemNode.path("descuento").asText(null));
                 producto.setSubTotal(itemNode.path("subTotal").asText(null));
+                producto.setAlicuotaIva(itemNode.path("alicuotaIva").asText(null));
+                producto.setOrdenCompra(itemNode.path("ordenCompra").asText(null));
+                producto.setRemito(itemNode.path("remito").asText(null));
                 doc.getProductosConceptos().add(producto);
+            }
+        }
+
+        JsonNode netosNode = json.path("netosGravados");
+        if (netosNode.isArray()) {
+            for (JsonNode netoNode : netosNode) {
+                NetoGravado neto = new NetoGravado();
+                neto.setDocumento(doc);
+                neto.setAlicuota(netoNode.path("alicuota").asText(null));
+                neto.setImporteNetoGravado(netoNode.path("importeNetoGravado").asText(null));
+                neto.setIva(netoNode.path("iva").asText(null));
+                doc.getNetosGravados().add(neto);
+            }
+        }
+
+        JsonNode percepcionesNode = json.path("percepcionesIIBB");
+        if (percepcionesNode.isArray()) {
+            for (JsonNode percNode : percepcionesNode) {
+                PercepcionIIBB perc = new PercepcionIIBB();
+                perc.setDocumento(doc);
+                perc.setProvincia(percNode.path("provincia").asText(null));
+                perc.setAlicuota(percNode.path("alicuota").asText(null));
+                perc.setImporte(percNode.path("importe").asText(null));
+                doc.getPercepcionesIIBB().add(perc);
             }
         }
 
