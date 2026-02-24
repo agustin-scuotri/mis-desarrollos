@@ -57,7 +57,10 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
     protected void actualizarLista() {
         if (service == null) return;
 
-        List<DocumentoConvertido> todos = service.listarTodos();
+        List<DocumentoConvertido> todos = service.listarTodos().stream()
+                .filter(doc -> doc.getArchivo() == null
+                        || !"PROCESADO_ERROR".equals(doc.getArchivo().getEstadoConversion()))
+                .collect(Collectors.toList());
 
         List<DocumentoConvertido> filtrados = todos.stream().filter(doc -> {
             for (Map.Entry<String, String> filtro : filtrosActivos.entrySet()) {
