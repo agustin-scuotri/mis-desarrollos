@@ -314,6 +314,9 @@ public class ConversorView extends FormView {
 
 		} catch (Exception e) {
 			panelProgreso.setVisible(false);
+			if (archivoSeleccionado != null) {
+				archivoService.actualizarEstado(archivoSeleccionado, "PROCESADO_ERROR");
+			}
 			Notification.show("Error al convertir: " + e.getMessage()).addThemeVariants(NotificationVariant.LUMO_ERROR);
 		} finally {
 			btnConvertir.setEnabled(true);

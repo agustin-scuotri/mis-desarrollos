@@ -64,6 +64,12 @@ public class ArchivoService {
     public List<Archivo> listarNoConvertidos() {
         return repository.findByConvertidoFalse();
     }
+
+    @Transactional
+    public void actualizarEstado(Archivo archivo, String estado) {
+        archivo.setEstadoConversion(estado);
+        repository.save(archivo);
+    }
     
     @Transactional
     public Archivo buscarPorIdConContenido(Long id) {

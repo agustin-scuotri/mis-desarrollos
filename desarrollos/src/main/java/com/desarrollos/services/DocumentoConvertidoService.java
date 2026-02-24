@@ -14,6 +14,7 @@ import com.desarrollos.entities.Vencimiento;
 import com.desarrollos.repositories.DocumentoConvertidoRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 
 @Service
 public class DocumentoConvertidoService {
@@ -132,9 +133,25 @@ public class DocumentoConvertidoService {
         repository.save(doc);
 
         archivoCompleto.setConvertido(true);
+        archivoCompleto.setEstadoConversion("PROCESADO");
         archivoService.guardar(archivoCompleto);
 
         return doc;
+    }
+
+    public List<DocumentoConvertido> listarTodos() {
+        return repository.findAll();
+    }
+
+    @Transactional
+    public void borrar(DocumentoConvertido doc) {
+        Archivo archivo = doc.getArchivo();
+        repository.delete(doc);
+        if (archivo != null) {
+            archivoService.actualizarEstado(archivo, "PENDIENTE");
+            archivo.setConvertido(false);
+            try { archivoService.guardar(archivo); } catch (Exception ignored) {}
+        }
     }
 
     private String detectarMimeType(String nombreArchivo) {

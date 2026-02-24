@@ -32,6 +32,9 @@ public class Archivo {
 
     private boolean convertido;
 
+    @Column(name = "estado_conversion")
+    private String estadoConversion = "PENDIENTE";
+
     // ── Relación con DocumentoConvertido ──────────────────────────────────────
     @OneToOne(mappedBy = "archivo", cascade = CascadeType.ALL, orphanRemoval = true)
     private DocumentoConvertido documentoConvertido;
@@ -58,6 +61,8 @@ public class Archivo {
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
     public boolean isConvertido() { return convertido; }
     public void setConvertido(boolean convertido) { this.convertido = convertido; }
+    public String getEstadoConversion() { return estadoConversion; }
+    public void setEstadoConversion(String estadoConversion) { this.estadoConversion = estadoConversion; }
     public DocumentoConvertido getDocumentoConvertido() { return documentoConvertido; }
     public void setDocumentoConvertido(DocumentoConvertido documentoConvertido) { this.documentoConvertido = documentoConvertido; }
 }

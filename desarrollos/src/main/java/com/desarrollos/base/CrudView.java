@@ -80,7 +80,11 @@ public abstract class CrudView<T> extends VerticalLayout {
         btnNuevo.getStyle().set("font-family", "Verdana, sans-serif");
 
         // ── Barra herramientas ────────────────────────────────────────────────
-        barraHerramientas = new HorizontalLayout(layoutTitulo, btnNuevo);
+        if (mostrarBotonNuevo()) {
+            barraHerramientas = new HorizontalLayout(layoutTitulo, btnNuevo);
+        } else {
+            barraHerramientas = new HorizontalLayout(layoutTitulo);
+        }
         barraHerramientas.setWidthFull();
         barraHerramientas.setJustifyContentMode(JustifyContentMode.BETWEEN);
         barraHerramientas.setAlignItems(Alignment.CENTER);
@@ -138,6 +142,20 @@ public abstract class CrudView<T> extends VerticalLayout {
                 "    background-color: transparent !important;" +
                 "  }" +
                 "  [part~='row'][selected]:hover > [part~='cell'] {" +
+                "    background-color: rgba(0,32,96,0.05) !important;" +
+                "  }" +
+                // ── FIX: columna frozen-to-end siempre encima ──
+                "  [frozen-to-end] {" +
+                "    z-index: 3 !important;" +
+                "    background-color: white;" +
+                "  }" +
+                "  [part~='row']:hover [frozen-to-end] {" +
+                "    background-color: rgba(0,32,96,0.05) !important;" +
+                "  }" +
+                "  [part~='row'][selected] [frozen-to-end] {" +
+                "    background-color: white !important;" +
+                "  }" +
+                "  [part~='row'][selected]:hover [frozen-to-end] {" +
                 "    background-color: rgba(0,32,96,0.05) !important;" +
                 "  }" +
                 "`;" +
@@ -293,7 +311,10 @@ public abstract class CrudView<T> extends VerticalLayout {
         btnB.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         btnB.addClickListener(event -> accionBorrar(item));
 
-        HorizontalLayout layout = new HorizontalLayout(btnV, btnE, btnB);
+        HorizontalLayout layout = new HorizontalLayout();
+        layout.add(btnV);
+        if (mostrarBotonEditar()) layout.add(btnE);
+        layout.add(btnB);
         layout.setSpacing(true);
         layout.setWidthFull();
         layout.setJustifyContentMode(JustifyContentMode.CENTER);
@@ -347,6 +368,10 @@ public abstract class CrudView<T> extends VerticalLayout {
         }
         actualizarLista();
     }
+
+    // ── Hooks de visibilidad (pueden sobreescribirse) ─────────────────────────
+    protected boolean mostrarBotonNuevo() { return true; }
+    protected boolean mostrarBotonEditar() { return true; }
 
     // ── Métodos abstractos ────────────────────────────────────────────────────
     protected abstract void configurarColumnasEspecificas();
