@@ -103,7 +103,7 @@ public class AbmArchivosView extends CrudView<Archivo> {
         filtro.setClearButtonVisible(true);
         filtro.addThemeVariants(ComboBoxVariant.LUMO_SMALL);
         filtro.setWidthFull();
-        filtro.getStyle().set("font-family", "Verdana, sans-serif");
+        filtro.getStyle().set("font-size", "0.875rem");
         filtro.addValueChangeListener(e -> {
             String sel = e.getValue();
             ejecutarFiltro(cabecera, (sel == null || sel.equals("Todos")) ? "" : sel);
@@ -111,9 +111,8 @@ public class AbmArchivosView extends CrudView<Archivo> {
 
         Span textoCabecera = new Span(cabecera);
         textoCabecera.getStyle()
-                .set("font-weight", "bold")
-                .set("color", "#002060")
-                .set("font-family", "Verdana, sans-serif");
+                .set("font-weight", "600")
+                .set("color", "#334155");
 
         VerticalLayout layoutCabecera = new VerticalLayout(textoCabecera, filtro);
         layoutCabecera.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -126,32 +125,42 @@ public class AbmArchivosView extends CrudView<Archivo> {
 
             Icon icono;
             Span texto;
+            String bgColor, fgColor;
+
             if ("PROCESADO".equals(estado)) {
                 icono = VaadinIcon.CHECK_CIRCLE.create();
-                icono.setColor("green");
-                icono.setSize("16px");
                 texto = new Span("Procesado");
-                texto.getStyle().set("color", "green");
+                bgColor = "#dcfce7";
+                fgColor = "#16a34a";
             } else if ("PROCESADO_ERROR".equals(estado)) {
                 icono = VaadinIcon.WARNING.create();
-                icono.setColor("#cc0000");
-                icono.setSize("16px");
-                texto = new Span("Procesado error");
-                texto.getStyle().set("color", "#cc0000");
+                texto = new Span("Error");
+                bgColor = "#fee2e2";
+                fgColor = "#dc2626";
             } else {
                 icono = VaadinIcon.CLOCK.create();
-                icono.setColor("#e07b00");
-                icono.setSize("16px");
-                texto = new Span("Pendiente a procesar");
-                texto.getStyle().set("color", "#e07b00");
+                texto = new Span("Pendiente");
+                bgColor = "#fef3c7";
+                fgColor = "#d97706";
             }
-            texto.getStyle().set("font-family", "Verdana, sans-serif").set("font-size", "0.8rem");
 
-            HorizontalLayout cell = new HorizontalLayout(icono, texto);
-            cell.setAlignItems(FlexComponent.Alignment.CENTER);
-            cell.setSpacing(true);
-            cell.setPadding(false);
-            return cell;
+            icono.setSize("13px");
+            icono.getStyle().set("color", fgColor);
+            texto.getStyle().set("font-size", "0.75rem").set("font-weight", "600").set("color", fgColor);
+
+            // Badge pill
+            HorizontalLayout pill = new HorizontalLayout(icono, texto);
+            pill.setAlignItems(FlexComponent.Alignment.CENTER);
+            pill.setSpacing(false);
+            pill.setPadding(false);
+            pill.getStyle()
+                    .set("background-color", bgColor)
+                    .set("border-radius", "20px")
+                    .set("padding", "4px 10px")
+                    .set("gap", "5px")
+                    .set("display", "inline-flex")
+                    .set("align-items", "center");
+            return pill;
         })
         .setHeader(layoutCabecera)
         .setKey(cabecera)

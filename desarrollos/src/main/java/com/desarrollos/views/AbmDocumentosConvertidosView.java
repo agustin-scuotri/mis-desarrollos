@@ -113,16 +113,19 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
 
         Pre jsonPre = new Pre(json);
         jsonPre.getStyle()
-                .set("background-color", "#f0f4ff")
-                .set("border", "1px solid rgba(0,32,96,0.2)")
-                .set("border-radius", "8px")
-                .set("padding", "15px")
-                .set("font-family", "monospace")
+                .set("background-color", "#1e1e2e")
+                .set("color", "#cdd6f4")
+                .set("border", "none")
+                .set("border-radius", "12px")
+                .set("padding", "20px")
+                .set("font-family", "'JetBrains Mono', 'Fira Code', 'Courier New', monospace")
                 .set("font-size", "13px")
                 .set("white-space", "pre-wrap")
                 .set("word-break", "break-word")
                 .set("overflow-y", "auto")
-                .set("flex", "1");
+                .set("flex", "1")
+                .set("line-height", "1.6")
+                .set("box-shadow", "inset 0 2px 8px rgba(0,0,0,0.4)");
 
         VerticalLayout contenido = new VerticalLayout();
         contenido.setPadding(false);
@@ -156,7 +159,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         Anchor anchorDescarga = new Anchor(resource, "");
         anchorDescarga.getElement().setAttribute("download", true);
         Button botonDescarga = new Button("Descargar JSON", VaadinIcon.DOWNLOAD.create());
-        botonDescarga.getStyle().set("background-color", "#002060").set("color", "white");
+        botonDescarga.getStyle().set("background-color", "#2563eb").set("color", "white");
         anchorDescarga.add(botonDescarga);
 
         Button btnCerrar = new Button("Cerrar", e -> dialog.close());

@@ -2,9 +2,8 @@ package com.desarrollos.views;
 
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -18,28 +17,65 @@ public class MainLayout extends AppLayout {
 		crearCabecera();
 		crearMenuLateral();
 
-		String cssGlobal = "const style = document.createElement('style');" + "style.textContent = ` "
-				+ "  /* 1. Seleccionamos el label de todos los componentes de entrada */ "
-				+ "  vaadin-text-field::part(label), " + "  vaadin-password-field::part(label), "
-				+ "  vaadin-combo-box::part(label), " + "  vaadin-date-picker::part(label), "
-				+ "  vaadin-text-area::part(label), " + "  vaadin-number-field::part(label) { "
-				+ "    display: inline-flex !important; " + "    align-items: center !important; "
-				+ "    flex-direction: row !important; " + "  } " +
+		// ── CSS global: Inter font + required indicator + sidebar pills ───────
+		String cssGlobal =
+			// 1. Importar fuente Inter desde Google Fonts
+			"const fontLink = document.createElement('link');" +
+			"fontLink.rel = 'stylesheet';" +
+			"fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap';" +
+			"document.head.appendChild(fontLink);" +
 
-				"  /* 2. Quitamos el asterisco original y su posición de exponente */ "
-				+ "  [required]::part(required-indicator) { " + "    font-size: 0px !important; "
-				+ "    position: static !important; " + "    line-height: 0 !important; " + "  } " +
+			"const style = document.createElement('style');" +
+			"style.textContent = `" +
 
-				"  /* 3. Creamos el punto relleno ● alineado */ " + "  [required]::part(required-indicator)::after { "
-				+ "    content: '●' !important; " + "    color: #002060 !important; "
-				+ "    font-size: 10px !important; " + "    margin-left: 8px !important; "
-				+ "    visibility: visible !important; " + "    display: inline-block !important; "
-				+ "    vertical-align: middle !important; "
-				+ "    transform: translateY(1px) !important; /* Ajuste fino según la fuente */ " + "  } " +
+			// 2. Fuente global Inter
+			"  *, body, html { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important; }" +
 
-				"  vaadin-text-field, vaadin-password-field, vaadin-combo-box, "
-				+ "  vaadin-date-picker, vaadin-number-field, vaadin-text-area { " + "    max-width: 100%; " + "  } `;"
-				+ "document.head.appendChild(style);";
+			// 3. Sidebar: ítem activo (pill resaltado)
+			"  a[highlight] {" +
+			"    background-color: rgba(0, 32, 96, 0.10) !important;" +
+			"    color: #002060 !important;" +
+			"    font-weight: 700 !important;" +
+			"  }" +
+			"  a[router-link]:hover:not([highlight]) {" +
+			"    background-color: rgba(0, 32, 96, 0.06) !important;" +
+			"    color: #1e3a6e !important;" +
+			"  }" +
+
+			// 4. Etiquetas de campos: alineación en fila (mantener comportamiento existente)
+			"  vaadin-text-field::part(label), " +
+			"  vaadin-password-field::part(label), " +
+			"  vaadin-combo-box::part(label), " +
+			"  vaadin-date-picker::part(label), " +
+			"  vaadin-text-area::part(label), " +
+			"  vaadin-number-field::part(label) { " +
+			"    display: inline-flex !important; " +
+			"    align-items: center !important; " +
+			"    flex-direction: row !important; " +
+			"  } " +
+
+			// 5. Indicador requerido: reemplazar asterisco por punto azul ●
+			"  [required]::part(required-indicator) { " +
+			"    font-size: 0px !important; " +
+			"    position: static !important; " +
+			"    line-height: 0 !important; " +
+			"  } " +
+			"  [required]::part(required-indicator)::after { " +
+			"    content: '●' !important; " +
+			"    color: #002060 !important; " +
+			"    font-size: 10px !important; " +
+			"    margin-left: 8px !important; " +
+			"    visibility: visible !important; " +
+			"    display: inline-block !important; " +
+			"    vertical-align: middle !important; " +
+			"    transform: translateY(1px) !important; " +
+			"  } " +
+
+			// 6. Campos: ancho máximo 100%
+			"  vaadin-text-field, vaadin-password-field, vaadin-combo-box, " +
+			"  vaadin-date-picker, vaadin-number-field, vaadin-text-area { max-width: 100%; } " +
+			"`;" +
+			"document.head.appendChild(style);";
 
 		getElement().executeJs(cssGlobal);
 	}
@@ -47,18 +83,19 @@ public class MainLayout extends AppLayout {
 	private void crearCabecera() {
 		H1 logo = new H1("Mi Sistema");
 		logo.getStyle().set("font-size", "var(--lumo-font-size-l)").set("margin", "0 0 0 10px")
-				.set("color", "white");
+				.set("color", "white").set("font-weight", "600").set("letter-spacing", "-0.3px");
 
 		DrawerToggle toggle = new DrawerToggle();
 		toggle.getStyle().set("color", "white");
 		toggle.getElement().executeJs("this.shadowRoot.querySelector('[part~=\"icon\"]').style.color = '#001030';");
+
 		HorizontalLayout header = new HorizontalLayout(toggle, logo);
 		header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
 		header.setWidthFull();
 		header.setHeight("60px");
 		header.setPadding(true);
-
-		header.getStyle().set("background-color", "#002060")
+		header.getStyle()
+				.set("background-color", "#002060")
 				.set("box-shadow", "0 2px 5px rgba(0,0,0,0.3)");
 
 		addToNavbar(header);
@@ -73,12 +110,12 @@ public class MainLayout extends AppLayout {
 
 		VerticalLayout opcionesContainer = new VerticalLayout();
 		opcionesContainer.setPadding(false);
-		opcionesContainer.setSpacing(true);
+		opcionesContainer.setSpacing(false);
 
-		RouterLink linkInicio = crearItemMenu(getTranslation("app.inicio"), VaadinIcon.HOME, InicioView.class);
-		RouterLink linkArchivos = crearItemMenu(getTranslation("app.archivos"), VaadinIcon.FILE_PROCESS, AbmArchivosView.class);
-		RouterLink linkConversor = crearItemMenu(getTranslation("app.conversor"), VaadinIcon.EXCHANGE, ConversorView.class);
-		RouterLink linkDocumentos = crearItemMenu("Documentos Convertidos", VaadinIcon.FILE_TABLE, AbmDocumentosConvertidosView.class);
+		RouterLink linkInicio    = crearItemMenu(getTranslation("app.inicio"),     VaadinIcon.HOME,         InicioView.class);
+		RouterLink linkArchivos  = crearItemMenu(getTranslation("app.archivos"),   VaadinIcon.FILE_PROCESS, AbmArchivosView.class);
+		RouterLink linkConversor = crearItemMenu(getTranslation("app.conversor"),  VaadinIcon.EXCHANGE,     ConversorView.class);
+		RouterLink linkDocumentos= crearItemMenu("Documentos Convertidos",         VaadinIcon.FILE_TABLE,   AbmDocumentosConvertidosView.class);
 
 		opcionesContainer.add(linkInicio, linkArchivos, linkConversor, linkDocumentos);
 
@@ -88,28 +125,40 @@ public class MainLayout extends AppLayout {
 		menuCompleto.setHeightFull();
 		menuCompleto.getStyle().set("background-color", "#fcfcfc");
 
-		getElement().executeJs("this.style.setProperty('--vaadin-app-layout-drawer-width', '320px');"
-				+ "this.shadowRoot.querySelector('[part~=\"drawer\"]').style.boxShadow = '4px 0 12px rgba(0, 32, 96, 0.2)';"
-				+ "this.shadowRoot.querySelector('[part~=\"drawer\"]').style.border = 'none';");
+		getElement().executeJs(
+			"this.style.setProperty('--vaadin-app-layout-drawer-width', '280px');" +
+			"this.shadowRoot.querySelector('[part~=\"drawer\"]').style.boxShadow = '4px 0 12px rgba(0,32,96,0.15)';" +
+			"this.shadowRoot.querySelector('[part~=\"drawer\"]').style.border = 'none';"
+		);
 
 		addToDrawer(menuCompleto);
 	}
 
 	private RouterLink crearItemMenu(String nombre, VaadinIcon icono, Class vistaDestino) {
 		RouterLink link = new RouterLink(nombre, vistaDestino);
-		link.addComponentAsFirst(icono.create());
 
-		link.getStyle().set("display", "flex").set("align-items", "center").set("gap", "15px")
-				.set("padding", "15px 25px")
-				.set("margin", "0")
-				.set("width", "100%")
-				.set("border-radius", "0")
-				.set("text-decoration", "none").set("font-weight", "600").set("color", "#002060")
-				.set("transition", "background-color 0.2s");
+		Icon icon = icono.create();
+		icon.setSize("17px");
+		link.addComponentAsFirst(icon);
 
-		link.getElement().addEventListener("mouseover",
-				e -> link.getStyle().set("background-color", "rgba(0, 32, 96, 0.1)"));
-		link.getElement().addEventListener("mouseout", e -> link.getStyle().set("background-color", "transparent"));
+		// Estilo pill: border-radius redondeado, sin borde, margen lateral
+		link.getStyle()
+				.set("display", "flex")
+				.set("align-items", "center")
+				.set("gap", "12px")
+				.set("padding", "10px 16px")
+				.set("margin", "2px 10px")
+				.set("width", "calc(100% - 20px)")
+				.set("border-radius", "10px")
+				.set("text-decoration", "none")
+				.set("font-weight", "500")
+				.set("font-size", "0.875rem")
+				.set("color", "#475569")
+				.set("transition", "all 0.15s ease")
+				.set("box-sizing", "border-box");
+
+		// Hover gestionado por CSS global (a[router-link]:hover)
+		// Estado activo gestionado por CSS global (a[highlight])
 
 		return link;
 	}

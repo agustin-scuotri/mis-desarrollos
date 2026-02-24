@@ -35,7 +35,7 @@ public abstract class CrudView<T> extends VerticalLayout {
         setSizeFull();
         setSpacing(true);
         setPadding(true);
-        getStyle().set("font-family", "Verdana, sans-serif");
+        getStyle().set("background-color", "#f8fafc");
 
         configurarComponentes(claseEntidad);
         add(barraHerramientas, grid);
@@ -47,26 +47,21 @@ public abstract class CrudView<T> extends VerticalLayout {
         tituloPrograma = new H2();
         tituloPrograma.getStyle()
                 .set("margin", "0")
-                .set("font-size", "1.5rem")
-                .set("font-weight", "bold")
-                .set("color", "#002060")
-                .set("font-family", "Verdana, sans-serif");
+                .set("font-size", "1.4rem")
+                .set("font-weight", "700")
+                .set("color", "#1e293b")
+                .set("letter-spacing", "-0.3px");
 
         // ── Botón configuración ───────────────────────────────────────────────
         Icon iconoConfig = VaadinIcon.OPTIONS.create();
-        iconoConfig.getStyle().set("color", "#002060");
+        iconoConfig.getStyle().set("color", "#64748b");
         iconoConfig.setSize("20px");
 
         btnConfiguracion = new Button(iconoConfig);
         btnConfiguracion.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         btnConfiguracion.getStyle()
-                .set("margin-right", "15px")
-                .set("cursor", "pointer")
-                .set("transition", "color 0.2s");
-        btnConfiguracion.getElement().addEventListener("mouseover",
-                e -> btnConfiguracion.getStyle().set("color", "#00aaff"));
-        btnConfiguracion.getElement().addEventListener("mouseout",
-                e -> btnConfiguracion.getStyle().set("color", "#002060"));
+                .set("margin-right", "12px")
+                .set("cursor", "pointer");
         btnConfiguracion.addClickListener(e -> abrirDialogoColumnas());
 
         HorizontalLayout layoutTitulo = new HorizontalLayout(btnConfiguracion, tituloPrograma);
@@ -77,7 +72,6 @@ public abstract class CrudView<T> extends VerticalLayout {
         btnNuevo = new Button(getTranslation("app.agregar"), VaadinIcon.PLUS.create());
         btnNuevo.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
         btnNuevo.addClickListener(e -> accionNuevo());
-        btnNuevo.getStyle().set("font-family", "Verdana, sans-serif");
 
         // ── Barra herramientas ────────────────────────────────────────────────
         if (mostrarBotonNuevo()) {
@@ -94,25 +88,33 @@ public abstract class CrudView<T> extends VerticalLayout {
         grid.setSizeFull();
         grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES, GridVariant.LUMO_COLUMN_BORDERS);
         grid.getStyle()
-                .set("border-radius", "8px")
-                .set("box-shadow", "0 2px 8px rgba(0,32,96,0.1)")
-                .set("font-family", "Verdana, sans-serif");
+                .set("border-radius", "12px")
+                .set("box-shadow", "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05)")
+                .set("background", "white");
 
-        // ── Mensaje estado vacío ──────────────────────────────────────────────
+        // ── Estado vacío mejorado: ícono + título + subtítulo ─────────────────
         VerticalLayout layoutVacio = new VerticalLayout();
         layoutVacio.setSizeFull();
         layoutVacio.setJustifyContentMode(JustifyContentMode.CENTER);
         layoutVacio.setAlignItems(Alignment.CENTER);
-        layoutVacio.getStyle().set("opacity", "0.8");
+        layoutVacio.getStyle().set("gap", "8px");
 
-        Span mensajeVacio = new Span("No existen archivos");
-        mensajeVacio.getStyle()
-                .set("color", "red")
-                .set("font-weight", "bold")
-                .set("font-size", "1.2rem")
-                .set("font-family", "Verdana, sans-serif");
+        Icon emptyIcon = VaadinIcon.INBOX.create();
+        emptyIcon.setSize("56px");
+        emptyIcon.getStyle().set("color", "#cbd5e1");
 
-        layoutVacio.add(mensajeVacio);
+        Span tituloVacio = new Span("No hay registros");
+        tituloVacio.getStyle()
+                .set("font-size", "1rem")
+                .set("font-weight", "600")
+                .set("color", "#64748b");
+
+        Span subtituloVacio = new Span("Usá el botón \"Agregar\" para crear uno nuevo");
+        subtituloVacio.getStyle()
+                .set("font-size", "0.8rem")
+                .set("color", "#94a3b8");
+
+        layoutVacio.add(emptyIcon, tituloVacio, subtituloVacio);
         grid.setEmptyStateComponent(layoutVacio);
 
         // ── CSS interno de la grilla ──────────────────────────────────────────
@@ -124,43 +126,43 @@ public abstract class CrudView<T> extends VerticalLayout {
                 "    text-align: center;" +
                 "    justify-content: center;" +
                 "    display: flex;" +
-                "    font-family: Verdana, sans-serif;" +
+                "    font-family: 'Inter', -apple-system, sans-serif;" +
+                "    font-size: 0.875rem;" +
                 "  }" +
                 "  [part~='header-cell'] {" +
-                "    border-bottom: 2px solid rgba(0,32,96,0.15) !important;" +
-                "    background-color: #f0f4ff !important;" +
-                "    font-weight: bold;" +
+                "    border-bottom: 2px solid rgba(0,32,96,0.12) !important;" +
+                "    background-color: #f8fafc !important;" +
+                "    font-weight: 600;" +
                 "  }" +
                 "  [part~='cell']:not([part~='header-cell']) {" +
-                "    border-right: 1px solid rgba(0,32,96,0.08) !important;" +
+                "    border-right: 1px solid rgba(0,32,96,0.06) !important;" +
                 "  }" +
                 "  [part~='row']:hover > [part~='cell'] {" +
-                "    background-color: rgba(0,32,96,0.05) !important;" +
+                "    background-color: rgba(0,32,96,0.04) !important;" +
                 "  }" +
-                // ── NUEVO: elimina el resaltado de fila seleccionada ──
                 "  [part~='row'][selected] > [part~='cell'] {" +
                 "    background-color: transparent !important;" +
                 "  }" +
                 "  [part~='row'][selected]:hover > [part~='cell'] {" +
-                "    background-color: rgba(0,32,96,0.05) !important;" +
+                "    background-color: rgba(0,32,96,0.04) !important;" +
                 "  }" +
-                // ── FIX: columna frozen-to-end siempre encima ──
                 "  [frozen-to-end] {" +
                 "    z-index: 3 !important;" +
                 "    background-color: white;" +
                 "  }" +
                 "  [part~='row']:hover [frozen-to-end] {" +
-                "    background-color: rgba(0,32,96,0.05) !important;" +
+                "    background-color: rgba(0,32,96,0.04) !important;" +
                 "  }" +
                 "  [part~='row'][selected] [frozen-to-end] {" +
                 "    background-color: white !important;" +
                 "  }" +
                 "  [part~='row'][selected]:hover [frozen-to-end] {" +
-                "    background-color: rgba(0,32,96,0.05) !important;" +
+                "    background-color: rgba(0,32,96,0.04) !important;" +
                 "  }" +
                 "`;" +
                 "grid.shadowRoot.appendChild(style);");
         grid.setSelectionMode(Grid.SelectionMode.NONE);
+
         // ── Columna acciones ──────────────────────────────────────────────────
         configurarColumnasEspecificas();
 
@@ -168,7 +170,7 @@ public abstract class CrudView<T> extends VerticalLayout {
                 .setHeader(getTranslation("archivo.acciones"))
                 .setKey("acciones")
                 .setFrozenToEnd(true)
-                .setWidth("150px")
+                .setWidth("130px")
                 .setFlexGrow(0)
                 .setTextAlign(ColumnTextAlign.CENTER);
     }
@@ -180,9 +182,7 @@ public abstract class CrudView<T> extends VerticalLayout {
         filtro.setClearButtonVisible(true);
         filtro.addThemeVariants(com.vaadin.flow.component.textfield.TextFieldVariant.LUMO_SMALL);
         filtro.setWidthFull();
-        filtro.getStyle()
-                .set("text-align", "left")
-                .set("font-family", "Verdana, sans-serif");
+        filtro.getStyle().set("text-align", "left");
         filtro.getElement().executeJs("this.inputElement.style.textAlign = 'left'");
 
         if (cabecera.equalsIgnoreCase("Código") || cabecera.toLowerCase().contains("codigo")) {
@@ -198,9 +198,8 @@ public abstract class CrudView<T> extends VerticalLayout {
 
         Span textoCabecera = new Span(cabecera);
         textoCabecera.getStyle()
-                .set("font-weight", "bold")
-                .set("color", "#002060")
-                .set("font-family", "Verdana, sans-serif");
+                .set("font-weight", "600")
+                .set("color", "#334155");
 
         VerticalLayout layoutCabecera = new VerticalLayout(textoCabecera, filtro);
         layoutCabecera.setAlignItems(Alignment.CENTER);
@@ -221,9 +220,8 @@ public abstract class CrudView<T> extends VerticalLayout {
 
         Span textoCabecera = new Span(cabecera);
         textoCabecera.getStyle()
-                .set("font-weight", "bold")
-                .set("color", "#002060")
-                .set("font-family", "Verdana, sans-serif");
+                .set("font-weight", "600")
+                .set("color", "#334155");
 
         VerticalLayout layoutCabecera = new VerticalLayout(textoCabecera);
         layoutCabecera.setAlignItems(Alignment.CENTER);
@@ -250,9 +248,6 @@ public abstract class CrudView<T> extends VerticalLayout {
         filtro.setClearButtonVisible(true);
         filtro.addThemeVariants(com.vaadin.flow.component.combobox.ComboBoxVariant.LUMO_SMALL);
         filtro.setWidthFull();
-        filtro.getStyle()
-                .set("font-size", "var(--lumo-font-size-xxs)")
-                .set("font-family", "Verdana, sans-serif");
 
         filtro.addValueChangeListener(e -> {
             String seleccion = e.getValue();
@@ -262,9 +257,8 @@ public abstract class CrudView<T> extends VerticalLayout {
 
         Span textoCabecera = new Span(cabecera);
         textoCabecera.getStyle()
-                .set("font-weight", "bold")
-                .set("color", "#002060")
-                .set("font-family", "Verdana, sans-serif");
+                .set("font-weight", "600")
+                .set("color", "#334155");
 
         VerticalLayout layoutCabecera = new VerticalLayout(textoCabecera, filtro);
         layoutCabecera.setAlignItems(Alignment.CENTER);
@@ -276,10 +270,10 @@ public abstract class CrudView<T> extends VerticalLayout {
             Icon icono;
             if (valor != null && valor) {
                 icono = VaadinIcon.CHECK_CIRCLE.create();
-                icono.setColor("green");
+                icono.setColor("#16a34a");
             } else {
                 icono = VaadinIcon.CLOSE_CIRCLE.create();
-                icono.setColor("red");
+                icono.setColor("#dc2626");
             }
             return icono;
         })
@@ -289,33 +283,42 @@ public abstract class CrudView<T> extends VerticalLayout {
         .setAutoWidth(true);
     }
 
-    // ── Botones de acción por fila ────────────────────────────────────────────
+    // ── Botones de acción por fila: colores semánticos ────────────────────────
     private HorizontalLayout crearBotonesAccion(T item) {
-        String colorGris = "#555555";
 
+        // Ver → azul
         Icon v = VaadinIcon.EYE.create();
-        v.getStyle().set("color", colorGris);
+        v.getStyle().set("color", "#2563eb");
+        v.setSize("17px");
         Button btnV = new Button(v);
         btnV.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+        btnV.getElement().setAttribute("title", "Visualizar");
         btnV.addClickListener(ev -> accionVisualizar(item));
 
+        // Editar → ámbar
         Icon e = VaadinIcon.EDIT.create();
-        e.getStyle().set("color", colorGris);
+        e.getStyle().set("color", "#d97706");
+        e.setSize("17px");
         Button btnE = new Button(e);
         btnE.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+        btnE.getElement().setAttribute("title", "Editar");
         btnE.addClickListener(click -> accionEditar(item));
 
+        // Borrar → rojo
         Icon b = VaadinIcon.TRASH.create();
-        b.getStyle().set("color", colorGris);
+        b.getStyle().set("color", "#dc2626");
+        b.setSize("17px");
         Button btnB = new Button(b);
         btnB.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+        btnB.getElement().setAttribute("title", "Eliminar");
         btnB.addClickListener(event -> accionBorrar(item));
 
         HorizontalLayout layout = new HorizontalLayout();
         layout.add(btnV);
         if (mostrarBotonEditar()) layout.add(btnE);
         layout.add(btnB);
-        layout.setSpacing(true);
+        layout.setSpacing(false);
+        layout.getStyle().set("gap", "4px");
         layout.setWidthFull();
         layout.setJustifyContentMode(JustifyContentMode.CENTER);
         layout.setAlignItems(Alignment.CENTER);
@@ -333,23 +336,21 @@ public abstract class CrudView<T> extends VerticalLayout {
         VerticalLayout contenido = new VerticalLayout();
         contenido.setPadding(false);
         contenido.setSpacing(false);
-        contenido.getStyle()
-                .set("gap", "15px")
-                .set("font-family", "Verdana, sans-serif");
+        contenido.getStyle().set("gap", "15px");
 
         grid.getColumns().forEach(col -> {
             String key = col.getKey();
             if (key != null && !key.equals("acciones")) {
                 Checkbox cb = new Checkbox(key);
                 cb.setValue(col.isVisible());
-                cb.addValueChangeListener(e -> col.setVisible(e.getValue()));
+                cb.addValueChangeListener(ev -> col.setVisible(ev.getValue()));
                 cb.getStyle().set("margin-bottom", "5px");
                 contenido.add(cb);
             }
         });
 
         dialog.add(contenido);
-        Button btnCerrar = new Button(getTranslation("app.aceptar"), e -> dialog.close());
+        Button btnCerrar = new Button(getTranslation("app.aceptar"), ev -> dialog.close());
         btnCerrar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         dialog.getFooter().add(btnCerrar);
         dialog.open();

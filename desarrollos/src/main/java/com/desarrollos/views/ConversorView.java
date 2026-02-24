@@ -89,15 +89,18 @@ public class ConversorView extends FormView {
 
 		// ── Botón convertir ───────────────────────────────────────────────────
 		btnConvertir.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-		btnConvertir.getStyle().set("background-color", "#002060").set("color", "white").set("margin-top", "15px");
+		btnConvertir.getStyle().set("background-color", "#2563eb").set("color", "white").set("margin-top", "15px")
+				.set("font-weight", "600");
 		btnConvertir.addClickListener(e -> ejecutarConversion());
 
 		// ── Panel progreso ────────────────────────────────────────────────────
 		progressBar.setIndeterminate(true);
 		progressBar.getStyle().set("width", "400px");
+		progressBar.getStyle().set("--vaadin-progress-value-background", "#2563eb");
 
 		H3 mensajeProcesando = new H3("Procesando imagen con IA...");
-		mensajeProcesando.getStyle().set("color", "#002060").set("font-size", "1rem").set("margin", "0");
+		mensajeProcesando.getStyle().set("color", "#1e293b").set("font-size", "1rem").set("margin", "0")
+				.set("font-weight", "600");
 
 		panelProgreso.add(mensajeProcesando, progressBar);
 		panelProgreso.setPadding(false);
@@ -106,16 +109,29 @@ public class ConversorView extends FormView {
 		panelProgreso.getStyle().set("margin-top", "20px");
 
 		// ── Panel resultado ───────────────────────────────────────────────────
-		H3 tituloResultado = new H3("Resultado");
-		tituloResultado.getStyle().set("color", "#002060").set("margin", "0");
+		H3 tituloResultado = new H3("Resultado JSON");
+		tituloResultado.getStyle().set("color", "#1e293b").set("margin", "0").set("font-weight", "700")
+				.set("font-size", "1rem").set("letter-spacing", "-0.2px");
 
-		jsonViewer.getStyle().set("background-color", "#f0f4ff").set("border", "1px solid rgba(0,32,96,0.2)")
-				.set("border-radius", "8px").set("padding", "15px").set("font-family", "monospace")
-				.set("font-size", "14px").set("width", "500px").set("white-space", "pre-wrap")
-				.set("word-break", "break-word");
+		// Dark code viewer
+		jsonViewer.getStyle()
+				.set("background-color", "#1e1e2e")
+				.set("color", "#cdd6f4")
+				.set("border", "none")
+				.set("border-radius", "12px")
+				.set("padding", "20px")
+				.set("font-family", "'JetBrains Mono', 'Fira Code', 'Courier New', monospace")
+				.set("font-size", "13px")
+				.set("width", "100%")
+				.set("white-space", "pre-wrap")
+				.set("word-break", "break-word")
+				.set("box-shadow", "inset 0 2px 8px rgba(0,0,0,0.4)")
+				.set("line-height", "1.6");
 
-		parrafoNotas.getStyle().set("color", "#cc6600").set("font-family", "Verdana, sans-serif")
-				.set("font-size", "0.9rem").set("margin-top", "10px").set("white-space", "pre-line");
+		parrafoNotas.getStyle().set("color", "#92400e").set("font-size", "0.875rem")
+				.set("margin-top", "10px").set("white-space", "pre-line")
+				.set("background-color", "#fffbeb").set("border", "1px solid #fde68a")
+				.set("border-radius", "8px").set("padding", "12px");
 		parrafoNotas.setVisible(false);
 
 		// ── Grid de productos/conceptos ───────────────────────────────────────
@@ -397,7 +413,7 @@ public class ConversorView extends FormView {
 
 		Button botonDescarga = new Button("Descargar JSON", VaadinIcon.DOWNLOAD.create());
 		// DESPUÉS
-		botonDescarga.getStyle().set("background-color", "#002060").set("color", "white");
+		botonDescarga.getStyle().set("background-color", "#2563eb").set("color", "white");
 
 		btnDescargar.add(botonDescarga);
 		barraDescarga.add(btnDescargar);
