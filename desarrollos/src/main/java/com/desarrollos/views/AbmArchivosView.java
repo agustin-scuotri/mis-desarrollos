@@ -75,7 +75,6 @@ public class AbmArchivosView extends CrudView<Archivo> {
                 else if (columna.equals(getTranslation("archivo.estado"))) {
                     String estadoArch = archivo.getEstadoConversion();
                     if (estadoArch == null) estadoArch = "PENDIENTE";
-                    String valorFiltro = filtro.getValue().toLowerCase();
                     boolean match;
                     if (valorFiltro.equals("pendiente a procesar")) {
                         match = "PENDIENTE".equalsIgnoreCase(estadoArch);

@@ -16,15 +16,18 @@ import com.desarrollos.services.ArchivoService;
 import com.desarrollos.services.DocumentoConvertidoService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Pre;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
@@ -205,7 +208,25 @@ public class ConversorView extends FormView {
 			// Ocultamos progreso
 			panelProgreso.setVisible(false);
 
-			// Mostramos JSON
+			// Verificar campos obligatorios antes de mostrar cualquier resultado
+			boolean esFacturaValida = !estaVacio(resultado.getCuit())
+					&& !estaVacio(resultado.getCodigoArca())
+					&& !estaVacio(resultado.getCentroEmision())
+					&& !estaVacio(resultado.getNumeroComprobante())
+					&& !estaVacio(resultado.getFechaEmision())
+					&& !estaVacio(resultado.getMoneda())
+					&& !estaVacio(resultado.getTotal());
+
+			// Limpiamos combo en cualquier caso
+			archivoCombo.limpiar();
+			archivoSeleccionado = null;
+
+			if (!esFacturaValida) {
+				mostrarDialogoNoFactura();
+				return; // No mostrar panel JSON; finally habilita btnConvertir
+			}
+
+			// Mostramos JSON (solo si es factura válida)
 			jsonViewer.setText(resultado.getJsonResultado());
 
 			// Cargamos grids
@@ -308,28 +329,7 @@ public class ConversorView extends FormView {
 			
 			panelResultado.setVisible(true);
 
-			// Limpiamos combo
-			archivoCombo.limpiar();
-			archivoSeleccionado = null;
-
-			// Notificación según si el documento es una factura válida
-			boolean esFacturaValida = !estaVacio(resultado.getCuit())
-					&& !estaVacio(resultado.getCodigoArca())
-					&& !estaVacio(resultado.getCentroEmision())
-					&& !estaVacio(resultado.getNumeroComprobante())
-					&& !estaVacio(resultado.getFechaEmision())
-					&& !estaVacio(resultado.getMoneda())
-					&& !estaVacio(resultado.getTotal());
-
-			if (esFacturaValida) {
-				Notification.show("¡Archivo convertido exitosamente!").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-			} else {
-				Notification n = new Notification(
-						"⚠ El documento no parece ser una factura válida o le faltan datos obligatorios. "
-						+ "Se guardó con estado 'Procesado error'.", 8000);
-				n.addThemeVariants(NotificationVariant.LUMO_WARNING);
-				n.open();
-			}
+			Notification.show("¡Archivo convertido exitosamente!").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
 		} catch (Exception e) {
 			panelProgreso.setVisible(false);
@@ -340,6 +340,48 @@ public class ConversorView extends FormView {
 		} finally {
 			btnConvertir.setEnabled(true);
 		}
+	}
+
+	private void mostrarDialogoNoFactura() {
+		Dialog dialog = new Dialog();
+		dialog.setModal(true);
+		dialog.setWidth("480px");
+
+		Icon icono = VaadinIcon.WARNING.create();
+		icono.setSize("56px");
+		icono.setColor("#cc0000");
+
+		H3 titulo = new H3("Documento no válido");
+		titulo.getStyle()
+				.set("color", "#cc0000")
+				.set("margin", "8px 0 0 0")
+				.set("font-family", "Verdana, sans-serif");
+
+		Paragraph mensaje = new Paragraph(
+				"El documento procesado no es una factura válida o le faltan datos obligatorios.\n"
+				+ "Se guardó con estado 'Procesado error'.\n\n"
+				+ "Campos obligatorios: CUIT del Emisor, Código ARCA, Centro de Emisión, "
+				+ "N° Comprobante, Fecha de Emisión, Moneda y Total.");
+		mensaje.getStyle()
+				.set("text-align", "center")
+				.set("color", "#444444")
+				.set("font-family", "Verdana, sans-serif")
+				.set("font-size", "0.9rem")
+				.set("white-space", "pre-line")
+				.set("margin", "0");
+
+		VerticalLayout contenido = new VerticalLayout(icono, titulo, mensaje);
+		contenido.setAlignItems(FlexComponent.Alignment.CENTER);
+		contenido.setPadding(true);
+		contenido.setSpacing(true);
+
+		Button btnAceptar = new Button("Aceptar", e -> dialog.close());
+		btnAceptar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+		btnAceptar.getStyle().set("background-color", "#cc0000").set("color", "white");
+
+		dialog.add(contenido);
+		dialog.getFooter().add(btnAceptar);
+		dialog.open();
 	}
 
 	private void generarBotonDescarga(DocumentoConvertido resultado) {
