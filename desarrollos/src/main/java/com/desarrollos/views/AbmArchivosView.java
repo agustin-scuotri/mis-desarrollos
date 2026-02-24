@@ -41,7 +41,6 @@ public class AbmArchivosView extends CrudView<Archivo> {
         agregarColumna(Archivo::getNombre, getTranslation("archivo.nombre"));
         agregarColumna(Archivo::getDescripcion, getTranslation("archivo.descripcion"));
         agregarColumnaEstado(getTranslation("archivo.estado"));
-        agregarColumnaFecha(Archivo::getFechaCreacion, getTranslation("archivo.fechaCreacion"));
     }
 
     @Override

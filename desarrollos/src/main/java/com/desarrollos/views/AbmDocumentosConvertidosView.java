@@ -51,7 +51,6 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         agregarColumna(DocumentoConvertido::getRazonSocial, "Razón Social");
         agregarColumna(DocumentoConvertido::getCuit, "CUIT");
         agregarColumna(DocumentoConvertido::getNumeroComprobante, "N° Comprobante");
-        agregarColumnaFecha(DocumentoConvertido::getFechaConversion, "Fecha Conversión");
     }
 
     @Override
@@ -91,13 +90,23 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
 
     @Override
     protected void accionVisualizar(DocumentoConvertido item) {
+        // Recargar con colecciones inicializadas (evita LazyInitializationException)
+        DocumentoConvertido item2;
+        try {
+            item2 = service.buscarCompleto(item.getId());
+        } catch (Exception ex) {
+            Notification.show("Error al cargar el documento: " + ex.getMessage())
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
         Dialog dialog = new Dialog();
         dialog.setWidth("860px");
         dialog.setHeight("600px");
-        String nombreDoc = item.getArchivo() != null ? item.getArchivo().getNombre() : "Documento";
+        String nombreDoc = item2.getArchivo() != null ? item2.getArchivo().getNombre() : "Documento";
         dialog.setHeaderTitle("JSON · " + nombreDoc);
 
-        String json = item.getJsonResultado() != null ? item.getJsonResultado() : "";
+        String json = item2.getJsonResultado() != null ? item2.getJsonResultado() : "";
 
         Pre jsonPre = new Pre(json);
         jsonPre.getStyle()
@@ -117,7 +126,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         contenido.setSpacing(true);
         contenido.setSizeFull();
 
-        String notasTexto = generarNotas(item);
+        String notasTexto = generarNotas(item2);
         if (!notasTexto.isEmpty()) {
             Paragraph pNotas = new Paragraph("⚠ Campos no encontrados:\n" + notasTexto);
             pNotas.getStyle()

@@ -153,6 +153,19 @@ public class DocumentoConvertidoService {
     }
 
     @Transactional
+    public DocumentoConvertido buscarCompleto(Long id) {
+        DocumentoConvertido doc = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Documento no encontrado"));
+        // Inicializar colecciones lazy para que estén disponibles fuera de la transacción
+        doc.getProductosConceptos().size();
+        doc.getNetosGravados().size();
+        doc.getPercepcionesIIBB().size();
+        doc.getPercepcionesIVA().size();
+        doc.getVencimientos().size();
+        return doc;
+    }
+
+    @Transactional
     public void borrar(DocumentoConvertido doc) {
         Archivo archivo = doc.getArchivo();
         repository.delete(doc);

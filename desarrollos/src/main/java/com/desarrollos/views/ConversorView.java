@@ -312,7 +312,24 @@ public class ConversorView extends FormView {
 			archivoCombo.limpiar();
 			archivoSeleccionado = null;
 
-			Notification.show("¡Archivo convertido exitosamente!").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+			// Notificación según si el documento es una factura válida
+			boolean esFacturaValida = !estaVacio(resultado.getCuit())
+					&& !estaVacio(resultado.getCodigoArca())
+					&& !estaVacio(resultado.getCentroEmision())
+					&& !estaVacio(resultado.getNumeroComprobante())
+					&& !estaVacio(resultado.getFechaEmision())
+					&& !estaVacio(resultado.getMoneda())
+					&& !estaVacio(resultado.getTotal());
+
+			if (esFacturaValida) {
+				Notification.show("¡Archivo convertido exitosamente!").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+			} else {
+				Notification n = new Notification(
+						"⚠ El documento no parece ser una factura válida o le faltan datos obligatorios. "
+						+ "Se guardó con estado 'Procesado error'.", 8000);
+				n.addThemeVariants(NotificationVariant.LUMO_WARNING);
+				n.open();
+			}
 
 		} catch (Exception e) {
 			panelProgreso.setVisible(false);
