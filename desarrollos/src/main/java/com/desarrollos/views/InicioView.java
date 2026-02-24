@@ -53,7 +53,7 @@ public class InicioView extends VerticalLayout {
 
         // ── Cards de métricas ─────────────────────────────────────────────────
         HorizontalLayout cards = new HorizontalLayout(
-            crearCard("Archivos Cargados",   String.valueOf(total),      VaadinIcon.FILES_O,      "#2563eb", "#eff6ff"),
+            crearCard("Archivos Cargados",   String.valueOf(total),      VaadinIcon.COPY_O,       "#2563eb", "#eff6ff"),
             crearCard("Procesados",          String.valueOf(procesados), VaadinIcon.CHECK_CIRCLE, "#16a34a", "#f0fdf4"),
             crearCard("Pendientes",          String.valueOf(pendientes), VaadinIcon.CLOCK,        "#d97706", "#fffbeb"),
             crearCard("Errores",             String.valueOf(errores),    VaadinIcon.WARNING,      "#dc2626", "#fef2f2"),
