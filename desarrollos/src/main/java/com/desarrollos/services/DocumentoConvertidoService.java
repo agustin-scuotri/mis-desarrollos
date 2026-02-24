@@ -132,8 +132,17 @@ public class DocumentoConvertidoService {
 
         repository.save(doc);
 
+        // Si falta algún campo obligatorio, el estado es PROCESADO_ERROR
+        boolean camposObligatoriosOk = !estaVacio(doc.getCuit())
+                && !estaVacio(doc.getCodigoArca())
+                && !estaVacio(doc.getCentroEmision())
+                && !estaVacio(doc.getNumeroComprobante())
+                && !estaVacio(doc.getFechaEmision())
+                && !estaVacio(doc.getMoneda())
+                && !estaVacio(doc.getTotal());
+
         archivoCompleto.setConvertido(true);
-        archivoCompleto.setEstadoConversion("PROCESADO");
+        archivoCompleto.setEstadoConversion(camposObligatoriosOk ? "PROCESADO" : "PROCESADO_ERROR");
         archivoService.guardar(archivoCompleto);
 
         return doc;
@@ -152,6 +161,10 @@ public class DocumentoConvertidoService {
             archivo.setConvertido(false);
             try { archivoService.guardar(archivo); } catch (Exception ignored) {}
         }
+    }
+
+    private boolean estaVacio(String valor) {
+        return valor == null || valor.isEmpty() || valor.equals("null");
     }
 
     private String detectarMimeType(String nombreArchivo) {

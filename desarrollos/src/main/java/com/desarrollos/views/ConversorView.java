@@ -182,6 +182,9 @@ public class ConversorView extends FormView {
 		panelResultado.getStyle().set("margin-top", "20px");
 
 		contenidoPrincipal.add(archivoCombo, btnConvertir, panelProgreso, panelResultado);
+
+		// Los botones Guardar y Cancelar no aplican en esta vista
+		barraBotones.setVisible(false);
 	}
 
 	private void ejecutarConversion() {
@@ -191,11 +194,10 @@ public class ConversorView extends FormView {
 			return;
 		}
 
-		// Mostramos progreso y deshabilitamos botones
+		// Mostramos progreso y deshabilitamos botón convertir
 		panelProgreso.setVisible(true);
 		panelResultado.setVisible(false);
 		btnConvertir.setEnabled(false);
-		btnGuardar.setEnabled(false);
 
 		try {
 			DocumentoConvertido resultado = documentoConvertidoService.convertir(archivoSeleccionado);
@@ -320,7 +322,6 @@ public class ConversorView extends FormView {
 			Notification.show("Error al convertir: " + e.getMessage()).addThemeVariants(NotificationVariant.LUMO_ERROR);
 		} finally {
 			btnConvertir.setEnabled(true);
-			btnGuardar.setEnabled(true);
 		}
 	}
 

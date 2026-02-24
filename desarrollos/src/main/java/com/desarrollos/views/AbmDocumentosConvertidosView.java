@@ -14,6 +14,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Anchor;
+import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Pre;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -111,10 +112,28 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
                 .set("overflow-y", "auto")
                 .set("flex", "1");
 
-        VerticalLayout contenido = new VerticalLayout(jsonPre);
+        VerticalLayout contenido = new VerticalLayout();
         contenido.setPadding(false);
-        contenido.setSpacing(false);
+        contenido.setSpacing(true);
         contenido.setSizeFull();
+
+        String notasTexto = generarNotas(item);
+        if (!notasTexto.isEmpty()) {
+            Paragraph pNotas = new Paragraph("⚠ Campos no encontrados:\n" + notasTexto);
+            pNotas.getStyle()
+                    .set("color", "#cc6600")
+                    .set("font-family", "Verdana, sans-serif")
+                    .set("font-size", "0.85rem")
+                    .set("white-space", "pre-line")
+                    .set("margin", "0")
+                    .set("background-color", "#fff8f0")
+                    .set("border", "1px solid #e07b00")
+                    .set("border-radius", "6px")
+                    .set("padding", "10px");
+            contenido.add(pNotas);
+        }
+
+        contenido.add(jsonPre);
         contenido.expand(jsonPre);
         dialog.add(contenido);
 
@@ -164,5 +183,41 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         });
 
         dialog.open();
+    }
+
+    private String generarNotas(DocumentoConvertido doc) {
+        StringBuilder notas = new StringBuilder();
+        if (estaVacio(doc.getCuit()))               notas.append("• No se encontró el CUIT.\n");
+        if (estaVacio(doc.getRazonSocial()))        notas.append("• No se encontró la razón social.\n");
+        if (estaVacio(doc.getSituacionIva()))       notas.append("• No se encontró la situación ante IVA.\n");
+        if (estaVacio(doc.getDireccion()))          notas.append("• No se encontró la dirección.\n");
+        if (estaVacio(doc.getCiudad()))             notas.append("• No se encontró la ciudad/localidad.\n");
+        if (estaVacio(doc.getCodigoPostal()))       notas.append("• No se encontró el código postal.\n");
+        if (estaVacio(doc.getProvincia()))          notas.append("• No se encontró la provincia.\n");
+        if (estaVacio(doc.getPais()))               notas.append("• No se encontró el país.\n");
+        if (estaVacio(doc.getTelefono()))           notas.append("• No se encontró el teléfono.\n");
+        if (estaVacio(doc.getMail()))               notas.append("• No se encontró el mail.\n");
+        if (estaVacio(doc.getCodigoArca()))         notas.append("• No se encontró el código ARCA.\n");
+        if (estaVacio(doc.getLetra()))              notas.append("• No se encontró la letra del comprobante.\n");
+        if (estaVacio(doc.getCentroEmision()))      notas.append("• No se encontró el centro de emisión.\n");
+        if (estaVacio(doc.getNumeroComprobante()))  notas.append("• No se encontró el número de comprobante.\n");
+        if (estaVacio(doc.getFechaEmision()))       notas.append("• No se encontró la fecha de emisión.\n");
+        if (estaVacio(doc.getCae()))                notas.append("• No se encontró el CAE.\n");
+        if (estaVacio(doc.getFechaVencimientoCae()))notas.append("• No se encontró la fecha de vencimiento del CAE.\n");
+        if (estaVacio(doc.getMoneda()))             notas.append("• No se encontró la moneda.\n");
+        if (estaVacio(doc.getCotizacion()))         notas.append("• No se encontró la cotización.\n");
+        if (estaVacio(doc.getOrdenCompra()))        notas.append("• No se encontró la orden de compra.\n");
+        if (doc.getProductosConceptos().isEmpty())  notas.append("• No se encontraron productos/conceptos.\n");
+        if (doc.getNetosGravados().isEmpty())       notas.append("• No se encontraron netos gravados e IVA.\n");
+        if (estaVacio(doc.getSubTotalNoGravado()))  notas.append("• No se encontró el importe neto no gravado.\n");
+        if (doc.getPercepcionesIIBB().isEmpty())    notas.append("• No se encontraron percepciones de IIBB.\n");
+        if (doc.getPercepcionesIVA().isEmpty())     notas.append("• No se encontraron percepciones de IVA.\n");
+        if (estaVacio(doc.getTotal()))              notas.append("• No se encontró el total del comprobante.\n");
+        if (doc.getVencimientos().isEmpty())        notas.append("• No se encontraron vencimientos.\n");
+        return notas.toString();
+    }
+
+    private boolean estaVacio(String valor) {
+        return valor == null || valor.isEmpty() || valor.equals("null");
     }
 }
