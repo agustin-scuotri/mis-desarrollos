@@ -22,7 +22,6 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
@@ -45,7 +44,6 @@ public class ArchivoView extends FormView implements HasUrlParameter<String> {
 
 	private TextField codigo = new TextField();
 	private TextField nombre = new TextField();
-	private TextArea descripcion = new TextArea();
 	private MemoryBuffer buffer = new MemoryBuffer();
 	private Upload upload = new Upload(buffer);
 	private Div galeriaContainer = new Div();
@@ -179,16 +177,12 @@ public class ArchivoView extends FormView implements HasUrlParameter<String> {
 		
 		codigo.setLabel(getTranslation("archivo.codigo"));
 		codigo.setWidthFull();
-		
+
 		nombre.setLabel(getTranslation("archivo.nombre"));
 		nombre.setRequired(true);
 		nombre.setWidthFull();
-		
-		descripcion.setLabel(getTranslation("archivo.descripcion"));
-		descripcion.setWidthFull();
-		descripcion.setMinHeight("150px");
-		
-		colIzquierda.add(codigo, nombre, descripcion);
+
+		colIzquierda.add(codigo, nombre);
 
 		VerticalLayout colDerecha = new VerticalLayout();
 		colDerecha.setWidth("60%");

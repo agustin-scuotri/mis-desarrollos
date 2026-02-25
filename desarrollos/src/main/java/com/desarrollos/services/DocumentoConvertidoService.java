@@ -34,6 +34,10 @@ public class DocumentoConvertidoService {
     @Transactional
     public DocumentoConvertido convertir(Archivo archivo) throws Exception {
         Archivo archivoCompleto = archivoService.buscarPorIdConContenido(archivo.getId());
+
+        // Borrar documento previo si existe (re-conversión de archivo con error)
+        repository.deleteByArchivoId(archivoCompleto.getId());
+
         String mimeType = detectarMimeType(archivoCompleto.getNombreOriginal());
         String jsonTexto = claudeVisionService.extraerDatos(archivoCompleto.getContenido(), mimeType);
 
@@ -151,7 +155,8 @@ public class DocumentoConvertidoService {
                 && !estaVacio(doc.getMoneda())
                 && !estaVacio(doc.getTotal());
 
-        archivoCompleto.setConvertido(true);
+        // PROCESADO_ERROR → convertido=false para que el archivo vuelva a aparecer en el combo
+        archivoCompleto.setConvertido(camposObligatoriosOk);
         archivoCompleto.setEstadoConversion(camposObligatoriosOk ? "PROCESADO" : "PROCESADO_ERROR");
         archivoService.guardar(archivoCompleto);
 

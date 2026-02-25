@@ -94,6 +94,10 @@ public class ArchivoCombo extends HorizontalLayout {
     public ComboBox<Archivo> getCombo() {
         return combo;
     }
+
+    public void refrescar() {
+        cargarOpciones("");
+    }
     
     private void abrirDialogoBusqueda() {
     Dialog dialog = new Dialog();

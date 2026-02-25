@@ -39,7 +39,6 @@ public class AbmArchivosView extends CrudView<Archivo> {
 
         agregarColumna(Archivo::getCodigo, getTranslation("archivo.codigo"));
         agregarColumna(Archivo::getNombre, getTranslation("archivo.nombre"));
-        agregarColumna(Archivo::getDescripcion, getTranslation("archivo.descripcion"));
         agregarColumnaEstado(getTranslation("archivo.estado"));
     }
 
@@ -65,11 +64,6 @@ public class AbmArchivosView extends CrudView<Archivo> {
                 else if (columna.equals(getTranslation("archivo.nombre"))) {
                     String nombre = archivo.getNombre() != null ? archivo.getNombre().toLowerCase() : "";
                     if (!nombre.contains(valorFiltro)) return false;
-                }
-                // Filtrado por Descripción
-                else if (columna.equals(getTranslation("archivo.descripcion"))) {
-                    String desc = archivo.getDescripcion() != null ? archivo.getDescripcion().toLowerCase() : "";
-                    if (!desc.contains(valorFiltro)) return false;
                 }
                 // Filtrado por Estado (3 estados)
                 else if (columna.equals(getTranslation("archivo.estado"))) {

@@ -123,8 +123,8 @@ public abstract class CrudView<T> extends VerticalLayout {
                 "const style = document.createElement('style');" +
                 "style.innerHTML = `" +
                 "  vaadin-grid-cell-content {" +
-                "    text-align: center;" +
-                "    justify-content: center;" +
+                "    text-align: left;" +
+                "    justify-content: flex-start;" +
                 "    display: flex;" +
                 "    font-family: 'Inter', -apple-system, sans-serif;" +
                 "    font-size: 0.875rem;" +
@@ -209,7 +209,7 @@ public abstract class CrudView<T> extends VerticalLayout {
         return grid.addColumn(valueProvider)
                 .setHeader(layoutCabecera)
                 .setKey(cabecera)
-                .setTextAlign(ColumnTextAlign.CENTER)
+                .setTextAlign(ColumnTextAlign.START)
                 .setSortable(true)
                 .setAutoWidth(true);
     }
@@ -234,7 +234,7 @@ public abstract class CrudView<T> extends VerticalLayout {
         })
         .setHeader(layoutCabecera)
         .setKey(cabecera)
-        .setTextAlign(ColumnTextAlign.CENTER)
+        .setTextAlign(ColumnTextAlign.START)
         .setSortable(true)
         .setAutoWidth(true);
     }
