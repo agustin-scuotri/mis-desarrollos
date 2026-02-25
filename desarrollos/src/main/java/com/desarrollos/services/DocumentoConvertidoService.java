@@ -12,6 +12,7 @@ import com.desarrollos.entities.PercepcionIVA;
 import com.desarrollos.entities.ProductoConcepto;
 import com.desarrollos.entities.Vencimiento;
 import com.desarrollos.repositories.DocumentoConvertidoRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -38,7 +39,16 @@ public class DocumentoConvertidoService {
 
         jsonTexto = limpiarJson(jsonTexto);
 
-        JsonNode json = objectMapper.readTree(jsonTexto);
+        JsonNode json;
+        try {
+            json = objectMapper.readTree(jsonTexto);
+        } catch (JsonProcessingException e) {
+            // El JSON llegó incompleto: Claude cortó la respuesta por límite de tokens.
+            // Esto ocurre con facturas muy extensas (muchos ítems).
+            throw new RuntimeException(
+                "La factura tiene demasiados ítems y la respuesta de la IA fue cortada. " +
+                "Intentá dividir el archivo en páginas más cortas o reducir la cantidad de productos por archivo.", e);
+        }
 
         DocumentoConvertido doc = new DocumentoConvertido();
         doc.setArchivo(archivoCompleto);

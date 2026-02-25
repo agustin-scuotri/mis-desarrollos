@@ -30,7 +30,7 @@ public class ClaudeVisionService {
         String requestBody = String.format("""
                 {
                   "model": "%s",
-                  "max_tokens": 4000,
+                  "max_tokens": 8192,
                   "messages": [
                     {
                       "role": "user",
