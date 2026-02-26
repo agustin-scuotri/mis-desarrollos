@@ -1,6 +1,5 @@
 package com.desarrollos.combos;
 
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -135,14 +134,6 @@ public class ArchivoCombo extends HorizontalLayout {
             .setHeader("Archivo Original")
             .setSortable(true)
             .setFlexGrow(1);
-
-    grilla.addColumn(archivo -> archivo.getFechaCreacion() != null
-                    ? archivo.getFechaCreacion().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                    : "-")
-            .setHeader("Fecha Creación")
-            .setSortable(true)
-            .setWidth("140px")
-            .setFlexGrow(0);
 
     grilla.setItems(archivoService.listarNoConvertidos());
 
