@@ -50,7 +50,9 @@ public class ArchivoCombo extends HorizontalLayout {
                 return archivoService.listarNoConvertidos().stream()
                     .filter(a -> f.isEmpty()
                             || (a.getCodigo() != null && a.getCodigo().toLowerCase().contains(f))
-                            || (a.getNombre() != null && a.getNombre().toLowerCase().contains(f)));
+                            || (a.getNombre() != null && a.getNombre().toLowerCase().contains(f)))
+                    .skip(query.getOffset())
+                    .limit(query.getLimit());
             },
             (CallbackDataProvider.CountCallback<Archivo, String>) query -> {
                 String f = query.getFilter().orElse("").trim().toLowerCase();
