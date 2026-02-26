@@ -18,6 +18,11 @@ spring:
           lob:
             non_contextual_creation: true
 
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=30s
+
   # CONFIGURACIÓN CRÍTICA PARA SUBIDA DE ARCHIVOS
   servlet:
     multipart:
