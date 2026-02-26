@@ -360,6 +360,8 @@ public class ConversorView extends FormView {
 					Notification.show("Error al convertir: " + ex.getMessage())
 							.addThemeVariants(NotificationVariant.LUMO_ERROR);
 				});
+				// Marcar el archivo como error para que no vuelva a aparecer en el combo
+				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
 			}
 		}).start();
 	}
@@ -379,7 +381,7 @@ public class ConversorView extends FormView {
 
 		Paragraph mensaje = new Paragraph(
 				"El documento procesado no es una factura válida o le faltan campos obligatorios.\n"
-				+ "Se guardó con estado 'Procesado error' y puede volver a convertirse.");
+				+ "Se guardó con estado 'Procesado error' y no volverá a aparecer en el selector de archivos.");
 		mensaje.getStyle()
 				.set("text-align", "center").set("color", "#475569")
 				.set("font-size", "0.875rem").set("white-space", "pre-line").set("margin", "0");

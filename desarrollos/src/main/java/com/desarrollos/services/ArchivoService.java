@@ -62,13 +62,16 @@ public class ArchivoService {
     }
     
     public List<Archivo> listarNoConvertidos() {
-        return repository.findByConvertidoFalse();
+        return repository.findByEstadoConversion("PENDIENTE");
     }
 
     @Transactional
     public void actualizarEstado(Archivo archivo, String estado) {
-        archivo.setEstadoConversion(estado);
-        repository.save(archivo);
+        // Recargar por ID para evitar problemas con entidades detached/stale
+        Archivo managed = repository.findById(archivo.getId())
+                .orElseThrow(() -> new RuntimeException("Archivo no encontrado"));
+        managed.setEstadoConversion(estado);
+        repository.save(managed);
     }
     
     @Transactional
