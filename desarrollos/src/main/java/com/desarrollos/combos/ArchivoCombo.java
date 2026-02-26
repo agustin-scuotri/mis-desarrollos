@@ -16,6 +16,8 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.provider.CallbackDataProvider;
+import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
 
 public class ArchivoCombo extends HorizontalLayout {
@@ -23,6 +25,7 @@ public class ArchivoCombo extends HorizontalLayout {
     private final ComboBox<Archivo> combo = new ComboBox<>();
     private final Button btnBuscar = new Button(VaadinIcon.SEARCH.create());
     private final ArchivoService archivoService;
+    private DataProvider<Archivo, String> dataProvider;
 
     public ArchivoCombo(ArchivoService archivoService) {
         this.archivoService = archivoService;
@@ -39,11 +42,26 @@ public class ArchivoCombo extends HorizontalLayout {
         combo.setClearButtonVisible(true);
         combo.setItemLabelGenerator(a -> a.getCodigo() + " - " + a.getNombre());
 
-        // Filtrado al escribir
-        combo.addCustomValueSetListener(e -> cargarOpciones(e.getDetail()));
-
-        // Carga inicial completa
-        cargarOpciones("");
+        // DataProvider con callbacks: consulta la BD en cada apertura/filtro,
+        // así archivos ya convertidos o con error nunca vuelven a aparecer.
+        dataProvider = DataProvider.fromFilteringCallbacks(
+            (CallbackDataProvider.FetchCallback<Archivo, String>) query -> {
+                String f = query.getFilter().orElse("").trim().toLowerCase();
+                return archivoService.listarNoConvertidos().stream()
+                    .filter(a -> f.isEmpty()
+                            || (a.getCodigo() != null && a.getCodigo().toLowerCase().contains(f))
+                            || (a.getNombre() != null && a.getNombre().toLowerCase().contains(f)));
+            },
+            (CallbackDataProvider.CountCallback<Archivo, String>) query -> {
+                String f = query.getFilter().orElse("").trim().toLowerCase();
+                return (int) archivoService.listarNoConvertidos().stream()
+                    .filter(a -> f.isEmpty()
+                            || (a.getCodigo() != null && a.getCodigo().toLowerCase().contains(f))
+                            || (a.getNombre() != null && a.getNombre().toLowerCase().contains(f)))
+                    .count();
+            }
+        );
+        combo.setItems(dataProvider);
 
         // ── Botón lupa ────────────────────────────────────────────────────────
         btnBuscar.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
@@ -59,19 +77,6 @@ public class ArchivoCombo extends HorizontalLayout {
         btnBuscar.addClickListener(e -> abrirDialogoBusqueda());
 
         add(combo, btnBuscar);
-    }
-
-    private void cargarOpciones(String filtro) {
-        String f = filtro == null ? "" : filtro.trim().toLowerCase();
-
-        List<Archivo> opciones = archivoService.listarNoConvertidos()
-                .stream()
-                .filter(a -> f.isEmpty()
-                        || (a.getCodigo() != null && a.getCodigo().toLowerCase().contains(f))
-                        || (a.getNombre() != null && a.getNombre().toLowerCase().contains(f)))
-                .collect(Collectors.toList());
-
-        combo.setItems(opciones);
     }
 
     // ── API pública ───────────────────────────────────────────────────────────
@@ -96,9 +101,9 @@ public class ArchivoCombo extends HorizontalLayout {
     }
 
     public void refrescar() {
-        cargarOpciones("");
+        dataProvider.refreshAll();
     }
-    
+
     private void abrirDialogoBusqueda() {
     Dialog dialog = new Dialog();
     dialog.setWidth("800px");
