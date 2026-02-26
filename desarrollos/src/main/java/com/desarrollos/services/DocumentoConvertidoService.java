@@ -35,8 +35,12 @@ public class DocumentoConvertidoService {
     public DocumentoConvertido convertir(Archivo archivo) throws Exception {
         Archivo archivoCompleto = archivoService.buscarPorIdConContenido(archivo.getId());
 
-        // Borrar documento previo si existe (re-conversión de archivo con error)
-        repository.deleteByArchivoId(archivoCompleto.getId());
+        // Borrar documento previo respetando cascades JPA (hijos primero, luego padre)
+        List<DocumentoConvertido> anteriores = repository.findByArchivo_Id(archivoCompleto.getId());
+        if (!anteriores.isEmpty()) {
+            repository.deleteAll(anteriores);
+            repository.flush();
+        }
 
         String mimeType = detectarMimeType(archivoCompleto.getNombreOriginal());
         String jsonTexto = claudeVisionService.extraerDatos(archivoCompleto.getContenido(), mimeType);
