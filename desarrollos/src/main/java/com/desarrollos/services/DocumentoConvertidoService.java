@@ -40,6 +40,9 @@ public class DocumentoConvertidoService {
         if (!anteriores.isEmpty()) {
             repository.deleteAll(anteriores);
             repository.flush();
+            // Limpiar referencia stale: sin esto, guardar(archivoCompleto) al final
+            // cascadea un merge sobre el doc eliminado y lo re-inserta → duplicate key
+            archivoCompleto.setDocumentoConvertido(null);
         }
 
         String mimeType = detectarMimeType(archivoCompleto.getNombreOriginal());
