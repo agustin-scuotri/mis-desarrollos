@@ -1,23 +1,30 @@
 package com.desarrollos.combos;
 
+import java.io.ByteArrayInputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.desarrollos.entities.Archivo;
 import com.desarrollos.services.ArchivoService;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.CallbackDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.server.StreamResource;
+import com.vaadin.flow.server.VaadinSession;
 
 public class ArchivoCombo extends HorizontalLayout {
 
@@ -134,6 +141,37 @@ public class ArchivoCombo extends HorizontalLayout {
             .setHeader("Archivo Original")
             .setSortable(true)
             .setFlexGrow(1);
+
+    grilla.addComponentColumn(archivo -> {
+        Icon icono = VaadinIcon.EYE.create();
+        icono.getStyle().set("color", "#2563eb");
+        icono.setSize("17px");
+        Button btn = new Button(icono);
+        btn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+        btn.getElement().setAttribute("title", "Visualizar archivo");
+        btn.addClickListener(e -> {
+            try {
+                Archivo completo = archivoService.buscarPorIdConContenido(archivo.getId());
+                if (completo.getContenido() == null) {
+                    Notification.show("El archivo no tiene contenido adjunto")
+                            .addThemeVariants(NotificationVariant.LUMO_WARNING);
+                    return;
+                }
+                StreamResource res = new StreamResource(
+                        completo.getNombreOriginal(),
+                        () -> new ByteArrayInputStream(completo.getContenido()));
+                var reg = VaadinSession.getCurrent().getResourceRegistry().registerResource(res);
+                UI.getCurrent().getPage().open(reg.getResourceUri().toString(), "_blank");
+            } catch (Exception ex) {
+                Notification.show("Error al abrir el archivo: " + ex.getMessage())
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        });
+        return btn;
+    })
+            .setHeader("Ver")
+            .setWidth("70px")
+            .setFlexGrow(0);
 
     grilla.setItems(archivoService.listarNoConvertidos());
 
