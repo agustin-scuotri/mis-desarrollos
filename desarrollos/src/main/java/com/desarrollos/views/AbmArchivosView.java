@@ -15,28 +15,48 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.data.provider.CallbackDataProvider;
+import com.vaadin.flow.data.provider.DataProvider;
+import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @PageTitle("Archivos")
 @Route(value = "ABMarchivos", layout = MainLayout.class)
 public class AbmArchivosView extends CrudView<Archivo> {
     private final ArchivoService service;
+    private CallbackDataProvider<Archivo, Void> gridProvider;
 
     public AbmArchivosView(ArchivoService service) {
         super(Archivo.class);
         this.service = service;
         setTitulo(getTranslation("app.archivos"));
-        actualizarLista();
+        inicializarDataProvider();
+    }
+
+    private void inicializarDataProvider() {
+        gridProvider = DataProvider.fromCallbacks(
+            (Query<Archivo, Void> query) -> {
+                String codigo   = filtrosActivos.getOrDefault(getTranslation("archivo.codigo"), "");
+                String nombre   = filtrosActivos.getOrDefault(getTranslation("archivo.nombre"), "");
+                String estadoDB = mapearEstado(filtrosActivos.getOrDefault(getTranslation("archivo.estado"), ""));
+                int pageSize = Math.max(query.getLimit(), 1);
+                int pageNum  = query.getOffset() / pageSize;
+                return service.listarPaginado(pageNum, pageSize, codigo, nombre, estadoDB).stream();
+            },
+            (Query<Archivo, Void> query) -> {
+                String codigo   = filtrosActivos.getOrDefault(getTranslation("archivo.codigo"), "");
+                String nombre   = filtrosActivos.getOrDefault(getTranslation("archivo.nombre"), "");
+                String estadoDB = mapearEstado(filtrosActivos.getOrDefault(getTranslation("archivo.estado"), ""));
+                return (int) service.contarFiltrado(codigo, nombre, estadoDB);
+            }
+        );
+        grid.setItems(gridProvider);
     }
 
     @Override
     protected void configurarColumnasEspecificas() {
         grid.removeAllColumns();
-
         agregarColumna(Archivo::getCodigo, getTranslation("archivo.codigo"));
         agregarColumna(a -> {
             String n = a.getNombre();
@@ -48,50 +68,17 @@ public class AbmArchivosView extends CrudView<Archivo> {
 
     @Override
     protected void actualizarLista() {
-        if (service == null) return;
+        if (gridProvider != null) gridProvider.refreshAll();
+    }
 
-        // 1. Obtenemos la lista completa del servicio
-        List<Archivo> todos = service.listarTodos();
-
-        // 2. Aplicamos los filtros del mapa filtrosActivos
-        List<Archivo> filtrados = todos.stream().filter(archivo -> {
-            for (Map.Entry<String, String> filtro : filtrosActivos.entrySet()) {
-                String columna = filtro.getKey();
-                String valorFiltro = filtro.getValue().toLowerCase();
-
-                // Filtrado por Código
-                if (columna.equals(getTranslation("archivo.codigo"))) {
-                    String codigo = archivo.getCodigo() != null ? archivo.getCodigo().toString() : "";
-                    if (!codigo.contains(valorFiltro)) return false;
-                }
-                // Filtrado por Nombre
-                else if (columna.equals(getTranslation("archivo.nombre"))) {
-                    String nombre = archivo.getNombre() != null ? archivo.getNombre().toLowerCase() : "";
-                    if (!nombre.contains(valorFiltro)) return false;
-                }
-                // Filtrado por Estado (3 estados)
-                else if (columna.equals(getTranslation("archivo.estado"))) {
-                    String estadoArch = archivo.getEstadoConversion();
-                    if (estadoArch == null) estadoArch = "PENDIENTE";
-                    boolean match;
-                    if (valorFiltro.equals("pendiente a procesar")) {
-                        match = "PENDIENTE".equalsIgnoreCase(estadoArch);
-                    } else if (valorFiltro.equals("procesado")) {
-                        match = "PROCESADO".equalsIgnoreCase(estadoArch);
-                    } else if (valorFiltro.equals("procesado error")) {
-                        match = "PROCESADO_ERROR".equalsIgnoreCase(estadoArch);
-                    } else {
-                        match = true;
-                    }
-                    if (!match) return false;
-                }
-            }
-            return true;
-        }).collect(Collectors.toList());
-
-        // 3. Pasamos los resultados filtrados al Grid
-        // Si 'filtrados' está vacío, aparecerá el mensaje "No existen archivos"
-        grid.setItems(filtrados);
+    private String mapearEstado(String displayValue) {
+        if (displayValue == null || displayValue.isEmpty()) return "";
+        return switch (displayValue.toLowerCase()) {
+            case "pendiente a procesar" -> "PENDIENTE";
+            case "procesado"            -> "PROCESADO";
+            case "procesado error"      -> "PROCESADO_ERROR";
+            default                     -> "";
+        };
     }
 
     private void agregarColumnaEstado(String cabecera) {

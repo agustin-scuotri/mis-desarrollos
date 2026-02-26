@@ -2,6 +2,8 @@ package com.desarrollos.views;
 
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -89,11 +91,70 @@ public class MainLayout extends AppLayout {
 		toggle.getStyle().set("color", "white");
 		toggle.getElement().executeJs("this.shadowRoot.querySelector('[part~=\"icon\"]').style.color = '#001030';");
 
-		HorizontalLayout header = new HorizontalLayout(toggle, logo);
+		// ── Toggle Modo Oscuro ────────────────────────────────────────────────
+		final boolean[] isDark = {false};
+
+		Icon iconoInicial = VaadinIcon.MOON.create();
+		iconoInicial.setSize("18px");
+		iconoInicial.getStyle().set("color", "rgba(255,255,255,0.85)");
+
+		Button btnTema = new Button(iconoInicial);
+		btnTema.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+		btnTema.getElement().setAttribute("title", "Activar modo oscuro");
+		btnTema.getStyle().set("cursor", "pointer");
+
+		// Leer preferencia guardada en localStorage y sincronizar icono
+		getElement().executeJs(
+			"if (localStorage.getItem('dark-mode') === '1') {" +
+			"  document.documentElement.setAttribute('theme', 'dark'); }")
+			.then(__ -> {
+				// sync icon: ask client about current state
+				getElement().executeJs("return localStorage.getItem('dark-mode') === '1';")
+					.then(Boolean.class, dark -> {
+						if (Boolean.TRUE.equals(dark)) {
+							isDark[0] = true;
+							Icon ic = VaadinIcon.SUN_O.create();
+							ic.setSize("18px");
+							ic.getStyle().set("color", "rgba(255,255,255,0.85)");
+							btnTema.setIcon(ic);
+							btnTema.getElement().setAttribute("title", "Activar modo claro");
+						}
+					});
+			});
+
+		btnTema.addClickListener(e -> {
+			isDark[0] = !isDark[0];
+			if (isDark[0]) {
+				getElement().executeJs(
+					"document.documentElement.setAttribute('theme', 'dark');" +
+					"localStorage.setItem('dark-mode', '1');");
+				Icon ic = VaadinIcon.SUN_O.create();
+				ic.setSize("18px");
+				ic.getStyle().set("color", "rgba(255,255,255,0.85)");
+				btnTema.setIcon(ic);
+				btnTema.getElement().setAttribute("title", "Activar modo claro");
+			} else {
+				getElement().executeJs(
+					"document.documentElement.removeAttribute('theme');" +
+					"localStorage.removeItem('dark-mode');");
+				Icon ic = VaadinIcon.MOON.create();
+				ic.setSize("18px");
+				ic.getStyle().set("color", "rgba(255,255,255,0.85)");
+				btnTema.setIcon(ic);
+				btnTema.getElement().setAttribute("title", "Activar modo oscuro");
+			}
+		});
+
+		// Spacer para empujar el botón a la derecha
+		HorizontalLayout spacer = new HorizontalLayout();
+		spacer.setFlexGrow(1, spacer);
+
+		HorizontalLayout header = new HorizontalLayout(toggle, logo, spacer, btnTema);
 		header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
 		header.setWidthFull();
 		header.setHeight("60px");
 		header.setPadding(true);
+		header.setSpacing(false);
 		header.getStyle()
 				.set("background-color", "#002060")
 				.set("box-shadow", "0 2px 5px rgba(0,0,0,0.3)");

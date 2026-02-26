@@ -2,13 +2,13 @@ package com.desarrollos.views;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.desarrollos.base.CrudView;
 import com.desarrollos.entities.DocumentoConvertido;
 import com.desarrollos.services.DocumentoConvertidoService;
+import com.vaadin.flow.data.provider.CallbackDataProvider;
+import com.vaadin.flow.data.provider.DataProvider;
+import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
@@ -30,12 +30,35 @@ import com.vaadin.flow.server.StreamResource;
 public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> {
 
     private final DocumentoConvertidoService service;
+    private CallbackDataProvider<DocumentoConvertido, Void> gridProvider;
 
     public AbmDocumentosConvertidosView(DocumentoConvertidoService service) {
         super(DocumentoConvertido.class);
         this.service = service;
         setTitulo("Documentos Convertidos");
-        actualizarLista();
+        inicializarDataProvider();
+    }
+
+    private void inicializarDataProvider() {
+        gridProvider = DataProvider.fromCallbacks(
+            (Query<DocumentoConvertido, Void> query) -> {
+                String archivo     = filtrosActivos.getOrDefault("Archivo", "");
+                String razonSocial = filtrosActivos.getOrDefault("Razón Social", "");
+                String cuit        = filtrosActivos.getOrDefault("CUIT", "");
+                String comprobante = filtrosActivos.getOrDefault("N° Comprobante", "");
+                int pageSize = Math.max(query.getLimit(), 1);
+                int pageNum  = query.getOffset() / pageSize;
+                return service.listarPaginado(pageNum, pageSize, archivo, razonSocial, cuit, comprobante).stream();
+            },
+            (Query<DocumentoConvertido, Void> query) -> {
+                String archivo     = filtrosActivos.getOrDefault("Archivo", "");
+                String razonSocial = filtrosActivos.getOrDefault("Razón Social", "");
+                String cuit        = filtrosActivos.getOrDefault("CUIT", "");
+                String comprobante = filtrosActivos.getOrDefault("N° Comprobante", "");
+                return (int) service.contarFiltrado(archivo, razonSocial, cuit, comprobante);
+            }
+        );
+        grid.setItems(gridProvider);
     }
 
     @Override
@@ -83,37 +106,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
 
     @Override
     protected void actualizarLista() {
-        if (service == null) return;
-
-        List<DocumentoConvertido> todos = service.listarTodos().stream()
-                .filter(doc -> doc.getArchivo() == null
-                        || !"PROCESADO_ERROR".equals(doc.getArchivo().getEstadoConversion()))
-                .collect(Collectors.toList());
-
-        List<DocumentoConvertido> filtrados = todos.stream().filter(doc -> {
-            for (Map.Entry<String, String> filtro : filtrosActivos.entrySet()) {
-                String columna = filtro.getKey();
-                String valorFiltro = filtro.getValue().toLowerCase();
-
-                if (columna.equals("Archivo")) {
-                    String val = (doc.getArchivo() != null && doc.getArchivo().getNombre() != null)
-                            ? doc.getArchivo().getNombre().toLowerCase() : "";
-                    if (!val.contains(valorFiltro)) return false;
-                } else if (columna.equals("Razón Social")) {
-                    String val = doc.getRazonSocial() != null ? doc.getRazonSocial().toLowerCase() : "";
-                    if (!val.contains(valorFiltro)) return false;
-                } else if (columna.equals("CUIT")) {
-                    String val = doc.getCuit() != null ? doc.getCuit().toLowerCase() : "";
-                    if (!val.contains(valorFiltro)) return false;
-                } else if (columna.equals("N° Comprobante")) {
-                    String val = doc.getNumeroComprobante() != null ? doc.getNumeroComprobante().toLowerCase() : "";
-                    if (!val.contains(valorFiltro)) return false;
-                }
-            }
-            return true;
-        }).collect(Collectors.toList());
-
-        grid.setItems(filtrados);
+        if (gridProvider != null) gridProvider.refreshAll();
     }
 
     @Override

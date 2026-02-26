@@ -1,6 +1,16 @@
 package com.desarrollos.services;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,7 +25,6 @@ import com.desarrollos.repositories.DocumentoConvertidoRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.List;
 
 @Service
 public class DocumentoConvertidoService {
@@ -161,6 +170,50 @@ public class DocumentoConvertidoService {
 
     public List<DocumentoConvertido> listarTodos() {
         return repository.findAll();
+    }
+
+    // ── Paginación server-side para AbmDocumentosConvertidosView ─────────────
+    public List<DocumentoConvertido> listarPaginado(int page, int size,
+            String archivo, String razonSocial, String cuit, String comprobante) {
+        Pageable pageable = PageRequest.of(page, Math.max(size, 1));
+        return repository.findFiltrado(
+                archivo != null ? archivo.toLowerCase() : "",
+                razonSocial != null ? razonSocial.toLowerCase() : "",
+                cuit != null ? cuit : "",
+                comprobante != null ? comprobante : "",
+                pageable);
+    }
+
+    public long contarFiltrado(String archivo, String razonSocial, String cuit, String comprobante) {
+        return repository.countFiltrado(
+                archivo != null ? archivo.toLowerCase() : "",
+                razonSocial != null ? razonSocial.toLowerCase() : "",
+                cuit != null ? cuit : "",
+                comprobante != null ? comprobante : "");
+    }
+
+    // ── Datos para gráfico de actividad ──────────────────────────────────────
+    public long[] conversionesPorDia() {
+        LocalDate hoy = LocalDate.now();
+        LocalDateTime desde = hoy.minusDays(6).atStartOfDay();
+        Map<LocalDate, Long> mapa = repository.findFechasDesde(desde).stream()
+                .filter(f -> f != null)
+                .collect(Collectors.groupingBy(LocalDateTime::toLocalDate, Collectors.counting()));
+        long[] datos = new long[7];
+        for (int i = 0; i < 7; i++) {
+            datos[i] = mapa.getOrDefault(hoy.minusDays(6 - i), 0L);
+        }
+        return datos;
+    }
+
+    public String[] etiquetasDias() {
+        LocalDate hoy = LocalDate.now();
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM");
+        String[] labels = new String[7];
+        for (int i = 0; i < 7; i++) {
+            labels[i] = hoy.minusDays(6 - i).format(fmt);
+        }
+        return labels;
     }
 
     @Transactional
