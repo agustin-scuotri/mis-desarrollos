@@ -47,7 +47,11 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
     protected void configurarColumnasEspecificas() {
         grid.removeAllColumns();
 
-        agregarColumna(doc -> doc.getArchivo() != null ? doc.getArchivo().getNombre() : "", "Archivo");
+        agregarColumna(doc -> {
+            String n = doc.getArchivo() != null ? doc.getArchivo().getNombre() : "";
+            if (n == null || n.isEmpty()) return "";
+            return n.length() > 20 ? n.substring(0, 20) + "..." : n;
+        }, "Archivo");
         agregarColumna(DocumentoConvertido::getRazonSocial, "Razón Social");
         agregarColumna(DocumentoConvertido::getCuit, "CUIT");
         agregarColumna(DocumentoConvertido::getNumeroComprobante, "N° Comprobante");
