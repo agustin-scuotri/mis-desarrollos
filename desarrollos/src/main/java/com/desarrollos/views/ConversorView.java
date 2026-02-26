@@ -62,6 +62,8 @@ public class ConversorView extends FormView {
 	// ── Panel resultado ───────────────────────────────────────────────────────
 	private final VerticalLayout panelResultado  = new VerticalLayout();
 	private final Pre jsonViewer                 = new Pre();
+	private final Button btnVerMas   = new Button("Ver más",   VaadinIcon.CHEVRON_DOWN.create());
+	private final Button btnVerMenos = new Button("Ver menos", VaadinIcon.CHEVRON_UP.create());
 	private final HorizontalLayout barraDescarga = new HorizontalLayout();
 	private final Paragraph parrafoNotas         = new Paragraph();
 
@@ -144,6 +146,24 @@ public class ConversorView extends FormView {
 				.set("font-size", "13px").set("width", "100%").set("white-space", "pre-wrap")
 				.set("word-break", "break-word").set("box-shadow", "inset 0 2px 8px rgba(0,0,0,0.4)")
 				.set("line-height", "1.6");
+		jsonViewer.setVisible(false);
+
+		btnVerMas.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+		btnVerMas.getStyle().set("align-self", "flex-start");
+		btnVerMas.addClickListener(e -> {
+			jsonViewer.setVisible(true);
+			btnVerMas.setVisible(false);
+			btnVerMenos.setVisible(true);
+		});
+
+		btnVerMenos.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+		btnVerMenos.getStyle().set("align-self", "flex-start");
+		btnVerMenos.setVisible(false);
+		btnVerMenos.addClickListener(e -> {
+			jsonViewer.setVisible(false);
+			btnVerMas.setVisible(true);
+			btnVerMenos.setVisible(false);
+		});
 
 		parrafoNotas.getStyle()
 				.set("color", "#92400e").set("font-size", "0.875rem").set("margin-top", "10px")
@@ -205,7 +225,7 @@ public class ConversorView extends FormView {
 		gridVencimientos.getStyle().set("margin-top", "4px");
 		gridVencimientos.setVisible(false);
 
-		panelResultado.add(tituloResultado, jsonViewer,
+		panelResultado.add(tituloResultado, btnVerMas, jsonViewer, btnVerMenos,
 				tituloProductos, gridProductos,
 				tituloNetos, gridNetosGravados,
 				tituloPercepcionesIIBB, gridPercepcionesIIBB,
@@ -287,8 +307,11 @@ public class ConversorView extends FormView {
 						return;
 					}
 
-					// Mostrar JSON
+					// Mostrar JSON (colapsado por defecto)
 					jsonViewer.setText(resultado.getJsonResultado());
+					jsonViewer.setVisible(false);
+					btnVerMas.setVisible(true);
+					btnVerMenos.setVisible(false);
 
 					// Cargar grids
 					if (!resultado.getProductosConceptos().isEmpty()) {
@@ -445,6 +468,9 @@ public class ConversorView extends FormView {
 		panelResultado.setVisible(false);
 		panelProgreso.setVisible(false);
 		jsonViewer.setText("");
+		jsonViewer.setVisible(false);
+		btnVerMas.setVisible(true);
+		btnVerMenos.setVisible(false);
 		gridProductos.setItems(Collections.emptyList());    gridProductos.setVisible(false);
 		gridNetosGravados.setItems(Collections.emptyList()); gridNetosGravados.setVisible(false);
 		gridPercepcionesIIBB.setItems(Collections.emptyList()); gridPercepcionesIIBB.setVisible(false);

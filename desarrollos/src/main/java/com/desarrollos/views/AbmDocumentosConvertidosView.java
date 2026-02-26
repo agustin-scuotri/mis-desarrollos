@@ -16,6 +16,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Pre;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
@@ -42,6 +43,29 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
 
     @Override
     protected boolean mostrarBotonEditar() { return false; }
+
+    @Override
+    protected String anchoColumnaAcciones() { return "170px"; }
+
+    @Override
+    protected com.vaadin.flow.component.Component crearBotonAccionExtra(DocumentoConvertido item) {
+        String nombreArchivo = (item.getArchivo() != null
+                ? item.getArchivo().getNombre().replaceAll("\\s+", "_") : "documento") + ".json";
+        String json = item.getJsonResultado() != null ? item.getJsonResultado() : "";
+        StreamResource resource = new StreamResource(nombreArchivo,
+                () -> new ByteArrayInputStream(json.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        Anchor anchor = new Anchor(resource, "");
+        anchor.getElement().setAttribute("download", true);
+        Icon icono = VaadinIcon.DOWNLOAD.create();
+        icono.getStyle().set("color", "#16a34a");
+        icono.setSize("17px");
+        Button btn = new Button(icono);
+        btn.addThemeVariants(com.vaadin.flow.component.button.ButtonVariant.LUMO_TERTIARY,
+                com.vaadin.flow.component.button.ButtonVariant.LUMO_SMALL);
+        btn.getElement().setAttribute("title", "Descargar JSON");
+        anchor.add(btn);
+        return anchor;
+    }
 
     @Override
     protected void configurarColumnasEspecificas() {

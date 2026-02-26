@@ -170,7 +170,7 @@ public abstract class CrudView<T> extends VerticalLayout {
                 .setHeader(getTranslation("archivo.acciones"))
                 .setKey("acciones")
                 .setFrozenToEnd(true)
-                .setWidth("130px")
+                .setWidth(anchoColumnaAcciones())
                 .setFlexGrow(0)
                 .setTextAlign(ColumnTextAlign.CENTER);
     }
@@ -315,6 +315,8 @@ public abstract class CrudView<T> extends VerticalLayout {
 
         HorizontalLayout layout = new HorizontalLayout();
         layout.add(btnV);
+        com.vaadin.flow.component.Component extra = crearBotonAccionExtra(item);
+        if (extra != null) layout.add(extra);
         if (mostrarBotonEditar()) layout.add(btnE);
         layout.add(btnB);
         layout.setSpacing(false);
@@ -373,6 +375,8 @@ public abstract class CrudView<T> extends VerticalLayout {
     // ── Hooks de visibilidad (pueden sobreescribirse) ─────────────────────────
     protected boolean mostrarBotonNuevo() { return true; }
     protected boolean mostrarBotonEditar() { return true; }
+    protected String anchoColumnaAcciones() { return "130px"; }
+    protected com.vaadin.flow.component.Component crearBotonAccionExtra(T item) { return null; }
 
     // ── Métodos abstractos ────────────────────────────────────────────────────
     protected abstract void configurarColumnasEspecificas();
