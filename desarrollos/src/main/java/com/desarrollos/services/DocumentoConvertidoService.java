@@ -15,6 +15,8 @@ import com.desarrollos.repositories.DocumentoConvertidoRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.util.List;
 
 @Service
@@ -29,20 +31,25 @@ public class DocumentoConvertidoService {
     @Autowired
     private ArchivoService archivoService;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Transactional
     public DocumentoConvertido convertir(Archivo archivo) throws Exception {
         Archivo archivoCompleto = archivoService.buscarPorIdConContenido(archivo.getId());
 
-        // Borrar documento previo respetando cascades JPA (hijos primero, luego padre)
+        // Borrar documento previo: flush + clear para eliminar toda referencia stale
+        // del first-level cache de Hibernate (la relación bidireccional @OneToOne
+        // con cascade=ALL en Archivo re-inserta el doc eliminado si queda en cache)
         List<DocumentoConvertido> anteriores = repository.findByArchivo_Id(archivoCompleto.getId());
         if (!anteriores.isEmpty()) {
             repository.deleteAll(anteriores);
-            repository.flush();
-            // Limpiar referencia stale: sin esto, guardar(archivoCompleto) al final
-            // cascadea un merge sobre el doc eliminado y lo re-inserta → duplicate key
-            archivoCompleto.setDocumentoConvertido(null);
+            entityManager.flush();
+            entityManager.clear();
+            // Recargar archivoCompleto limpio, sin referencia al doc eliminado
+            archivoCompleto = archivoService.buscarPorIdConContenido(archivo.getId());
         }
 
         String mimeType = detectarMimeType(archivoCompleto.getNombreOriginal());
