@@ -38,7 +38,11 @@ public class AbmArchivosView extends CrudView<Archivo> {
         grid.removeAllColumns();
 
         agregarColumna(Archivo::getCodigo, getTranslation("archivo.codigo"));
-        agregarColumna(Archivo::getNombre, getTranslation("archivo.nombre"));
+        agregarColumna(a -> {
+            String n = a.getNombre();
+            if (n == null) return "";
+            return n.length() > 20 ? n.substring(0, 20) + "..." : n;
+        }, getTranslation("archivo.nombre"));
         agregarColumnaEstado(getTranslation("archivo.estado"));
     }
 
