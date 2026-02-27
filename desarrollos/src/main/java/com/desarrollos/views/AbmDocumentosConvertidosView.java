@@ -151,6 +151,26 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         contenido.setWidthFull();
         contenido.getStyle().set("overflow-y", "auto").set("padding-right", "4px");
 
+        // ── Datos clave de la factura ─────────────────────────────────────────
+        HorizontalLayout panelDatos = new HorizontalLayout();
+        panelDatos.setWidthFull();
+        panelDatos.setSpacing(true);
+        panelDatos.getStyle()
+                .set("background-color", "#f0f9ff")
+                .set("border", "1px solid #bae6fd")
+                .set("border-radius", "10px")
+                .set("padding", "14px 18px")
+                .set("flex-wrap", "wrap")
+                .set("gap", "20px");
+
+        panelDatos.add(
+            crearCampoInfo("CUIT del Emisor",     estaVacio(doc.getCuit())              ? "—" : doc.getCuit()),
+            crearCampoInfo("N° Comprobante",       estaVacio(doc.getNumeroComprobante()) ? "—" : doc.getNumeroComprobante()),
+            crearCampoInfo("Centro de Emisión",    estaVacio(doc.getCentroEmision())     ? "—" : doc.getCentroEmision()),
+            crearCampoInfo("Total",                estaVacio(doc.getTotal())             ? "—" : doc.getTotal())
+        );
+        contenido.add(panelDatos);
+
         // ── JSON viewer (colapsado por defecto) ───────────────────────────────
         H3 tituloJson = new H3("Resultado JSON");
         tituloJson.getStyle()
@@ -314,6 +334,24 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         });
 
         dialog.open();
+    }
+
+    /** Crea un bloque etiqueta + valor para el panel de datos clave. */
+    private VerticalLayout crearCampoInfo(String etiqueta, String valor) {
+        com.vaadin.flow.component.html.Span lbl = new com.vaadin.flow.component.html.Span(etiqueta);
+        lbl.getStyle()
+                .set("font-size", "0.72rem").set("font-weight", "600")
+                .set("color", "#0369a1").set("text-transform", "uppercase")
+                .set("letter-spacing", "0.05em");
+        com.vaadin.flow.component.html.Span val = new com.vaadin.flow.component.html.Span(valor);
+        val.getStyle()
+                .set("font-size", "1rem").set("font-weight", "700")
+                .set("color", "#0c4a6e");
+        VerticalLayout campo = new VerticalLayout(lbl, val);
+        campo.setPadding(false);
+        campo.setSpacing(false);
+        campo.getStyle().set("gap", "2px").set("min-width", "160px");
+        return campo;
     }
 
     private String generarNotas(DocumentoConvertido doc) {
