@@ -286,9 +286,11 @@ public class ConversorView extends FormView {
 
 		new Thread(() -> {
 			try {
-				final DocumentoConvertido resultado = documentoConvertidoService.convertir(archivoAConvertir);
+				final List<DocumentoConvertido> resultados = documentoConvertidoService.convertir(archivoAConvertir);
+				final DocumentoConvertido resultado = resultados.get(0);
+				final int totalFacturas = resultados.size();
 
-				// Detectar campos obligatorios faltantes
+				// Detectar campos obligatorios faltantes en la primera factura (para mostrar al usuario)
 				final List<String> camposFaltantes = new ArrayList<>();
 				if (estaVacio(resultado.getCuit()))              camposFaltantes.add("CUIT del Emisor");
 				if (estaVacio(resultado.getCodigoArca()))        camposFaltantes.add("Código ARCA");
@@ -307,7 +309,17 @@ public class ConversorView extends FormView {
 						return;
 					}
 
-					// Mostrar JSON (colapsado por defecto)
+					// Si hay múltiples facturas, mostrar banner informativo
+					if (totalFacturas > 1) {
+						Notification notifMulti = new Notification(
+								totalFacturas + " facturas distintas detectadas y guardadas. " +
+								"Se muestra la primera — ver todas en Lista de JSONs.",
+								6000, Notification.Position.TOP_CENTER);
+						notifMulti.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+						notifMulti.open();
+					}
+
+					// Mostrar JSON de la primera factura (colapsado por defecto)
 					jsonViewer.setText(resultado.getJsonResultado());
 					jsonViewer.setVisible(false);
 					btnVerMas.setVisible(true);
@@ -372,8 +384,10 @@ public class ConversorView extends FormView {
 					}
 
 					panelResultado.setVisible(true);
-					Notification.show("¡Archivo convertido exitosamente!")
-							.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+					if (totalFacturas == 1) {
+						Notification.show("¡Archivo convertido exitosamente!")
+								.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+					}
 				});
 
 			} catch (Exception ex) {

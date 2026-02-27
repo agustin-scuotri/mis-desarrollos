@@ -3,6 +3,8 @@ package com.desarrollos.entities;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "archivos")
@@ -35,9 +37,9 @@ public class Archivo {
     @Column(name = "estado_conversion")
     private String estadoConversion = "PENDIENTE";
 
-    // ── Relación con DocumentoConvertido ──────────────────────────────────────
-    @OneToOne(mappedBy = "archivo", cascade = CascadeType.ALL, orphanRemoval = true)
-    private DocumentoConvertido documentoConvertido;
+    // ── Relación con DocumentoConvertido (un archivo puede tener múltiples facturas) ──
+    @OneToMany(mappedBy = "archivo", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DocumentoConvertido> documentosConvertidos = new ArrayList<>();
 
     public Archivo() {
         this.fechaCreacion = LocalDateTime.now();
@@ -63,6 +65,6 @@ public class Archivo {
     public void setConvertido(boolean convertido) { this.convertido = convertido; }
     public String getEstadoConversion() { return estadoConversion; }
     public void setEstadoConversion(String estadoConversion) { this.estadoConversion = estadoConversion; }
-    public DocumentoConvertido getDocumentoConvertido() { return documentoConvertido; }
-    public void setDocumentoConvertido(DocumentoConvertido documentoConvertido) { this.documentoConvertido = documentoConvertido; }
+    public List<DocumentoConvertido> getDocumentosConvertidos() { return documentosConvertidos; }
+    public void setDocumentosConvertidos(List<DocumentoConvertido> documentosConvertidos) { this.documentosConvertidos = documentosConvertidos; }
 }

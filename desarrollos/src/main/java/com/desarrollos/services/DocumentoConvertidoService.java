@@ -3,6 +3,7 @@ package com.desarrollos.services;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,27 +42,51 @@ public class DocumentoConvertidoService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Transactional
-    public DocumentoConvertido convertir(Archivo archivo) throws Exception {
+    public List<DocumentoConvertido> convertir(Archivo archivo) throws Exception {
         Archivo archivoCompleto = archivoService.buscarPorIdConContenido(archivo.getId());
 
         String mimeType = detectarMimeType(archivoCompleto.getNombreOriginal());
         String jsonTexto = claudeVisionService.extraerDatos(archivoCompleto.getContenido(), mimeType);
-
         jsonTexto = limpiarJson(jsonTexto);
 
-        JsonNode json;
+        JsonNode raiz;
         try {
-            json = objectMapper.readTree(jsonTexto);
+            raiz = objectMapper.readTree(jsonTexto);
         } catch (JsonProcessingException e) {
-            // El JSON llegó incompleto: Claude cortó la respuesta por límite de tokens.
-            // Esto ocurre con facturas muy extensas (muchos ítems).
             throw new RuntimeException(
                 "La factura tiene demasiados ítems y la respuesta de la IA fue cortada. " +
                 "Intentá dividir el archivo en páginas más cortas o reducir la cantidad de productos por archivo.", e);
         }
 
+        List<DocumentoConvertido> resultados = new ArrayList<>();
+
+        if (raiz.isArray()) {
+            // El modelo detectó múltiples facturas distintas en el mismo archivo
+            for (JsonNode nodo : raiz) {
+                DocumentoConvertido doc = mapearDesdeNodo(nodo, archivoCompleto, nodo.toString());
+                repository.save(doc);
+                resultados.add(doc);
+            }
+        } else {
+            // Factura única (caso normal)
+            DocumentoConvertido doc = mapearDesdeNodo(raiz, archivoCompleto, jsonTexto);
+            repository.save(doc);
+            resultados.add(doc);
+        }
+
+        // PROCESADO si todas las facturas tienen los campos obligatorios; PROCESADO_ERROR si alguna falla
+        boolean todosOk = resultados.stream().allMatch(this::camposObligatoriosOk);
+        archivoCompleto.setConvertido(true);
+        archivoCompleto.setEstadoConversion(todosOk ? "PROCESADO" : "PROCESADO_ERROR");
+        archivoService.guardar(archivoCompleto);
+
+        return resultados;
+    }
+
+    /** Construye un DocumentoConvertido a partir de un nodo JSON y su texto original. */
+    private DocumentoConvertido mapearDesdeNodo(JsonNode json, Archivo archivo, String jsonOriginal) {
         DocumentoConvertido doc = new DocumentoConvertido();
-        doc.setArchivo(archivoCompleto);
+        doc.setArchivo(archivo);
         doc.setCuit(json.path("cuit").asText(null));
         doc.setRazonSocial(json.path("razonSocial").asText(null));
         doc.setSituacionIva(json.path("situacionIva").asText(null));
@@ -84,7 +109,8 @@ public class DocumentoConvertidoService {
         doc.setOrdenCompra(json.path("ordenCompra").asText(null));
         doc.setSubTotalNoGravado(json.path("subTotalNoGravado").asText(null));
         doc.setTotal(json.path("total").asText(null));
-        doc.setJsonResultado(jsonTexto);
+        // Limitar a 20 000 chars si el JSON es muy grande
+        doc.setJsonResultado(jsonOriginal.length() <= 20000 ? jsonOriginal : jsonOriginal.substring(0, 20000));
 
         JsonNode productosNode = json.path("productosConceptos");
         if (productosNode.isArray()) {
@@ -150,22 +176,17 @@ public class DocumentoConvertidoService {
             }
         }
 
-        repository.save(doc);
+        return doc;
+    }
 
-        // Si falta algún campo obligatorio, el estado es PROCESADO_ERROR
-        boolean camposObligatoriosOk = !estaVacio(doc.getCuit())
+    private boolean camposObligatoriosOk(DocumentoConvertido doc) {
+        return !estaVacio(doc.getCuit())
                 && !estaVacio(doc.getCodigoArca())
                 && !estaVacio(doc.getCentroEmision())
                 && !estaVacio(doc.getNumeroComprobante())
                 && !estaVacio(doc.getFechaEmision())
                 && !estaVacio(doc.getMoneda())
                 && !estaVacio(doc.getTotal());
-
-        archivoCompleto.setConvertido(true);
-        archivoCompleto.setEstadoConversion(camposObligatoriosOk ? "PROCESADO" : "PROCESADO_ERROR");
-        archivoService.guardar(archivoCompleto);
-
-        return doc;
     }
 
     public List<DocumentoConvertido> listarTodos() {
@@ -235,10 +256,15 @@ public class DocumentoConvertidoService {
     public void borrar(DocumentoConvertido doc) {
         Archivo archivo = doc.getArchivo();
         repository.delete(doc);
+        repository.flush();
         if (archivo != null) {
-            archivoService.actualizarEstado(archivo, "PENDIENTE");
-            archivo.setConvertido(false);
-            try { archivoService.guardar(archivo); } catch (Exception ignored) {}
+            // Solo resetear el archivo a PENDIENTE cuando ya no queda ningún documento convertido
+            boolean tieneOtros = !repository.findByArchivo_Id(archivo.getId()).isEmpty();
+            if (!tieneOtros) {
+                archivoService.actualizarEstado(archivo, "PENDIENTE");
+                archivo.setConvertido(false);
+                try { archivoService.guardar(archivo); } catch (Exception ignored) {}
+            }
         }
     }
 

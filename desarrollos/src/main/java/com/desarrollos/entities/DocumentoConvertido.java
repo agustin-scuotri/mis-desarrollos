@@ -13,7 +13,7 @@ public class DocumentoConvertido {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "archivo_id")
     private Archivo archivo;
 
