@@ -110,7 +110,14 @@ public class DocumentoConvertidoService {
         doc.setSubTotalNoGravado(json.path("subTotalNoGravado").asText(null));
         doc.setTotal(json.path("total").asText(null));
         // Limitar a 20 000 chars si el JSON es muy grande
-        doc.setJsonResultado(jsonOriginal.length() <= 20000 ? jsonOriginal : jsonOriginal.substring(0, 20000));
+        // Guardar el JSON formateado (indentado) para que se vea legible en el visor
+        String jsonFormateado;
+        try {
+            jsonFormateado = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
+        } catch (Exception e) {
+            jsonFormateado = jsonOriginal;
+        }
+        doc.setJsonResultado(jsonFormateado.length() <= 20000 ? jsonFormateado : jsonFormateado.substring(0, 20000));
 
         JsonNode productosNode = json.path("productosConceptos");
         if (productosNode.isArray()) {
