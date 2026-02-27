@@ -158,7 +158,12 @@ public class DocumentoConvertidoService {
             for (JsonNode percNode : percepcionesNode) {
                 PercepcionIIBB perc = new PercepcionIIBB();
                 perc.setDocumento(doc);
-                perc.setProvincia(percNode.path("provincia").asText(null));
+                String provinciaPerc = percNode.path("provincia").asText(null);
+                // Si no hay provincia en la percepción pero sí hay importe, usar la provincia del emisor
+                if (estaVacio(provinciaPerc) && !estaVacio(percNode.path("importe").asText(null))) {
+                    provinciaPerc = doc.getProvincia();
+                }
+                perc.setProvincia(provinciaPerc);
                 perc.setAlicuota(percNode.path("alicuota").asText(null));
                 perc.setImporte(percNode.path("importe").asText(null));
                 doc.getPercepcionesIIBB().add(perc);
