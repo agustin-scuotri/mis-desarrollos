@@ -67,6 +67,7 @@ public class ConversorView extends FormView {
 	private final HorizontalLayout barraDescarga = new HorizontalLayout();
 	private final Paragraph parrafoNotas         = new Paragraph();
 
+	private final HorizontalLayout      panelDatos           = new HorizontalLayout();
 	private final Grid<ProductoConcepto> gridProductos        = new Grid<>(ProductoConcepto.class, false);
 	private final Grid<NetoGravado>      gridNetosGravados    = new Grid<>(NetoGravado.class, false);
 	private final Grid<PercepcionIIBB>   gridPercepcionesIIBB = new Grid<>(PercepcionIIBB.class, false);
@@ -132,6 +133,20 @@ public class ConversorView extends FormView {
 		panelProgreso.setSpacing(true);
 		panelProgreso.setVisible(false);
 		panelProgreso.getStyle().set("margin-top", "20px");
+
+		// ── Panel datos clave ─────────────────────────────────────────────────
+		panelDatos.setWidthFull();
+		panelDatos.setSpacing(false);
+		panelDatos.getStyle()
+				.set("background-color", "#f0f9ff")
+				.set("border", "1px solid #bae6fd")
+				.set("border-radius", "10px")
+				.set("padding", "14px 18px")
+				.set("display", "flex")
+				.set("flex-direction", "row")
+				.set("align-items", "flex-start")
+				.set("gap", "40px");
+		panelDatos.setVisible(false);
 
 		// ── Panel resultado ───────────────────────────────────────────────────
 		H3 tituloResultado = new H3("Resultado JSON");
@@ -225,7 +240,7 @@ public class ConversorView extends FormView {
 		gridVencimientos.getStyle().set("margin-top", "4px");
 		gridVencimientos.setVisible(false);
 
-		panelResultado.add(tituloResultado, btnVerMas, jsonViewer, btnVerMenos,
+		panelResultado.add(panelDatos, tituloResultado, btnVerMas, jsonViewer, btnVerMenos,
 				tituloProductos, gridProductos,
 				tituloNetos, gridNetosGravados,
 				tituloPercepcionesIIBB, gridPercepcionesIIBB,
@@ -313,6 +328,16 @@ public class ConversorView extends FormView {
 					if (totalFacturas > 1) {
 						mostrarDialogoMultiFactura(resultados);
 					}
+
+					// Panel de datos clave
+					panelDatos.removeAll();
+					panelDatos.add(
+						crearCampoInfo("CUIT del Emisor",  estaVacio(resultado.getCuit())              ? "—" : resultado.getCuit()),
+						crearCampoInfo("N° Comprobante",    estaVacio(resultado.getNumeroComprobante()) ? "—" : resultado.getNumeroComprobante()),
+						crearCampoInfo("Centro de Emisión", estaVacio(resultado.getCentroEmision())     ? "—" : resultado.getCentroEmision()),
+						crearCampoInfo("Total",             estaVacio(resultado.getTotal())             ? "—" : resultado.getTotal())
+					);
+					panelDatos.setVisible(true);
 
 					// Mostrar JSON de la primera factura (colapsado por defecto)
 					jsonViewer.setText(resultado.getJsonResultado());
@@ -527,6 +552,24 @@ public class ConversorView extends FormView {
 	@Override
 	protected void accionGuardar() { /* integrado en ejecutarConversion() */ }
 
+	private VerticalLayout crearCampoInfo(String etiqueta, String valor) {
+		Span lbl = new Span(etiqueta);
+		lbl.getStyle()
+				.set("font-size", "0.72rem").set("font-weight", "600")
+				.set("color", "#0369a1").set("text-transform", "uppercase")
+				.set("letter-spacing", "0.05em");
+		Span val = new Span(valor);
+		val.getStyle()
+				.set("font-size", "1rem").set("font-weight", "700")
+				.set("color", "#0c4a6e");
+		VerticalLayout campo = new VerticalLayout(lbl, val);
+		campo.setPadding(false);
+		campo.setSpacing(false);
+		campo.setWidth("auto");
+		campo.getStyle().set("gap", "2px").set("flex-shrink", "0");
+		return campo;
+	}
+
 	private boolean estaVacio(String valor) {
 		return valor == null || valor.isEmpty() || valor.equals("null");
 	}
@@ -536,6 +579,8 @@ public class ConversorView extends FormView {
 		archivoCombo.limpiar();
 		archivoSeleccionado = null;
 		btnVerArchivo.setEnabled(false);
+		panelDatos.removeAll();
+		panelDatos.setVisible(false);
 		panelResultado.setVisible(false);
 		panelProgreso.setVisible(false);
 		jsonViewer.setText("");
