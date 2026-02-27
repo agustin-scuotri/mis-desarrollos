@@ -309,14 +309,9 @@ public class ConversorView extends FormView {
 						return;
 					}
 
-					// Si hay múltiples facturas, mostrar banner informativo
+					// Si hay múltiples facturas, mostrar diálogo informativo antes de mostrar la primera
 					if (totalFacturas > 1) {
-						Notification notifMulti = new Notification(
-								totalFacturas + " facturas distintas detectadas y guardadas. " +
-								"Se muestra la primera — ver todas en Lista de JSONs.",
-								6000, Notification.Position.TOP_CENTER);
-						notifMulti.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-						notifMulti.open();
+						mostrarDialogoMultiFactura(resultados);
 					}
 
 					// Mostrar JSON de la primera factura (colapsado por defecto)
@@ -448,6 +443,68 @@ public class ConversorView extends FormView {
 		Button btnAceptar = new Button("Aceptar", e -> dialog.close());
 		btnAceptar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 		btnAceptar.getStyle().set("background-color", "#dc2626").set("color", "white");
+
+		dialog.add(contenido);
+		dialog.getFooter().add(btnAceptar);
+		dialog.open();
+	}
+
+	// ── Diálogo informativo cuando se detectan múltiples facturas ────────────
+	private void mostrarDialogoMultiFactura(List<DocumentoConvertido> resultados) {
+		Dialog dialog = new Dialog();
+		dialog.setModal(true);
+		dialog.setWidth("520px");
+
+		Icon icono = VaadinIcon.CHECK_CIRCLE.create();
+		icono.setSize("48px");
+		icono.setColor("#16a34a");
+
+		H3 titulo = new H3(resultados.size() + " facturas detectadas en el archivo");
+		titulo.getStyle().set("color", "#16a34a").set("margin", "8px 0 0 0").set("font-weight", "700")
+				.set("text-align", "center");
+
+		Paragraph mensaje = new Paragraph(
+				"Todas fueron convertidas y guardadas correctamente.\n"
+				+ "A continuación se muestran los datos de la primera factura.");
+		mensaje.getStyle()
+				.set("text-align", "center").set("color", "#475569")
+				.set("font-size", "0.875rem").set("white-space", "pre-line").set("margin", "0");
+
+		VerticalLayout listaFacturas = new VerticalLayout();
+		listaFacturas.setPadding(false);
+		listaFacturas.setSpacing(false);
+		listaFacturas.getStyle()
+				.set("background-color", "#f0fdf4").set("border", "1px solid #bbf7d0")
+				.set("border-radius", "8px").set("padding", "12px").set("gap", "4px")
+				.set("width", "100%").set("margin-top", "8px");
+
+		Span tituloLista = new Span("Facturas encontradas:");
+		tituloLista.getStyle().set("font-weight", "600").set("color", "#15803d").set("font-size", "0.8rem");
+		listaFacturas.add(tituloLista);
+
+		for (int i = 0; i < resultados.size(); i++) {
+			DocumentoConvertido doc = resultados.get(i);
+			String nro  = estaVacio(doc.getNumeroComprobante()) ? "Sin número" : doc.getNumeroComprobante();
+			String cuit = estaVacio(doc.getCuit())              ? "Sin CUIT"   : doc.getCuit();
+			String label = (i == 0 ? "★ " : "   ") + "Factura " + (i + 1) + "  —  Nro: " + nro + "  |  CUIT: " + cuit;
+			Span item = new Span(label);
+			item.getStyle().set("color", i == 0 ? "#14532d" : "#166534")
+					.set("font-size", "0.82rem")
+					.set("font-weight", i == 0 ? "600" : "400");
+			listaFacturas.add(item);
+		}
+
+		Span nota = new Span("Podés ver todas en Lista de JSONs del menú lateral.");
+		nota.getStyle().set("color", "#6b7280").set("font-size", "0.8rem").set("margin-top", "10px");
+
+		VerticalLayout contenido = new VerticalLayout(icono, titulo, mensaje, listaFacturas, nota);
+		contenido.setAlignItems(FlexComponent.Alignment.CENTER);
+		contenido.setPadding(true);
+		contenido.setSpacing(true);
+
+		Button btnAceptar = new Button("Aceptar", e -> dialog.close());
+		btnAceptar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+		btnAceptar.getStyle().set("background-color", "#16a34a").set("color", "white");
 
 		dialog.add(contenido);
 		dialog.getFooter().add(btnAceptar);
