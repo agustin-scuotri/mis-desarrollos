@@ -176,7 +176,7 @@ public class MainLayout extends AppLayout {
 		RouterLink linkInicio    = crearItemMenu(getTranslation("app.inicio"),     VaadinIcon.HOME,         InicioView.class);
 		RouterLink linkArchivos  = crearItemMenu(getTranslation("app.archivos"),   VaadinIcon.FILE_PROCESS, AbmArchivosView.class);
 		RouterLink linkConversor = crearItemMenu(getTranslation("app.conversor"),  VaadinIcon.EXCHANGE,     ConversorView.class);
-		RouterLink linkDocumentos= crearItemMenu("Documentos Convertidos",         VaadinIcon.FILE_TABLE,   AbmDocumentosConvertidosView.class);
+		RouterLink linkDocumentos= crearItemMenu("Lista de JSONs",                 VaadinIcon.FILE_TABLE,   AbmDocumentosConvertidosView.class);
 
 		opcionesContainer.add(linkInicio, linkArchivos, linkConversor, linkDocumentos);
 

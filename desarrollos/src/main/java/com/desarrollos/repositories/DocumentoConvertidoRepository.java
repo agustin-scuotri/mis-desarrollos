@@ -19,26 +19,30 @@ public interface DocumentoConvertidoRepository extends JpaRepository<DocumentoCo
     // ── Paginación con filtros (excluye PROCESADO_ERROR) ──────────────────────
     @Query("SELECT d FROM DocumentoConvertido d LEFT JOIN d.archivo a WHERE " +
            "(a IS NULL OR a.estadoConversion != 'PROCESADO_ERROR') AND " +
-           "(:archivo = '' OR (a IS NOT NULL AND LOWER(a.nombre) LIKE CONCAT('%', :archivo, '%'))) AND " +
-           "(:razonSocial = '' OR LOWER(d.razonSocial) LIKE CONCAT('%', :razonSocial, '%')) AND " +
+           "(:codigo = '' OR (a IS NOT NULL AND a.codigo LIKE CONCAT('%', :codigo, '%'))) AND " +
+           "(:nombre = '' OR (a IS NOT NULL AND LOWER(a.nombre) LIKE CONCAT('%', :nombre, '%'))) AND " +
            "(:cuit = '' OR d.cuit LIKE CONCAT('%', :cuit, '%')) AND " +
+           "(:centroEmision = '' OR LOWER(d.centroEmision) LIKE CONCAT('%', :centroEmision, '%')) AND " +
            "(:comprobante = '' OR d.numeroComprobante LIKE CONCAT('%', :comprobante, '%')) " +
            "ORDER BY d.fechaConversion DESC")
-    List<DocumentoConvertido> findFiltrado(@Param("archivo") String archivo,
-                                           @Param("razonSocial") String razonSocial,
+    List<DocumentoConvertido> findFiltrado(@Param("codigo") String codigo,
+                                           @Param("nombre") String nombre,
                                            @Param("cuit") String cuit,
+                                           @Param("centroEmision") String centroEmision,
                                            @Param("comprobante") String comprobante,
                                            Pageable pageable);
 
     @Query("SELECT COUNT(d) FROM DocumentoConvertido d LEFT JOIN d.archivo a WHERE " +
            "(a IS NULL OR a.estadoConversion != 'PROCESADO_ERROR') AND " +
-           "(:archivo = '' OR (a IS NOT NULL AND LOWER(a.nombre) LIKE CONCAT('%', :archivo, '%'))) AND " +
-           "(:razonSocial = '' OR LOWER(d.razonSocial) LIKE CONCAT('%', :razonSocial, '%')) AND " +
+           "(:codigo = '' OR (a IS NOT NULL AND a.codigo LIKE CONCAT('%', :codigo, '%'))) AND " +
+           "(:nombre = '' OR (a IS NOT NULL AND LOWER(a.nombre) LIKE CONCAT('%', :nombre, '%'))) AND " +
            "(:cuit = '' OR d.cuit LIKE CONCAT('%', :cuit, '%')) AND " +
+           "(:centroEmision = '' OR LOWER(d.centroEmision) LIKE CONCAT('%', :centroEmision, '%')) AND " +
            "(:comprobante = '' OR d.numeroComprobante LIKE CONCAT('%', :comprobante, '%'))")
-    long countFiltrado(@Param("archivo") String archivo,
-                       @Param("razonSocial") String razonSocial,
+    long countFiltrado(@Param("codigo") String codigo,
+                       @Param("nombre") String nombre,
                        @Param("cuit") String cuit,
+                       @Param("centroEmision") String centroEmision,
                        @Param("comprobante") String comprobante);
 
     // ── Fechas de conversión para gráfico ─────────────────────────────────────

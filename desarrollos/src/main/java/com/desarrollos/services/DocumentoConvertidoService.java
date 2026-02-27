@@ -174,21 +174,23 @@ public class DocumentoConvertidoService {
 
     // ── Paginación server-side para AbmDocumentosConvertidosView ─────────────
     public List<DocumentoConvertido> listarPaginado(int page, int size,
-            String archivo, String razonSocial, String cuit, String comprobante) {
+            String codigo, String nombre, String cuit, String centroEmision, String comprobante) {
         Pageable pageable = PageRequest.of(page, Math.max(size, 1));
         return repository.findFiltrado(
-                archivo != null ? archivo.toLowerCase() : "",
-                razonSocial != null ? razonSocial.toLowerCase() : "",
+                codigo != null ? codigo : "",
+                nombre != null ? nombre.toLowerCase() : "",
                 cuit != null ? cuit : "",
+                centroEmision != null ? centroEmision.toLowerCase() : "",
                 comprobante != null ? comprobante : "",
                 pageable);
     }
 
-    public long contarFiltrado(String archivo, String razonSocial, String cuit, String comprobante) {
+    public long contarFiltrado(String codigo, String nombre, String cuit, String centroEmision, String comprobante) {
         return repository.countFiltrado(
-                archivo != null ? archivo.toLowerCase() : "",
-                razonSocial != null ? razonSocial.toLowerCase() : "",
+                codigo != null ? codigo : "",
+                nombre != null ? nombre.toLowerCase() : "",
                 cuit != null ? cuit : "",
+                centroEmision != null ? centroEmision.toLowerCase() : "",
                 comprobante != null ? comprobante : "");
     }
 

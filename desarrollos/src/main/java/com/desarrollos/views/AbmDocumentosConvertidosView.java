@@ -25,8 +25,8 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
 
-@PageTitle("Documentos Convertidos")
-@Route(value = "documentos-convertidos", layout = MainLayout.class)
+@PageTitle("Lista de JSONs")
+@Route(value = "lista-jsons", layout = MainLayout.class)
 public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> {
 
     private final DocumentoConvertidoService service;
@@ -35,27 +35,29 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
     public AbmDocumentosConvertidosView(DocumentoConvertidoService service) {
         super(DocumentoConvertido.class);
         this.service = service;
-        setTitulo("Documentos Convertidos");
+        setTitulo("Lista de JSONs");
         inicializarDataProvider();
     }
 
     private void inicializarDataProvider() {
         gridProvider = DataProvider.fromCallbacks(
             (Query<DocumentoConvertido, Void> query) -> {
-                String archivo     = filtrosActivos.getOrDefault("Archivo", "");
-                String razonSocial = filtrosActivos.getOrDefault("Razón Social", "");
-                String cuit        = filtrosActivos.getOrDefault("CUIT", "");
-                String comprobante = filtrosActivos.getOrDefault("N° Comprobante", "");
+                String codigo        = filtrosActivos.getOrDefault("CODIGO", "");
+                String nombre        = filtrosActivos.getOrDefault("NOMBRE", "");
+                String cuit          = filtrosActivos.getOrDefault("CUIT DEL EMISOR", "");
+                String centroEmision = filtrosActivos.getOrDefault("CENTRO DE EMISION", "");
+                String comprobante   = filtrosActivos.getOrDefault("NUMERO DE COMPROBANTE", "");
                 int pageSize = Math.max(query.getLimit(), 1);
                 int pageNum  = query.getOffset() / pageSize;
-                return service.listarPaginado(pageNum, pageSize, archivo, razonSocial, cuit, comprobante).stream();
+                return service.listarPaginado(pageNum, pageSize, codigo, nombre, cuit, centroEmision, comprobante).stream();
             },
             (Query<DocumentoConvertido, Void> query) -> {
-                String archivo     = filtrosActivos.getOrDefault("Archivo", "");
-                String razonSocial = filtrosActivos.getOrDefault("Razón Social", "");
-                String cuit        = filtrosActivos.getOrDefault("CUIT", "");
-                String comprobante = filtrosActivos.getOrDefault("N° Comprobante", "");
-                return (int) service.contarFiltrado(archivo, razonSocial, cuit, comprobante);
+                String codigo        = filtrosActivos.getOrDefault("CODIGO", "");
+                String nombre        = filtrosActivos.getOrDefault("NOMBRE", "");
+                String cuit          = filtrosActivos.getOrDefault("CUIT DEL EMISOR", "");
+                String centroEmision = filtrosActivos.getOrDefault("CENTRO DE EMISION", "");
+                String comprobante   = filtrosActivos.getOrDefault("NUMERO DE COMPROBANTE", "");
+                return (int) service.contarFiltrado(codigo, nombre, cuit, centroEmision, comprobante);
             }
         );
         grid.setItems(gridProvider);
@@ -94,14 +96,15 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
     protected void configurarColumnasEspecificas() {
         grid.removeAllColumns();
 
+        agregarColumna(doc -> doc.getArchivo() != null ? doc.getArchivo().getCodigo() : "", "CODIGO");
         agregarColumna(doc -> {
             String n = doc.getArchivo() != null ? doc.getArchivo().getNombre() : "";
             if (n == null || n.isEmpty()) return "";
-            return n.length() > 20 ? n.substring(0, 20) + "..." : n;
-        }, "Archivo");
-        agregarColumna(DocumentoConvertido::getRazonSocial, "Razón Social");
-        agregarColumna(DocumentoConvertido::getCuit, "CUIT");
-        agregarColumna(DocumentoConvertido::getNumeroComprobante, "N° Comprobante");
+            return n.length() > 25 ? n.substring(0, 25) + "..." : n;
+        }, "NOMBRE");
+        agregarColumna(DocumentoConvertido::getCuit, "CUIT DEL EMISOR");
+        agregarColumna(DocumentoConvertido::getCentroEmision, "CENTRO DE EMISION");
+        agregarColumna(DocumentoConvertido::getNumeroComprobante, "NUMERO DE COMPROBANTE");
     }
 
     @Override
