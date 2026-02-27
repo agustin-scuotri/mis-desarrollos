@@ -48,4 +48,13 @@ public interface DocumentoConvertidoRepository extends JpaRepository<DocumentoCo
     // ── Fechas de conversión para gráfico ─────────────────────────────────────
     @Query("SELECT d.fechaConversion FROM DocumentoConvertido d WHERE d.fechaConversion >= :desde")
     List<LocalDateTime> findFechasDesde(@Param("desde") LocalDateTime desde);
+
+    // ── Verificación de factura duplicada (clave única de negocio) ────────────
+    @Query("SELECT COUNT(d) FROM DocumentoConvertido d WHERE " +
+           "d.cuit = :cuit AND d.codigoArca = :codigoArca AND " +
+           "d.centroEmision = :centroEmision AND d.numeroComprobante = :comprobante")
+    long countDuplicado(@Param("cuit") String cuit,
+                        @Param("codigoArca") String codigoArca,
+                        @Param("centroEmision") String centroEmision,
+                        @Param("comprobante") String comprobante);
 }

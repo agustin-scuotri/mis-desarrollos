@@ -9,6 +9,8 @@ import java.util.List;
 import com.desarrollos.base.FormView;
 import com.desarrollos.combos.ArchivoCombo;
 import com.desarrollos.entities.Archivo;
+import com.desarrollos.services.FacturaDuplicadaException;
+import com.desarrollos.services.TotalNegativoException;
 import com.desarrollos.entities.DocumentoConvertido;
 import com.desarrollos.entities.NetoGravado;
 import com.desarrollos.entities.PercepcionIIBB;
@@ -410,6 +412,26 @@ public class ConversorView extends FormView {
 					}
 				});
 
+			} catch (FacturaDuplicadaException ex) {
+				final FacturaDuplicadaException dup = ex;
+				ui.access(() -> {
+					panelProgreso.setVisible(false);
+					btnConvertir.setEnabled(true);
+					mostrarDialogoDuplicada(dup);
+				});
+				// Marcar como error para que no vuelva a aparecer en el combo
+				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
+
+			} catch (TotalNegativoException ex) {
+				final TotalNegativoException neg = ex;
+				ui.access(() -> {
+					panelProgreso.setVisible(false);
+					btnConvertir.setEnabled(true);
+					mostrarDialogoTotalNegativo(neg);
+				});
+				// Marcar como error para que no vuelva a aparecer en el combo
+				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
+
 			} catch (Exception ex) {
 				ui.access(() -> {
 					panelProgreso.setVisible(false);
@@ -530,6 +552,110 @@ public class ConversorView extends FormView {
 		Button btnAceptar = new Button("Aceptar", e -> dialog.close());
 		btnAceptar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 		btnAceptar.getStyle().set("background-color", "#16a34a").set("color", "white");
+
+		dialog.add(contenido);
+		dialog.getFooter().add(btnAceptar);
+		dialog.open();
+	}
+
+	// ── Diálogo: factura duplicada ────────────────────────────────────────────
+	private void mostrarDialogoDuplicada(FacturaDuplicadaException ex) {
+		Dialog dialog = new Dialog();
+		dialog.setModal(true);
+		dialog.setWidth("520px");
+
+		Icon icono = VaadinIcon.WARNING.create();
+		icono.setSize("48px");
+		icono.setColor("#dc2626");
+
+		H3 titulo = new H3("Factura ya procesada");
+		titulo.getStyle().set("color", "#dc2626").set("margin", "8px 0 0 0").set("font-weight", "700");
+
+		Paragraph mensaje = new Paragraph(
+				"Ya existe una factura registrada con la misma combinación de datos.\n"
+				+ "El archivo fue marcado como procesado con error y no volverá a aparecer en el selector.");
+		mensaje.getStyle()
+				.set("text-align", "center").set("color", "#475569")
+				.set("font-size", "0.875rem").set("white-space", "pre-line").set("margin", "0");
+
+		VerticalLayout detalle = new VerticalLayout();
+		detalle.setPadding(false);
+		detalle.setSpacing(false);
+		detalle.getStyle()
+				.set("background-color", "#fef2f2").set("border", "1px solid #fecaca")
+				.set("border-radius", "8px").set("padding", "12px").set("gap", "6px")
+				.set("width", "100%").set("margin-top", "8px");
+
+		Span tituloDetalle = new Span("Clave de la factura duplicada:");
+		tituloDetalle.getStyle().set("font-weight", "600").set("color", "#dc2626").set("font-size", "0.8rem");
+		detalle.add(tituloDetalle);
+
+		String[][] campos = {
+			{ "CUIT del Emisor",   ex.getCuit() },
+			{ "Código ARCA",       ex.getCodigoArca() },
+			{ "Centro de Emisión", ex.getCentroEmision() },
+			{ "N° Comprobante",    ex.getNumeroComprobante() }
+		};
+		for (String[] par : campos) {
+			Span item = new Span(par[0] + ": " + par[1]);
+			item.getStyle().set("color", "#991b1b").set("font-size", "0.82rem");
+			detalle.add(item);
+		}
+
+		VerticalLayout contenido = new VerticalLayout(icono, titulo, mensaje, detalle);
+		contenido.setAlignItems(FlexComponent.Alignment.CENTER);
+		contenido.setPadding(true);
+		contenido.setSpacing(true);
+
+		Button btnAceptar = new Button("Aceptar", e -> dialog.close());
+		btnAceptar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+		btnAceptar.getStyle().set("background-color", "#dc2626").set("color", "white");
+
+		dialog.add(contenido);
+		dialog.getFooter().add(btnAceptar);
+		dialog.open();
+	}
+
+	// ── Diálogo: total negativo ───────────────────────────────────────────────
+	private void mostrarDialogoTotalNegativo(TotalNegativoException ex) {
+		Dialog dialog = new Dialog();
+		dialog.setModal(true);
+		dialog.setWidth("480px");
+
+		Icon icono = VaadinIcon.WARNING.create();
+		icono.setSize("48px");
+		icono.setColor("#dc2626");
+
+		H3 titulo = new H3("Total inválido");
+		titulo.getStyle().set("color", "#dc2626").set("margin", "8px 0 0 0").set("font-weight", "700");
+
+		Paragraph mensaje = new Paragraph(
+				"No se permiten facturas con subtotal negativo.\n"
+				+ "Revisá el documento e intentá nuevamente.");
+		mensaje.getStyle()
+				.set("text-align", "center").set("color", "#475569")
+				.set("font-size", "0.875rem").set("white-space", "pre-line").set("margin", "0");
+
+		VerticalLayout detalle = new VerticalLayout();
+		detalle.setPadding(false);
+		detalle.setSpacing(false);
+		detalle.getStyle()
+				.set("background-color", "#fef2f2").set("border", "1px solid #fecaca")
+				.set("border-radius", "8px").set("padding", "12px")
+				.set("width", "100%").set("margin-top", "8px");
+
+		Span itemTotal = new Span("Total detectado: " + ex.getTotal());
+		itemTotal.getStyle().set("color", "#991b1b").set("font-size", "0.82rem").set("font-weight", "600");
+		detalle.add(itemTotal);
+
+		VerticalLayout contenido = new VerticalLayout(icono, titulo, mensaje, detalle);
+		contenido.setAlignItems(FlexComponent.Alignment.CENTER);
+		contenido.setPadding(true);
+		contenido.setSpacing(true);
+
+		Button btnAceptar = new Button("Aceptar", e -> dialog.close());
+		btnAceptar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+		btnAceptar.getStyle().set("background-color", "#dc2626").set("color", "white");
 
 		dialog.add(contenido);
 		dialog.getFooter().add(btnAceptar);

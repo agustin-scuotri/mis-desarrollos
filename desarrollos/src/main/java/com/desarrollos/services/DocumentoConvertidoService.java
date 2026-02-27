@@ -64,12 +64,16 @@ public class DocumentoConvertidoService {
             // El modelo detectó múltiples facturas distintas en el mismo archivo
             for (JsonNode nodo : raiz) {
                 DocumentoConvertido doc = mapearDesdeNodo(nodo, archivoCompleto, nodo.toString());
+                validarNoDuplicada(doc);
+                validarTotalNoNegativo(doc);
                 repository.save(doc);
                 resultados.add(doc);
             }
         } else {
             // Factura única (caso normal)
             DocumentoConvertido doc = mapearDesdeNodo(raiz, archivoCompleto, jsonTexto);
+            validarNoDuplicada(doc);
+            validarTotalNoNegativo(doc);
             repository.save(doc);
             resultados.add(doc);
         }
@@ -271,6 +275,47 @@ public class DocumentoConvertidoService {
                 archivoService.actualizarEstado(archivo, "PENDIENTE");
                 archivo.setConvertido(false);
                 try { archivoService.guardar(archivo); } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    /** Lanza FacturaDuplicadaException si ya existe un documento con la misma clave de negocio. */
+    private void validarNoDuplicada(DocumentoConvertido doc) {
+        if (!estaVacio(doc.getCuit()) && !estaVacio(doc.getCodigoArca())
+                && !estaVacio(doc.getCentroEmision()) && !estaVacio(doc.getNumeroComprobante())) {
+            long count = repository.countDuplicado(
+                    doc.getCuit(), doc.getCodigoArca(),
+                    doc.getCentroEmision(), doc.getNumeroComprobante());
+            if (count > 0) {
+                throw new FacturaDuplicadaException(
+                        doc.getCuit(), doc.getCodigoArca(),
+                        doc.getCentroEmision(), doc.getNumeroComprobante());
+            }
+        }
+    }
+
+    /** Lanza TotalNegativoException si el total de la factura es un número negativo. */
+    private void validarTotalNoNegativo(DocumentoConvertido doc) {
+        if (!estaVacio(doc.getTotal())) {
+            // Quitar símbolos de moneda y espacios, luego intentar parsear
+            String limpio = doc.getTotal().replaceAll("[$\\s]", "").trim();
+            // Si empieza con '-' ya es negativo sin necesidad de parsear
+            if (limpio.startsWith("-")) {
+                throw new TotalNegativoException(doc.getTotal());
+            }
+            try {
+                // Normalizar formato: puntos de miles y coma decimal (ej: 1.234,56)
+                if (limpio.matches(".*\\d\\.\\d{3}.*")) {
+                    limpio = limpio.replace(".", "").replace(",", ".");
+                } else {
+                    limpio = limpio.replace(",", ".");
+                }
+                double valor = Double.parseDouble(limpio);
+                if (valor < 0) {
+                    throw new TotalNegativoException(doc.getTotal());
+                }
+            } catch (NumberFormatException ignored) {
+                // No se puede parsear; otras validaciones ya lo marcarán si corresponde
             }
         }
     }
