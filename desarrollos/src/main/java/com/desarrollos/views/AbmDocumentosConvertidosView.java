@@ -154,14 +154,16 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         // ── Datos clave de la factura ─────────────────────────────────────────
         HorizontalLayout panelDatos = new HorizontalLayout();
         panelDatos.setWidthFull();
-        panelDatos.setSpacing(true);
+        panelDatos.setSpacing(false);
         panelDatos.getStyle()
                 .set("background-color", "#f0f9ff")
                 .set("border", "1px solid #bae6fd")
                 .set("border-radius", "10px")
                 .set("padding", "14px 18px")
-                .set("flex-wrap", "wrap")
-                .set("gap", "20px");
+                .set("display", "flex")
+                .set("flex-direction", "row")
+                .set("align-items", "flex-start")
+                .set("gap", "40px");
 
         panelDatos.add(
             crearCampoInfo("CUIT del Emisor",     estaVacio(doc.getCuit())              ? "—" : doc.getCuit()),
@@ -350,7 +352,8 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         VerticalLayout campo = new VerticalLayout(lbl, val);
         campo.setPadding(false);
         campo.setSpacing(false);
-        campo.getStyle().set("gap", "2px").set("min-width", "160px");
+        campo.setWidth("auto");   // evita que VerticalLayout ocupe 100% del ancho
+        campo.getStyle().set("gap", "2px").set("flex-shrink", "0");
         return campo;
     }
 
