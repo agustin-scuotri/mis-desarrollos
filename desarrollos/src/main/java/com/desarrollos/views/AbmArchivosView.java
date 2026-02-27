@@ -165,6 +165,11 @@ public class AbmArchivosView extends CrudView<Archivo> {
 
     @Override
     protected void accionEditar(Archivo item) {
+        if ("PROCESADO".equals(item.getEstadoConversion())) {
+            Notification.show("No se puede editar un archivo ya procesado. Usá Visualizar para ver su contenido.")
+                    .addThemeVariants(NotificationVariant.LUMO_WARNING);
+            return;
+        }
         getUI().ifPresent(ui -> ui.navigate(ArchivoView.class, item.getId().toString()));
     }
 

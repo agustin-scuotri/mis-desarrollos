@@ -85,7 +85,7 @@ public class ArchivoView extends FormView implements HasUrlParameter<String> {
                     binder.readBean(archivoActual);
                     actualizarInterfazCargaExistente();
 
-                    if (esLectura) {
+                    if (esLectura || "PROCESADO".equals(archivoActual.getEstadoConversion())) {
                         aplicarModoLectura();
                     } else {
                         setTitulo(getTranslation("archivo.editar.titulo"));
@@ -243,7 +243,13 @@ public class ArchivoView extends FormView implements HasUrlParameter<String> {
 				byte[] bytes = buffer.getInputStream().readAllBytes();
 				archivoActual.setContenido(bytes);
 				archivoActual.setNombreOriginal(event.getFileName());
-				
+
+				// Si el archivo tenía error y se reemplaza el contenido, volver a PENDIENTE
+				if ("PROCESADO_ERROR".equals(archivoActual.getEstadoConversion())) {
+					archivoActual.setEstadoConversion("PENDIENTE");
+					archivoActual.setConvertido(false);
+				}
+
 				nombre.setValue(event.getFileName());
 				nombreArchivoLabel.setText(event.getFileName());
 				
