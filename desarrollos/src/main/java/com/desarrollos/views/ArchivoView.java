@@ -198,8 +198,8 @@ public class ArchivoView extends FormView implements HasUrlParameter<String> {
 		colDerecha.setAlignItems(Alignment.CENTER);
 
 		Span labelArchivo = new Span("Archivo adjunto");
-		Span asterisco = new Span(" *");
-		asterisco.getStyle().set("color", "#dc2626");
+		Span asterisco = new Span(" \u2022");
+		asterisco.getStyle().set("color", "var(--lumo-primary-color)");
 		HorizontalLayout headerArchivo = new HorizontalLayout(labelArchivo, asterisco);
 		headerArchivo.setSpacing(false);
 
