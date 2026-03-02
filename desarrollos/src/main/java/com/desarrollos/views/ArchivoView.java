@@ -53,6 +53,8 @@ public class ArchivoView extends FormView implements HasUrlParameter<String> {
 	private VerticalLayout estadoCargado = new VerticalLayout();
 	private VerticalLayout estadoVacio = new VerticalLayout();
 
+	private Span errorArchivo = new Span("Debe adjuntar un archivo");
+
 	private Binder<Archivo> binder = new BeanValidationBinder<>(Archivo.class);
 	private Archivo archivoActual;
 
@@ -118,7 +120,8 @@ public class ArchivoView extends FormView implements HasUrlParameter<String> {
 		upload.setVisible(true);
 		btnGuardar.setVisible(true);
 		btnCancelar.setText(getTranslation("app.cancelar"));
-		
+
+		errorArchivo.setVisible(false);
 		galeriaContainer.setVisible(false);
 		estadoCargado.setVisible(false);
 		estadoVacio.setVisible(true);
@@ -193,7 +196,17 @@ public class ArchivoView extends FormView implements HasUrlParameter<String> {
 		VerticalLayout colDerecha = new VerticalLayout();
 		colDerecha.setWidth("60%");
 		colDerecha.setAlignItems(Alignment.CENTER);
-		colDerecha.add(new Span("Archivo adjunto"), configurarZonaUpload(), galeriaContainer);
+
+		Span labelArchivo = new Span("Archivo adjunto");
+		Span asterisco = new Span(" *");
+		asterisco.getStyle().set("color", "#dc2626");
+		HorizontalLayout headerArchivo = new HorizontalLayout(labelArchivo, asterisco);
+		headerArchivo.setSpacing(false);
+
+		errorArchivo.getStyle().set("color", "#dc2626").set("font-size", "0.75rem");
+		errorArchivo.setVisible(false);
+
+		colDerecha.add(headerArchivo, configurarZonaUpload(), errorArchivo, galeriaContainer);
 
 		HorizontalLayout mainLayout = new HorizontalLayout(colIzquierda, colDerecha);
 		mainLayout.setWidthFull();
@@ -261,6 +274,7 @@ public class ArchivoView extends FormView implements HasUrlParameter<String> {
 				
 				estadoVacio.setVisible(false);
 				estadoCargado.setVisible(true);
+				errorArchivo.setVisible(false);
 				upload.getStyle().set("z-index", "0");
 				zonaVisual.getStyle().set("border-style", "solid").set("border-color", "#002060");
 				
@@ -282,10 +296,10 @@ public class ArchivoView extends FormView implements HasUrlParameter<String> {
 	@Override
 	protected void accionGuardar() {
 		if (archivoActual.getContenido() == null || archivoActual.getContenido().length == 0) {
-			Notification.show("Debe adjuntar un archivo obligatoriamente", 3000, Notification.Position.MIDDLE)
-					.addThemeVariants(NotificationVariant.LUMO_ERROR);
+			errorArchivo.setVisible(true);
 			return;
 		}
+		errorArchivo.setVisible(false);
 
 		if (binder.writeBeanIfValid(archivoActual)) {
 			try {
