@@ -17,6 +17,7 @@ public class Archivo {
     @Column(unique = true)
     private String codigo;
 
+    @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
 
     @Column(length = 1000)
