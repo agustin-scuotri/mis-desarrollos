@@ -181,6 +181,12 @@ public class ArchivoView extends FormView implements HasUrlParameter<String> {
 		nombre.setLabel(getTranslation("archivo.nombre"));
 		nombre.setRequired(true);
 		nombre.setWidthFull();
+		// Forzar mensaje de error en rojo y sin negrita (sobrescribe estilo del tema)
+		nombre.getElement().executeJs(
+			"const s = document.createElement('style');" +
+			"s.textContent = ':host([invalid]) [part=error-message] { color: #dc2626 !important; font-weight: 400 !important; }';" +
+			"this.shadowRoot.appendChild(s);"
+		);
 
 		colIzquierda.add(codigo, nombre);
 
