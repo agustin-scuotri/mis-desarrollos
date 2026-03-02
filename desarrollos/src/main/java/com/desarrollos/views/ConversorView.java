@@ -3,13 +3,14 @@ package com.desarrollos.views;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import com.desarrollos.base.FormView;
 import com.desarrollos.combos.ArchivoCombo;
 import com.desarrollos.entities.Archivo;
+import com.desarrollos.services.ErrorFactura;
 import com.desarrollos.services.FacturaDuplicadaException;
+import com.desarrollos.services.ResultadoConversion;
 import com.desarrollos.services.TotalNegativoException;
 import com.desarrollos.entities.DocumentoConvertido;
 import com.desarrollos.entities.NetoGravado;
@@ -19,6 +20,7 @@ import com.desarrollos.entities.ProductoConcepto;
 import com.desarrollos.entities.Vencimiento;
 import com.desarrollos.services.ArchivoService;
 import com.desarrollos.services.DocumentoConvertidoService;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -38,6 +40,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
+import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamRegistration;
@@ -58,23 +61,11 @@ public class ConversorView extends FormView {
 	private final Button btnVerArchivo = new Button("Ver Archivo", VaadinIcon.EYE.create());
 
 	// ── Progreso ──────────────────────────────────────────────────────────────
-	private final ProgressBar progressBar      = new ProgressBar();
+	private final ProgressBar    progressBar   = new ProgressBar();
 	private final VerticalLayout panelProgreso = new VerticalLayout();
 
-	// ── Panel resultado ───────────────────────────────────────────────────────
-	private final VerticalLayout panelResultado  = new VerticalLayout();
-	private final Pre jsonViewer                 = new Pre();
-	private final Button btnVerMas   = new Button("Ver más",   VaadinIcon.CHEVRON_DOWN.create());
-	private final Button btnVerMenos = new Button("Ver menos", VaadinIcon.CHEVRON_UP.create());
-	private final HorizontalLayout barraDescarga = new HorizontalLayout();
-	private final Paragraph parrafoNotas         = new Paragraph();
-
-	private final HorizontalLayout      panelDatos           = new HorizontalLayout();
-	private final Grid<ProductoConcepto> gridProductos        = new Grid<>(ProductoConcepto.class, false);
-	private final Grid<NetoGravado>      gridNetosGravados    = new Grid<>(NetoGravado.class, false);
-	private final Grid<PercepcionIIBB>   gridPercepcionesIIBB = new Grid<>(PercepcionIIBB.class, false);
-	private final Grid<PercepcionIVA>    gridPercepcionesIVA  = new Grid<>(PercepcionIVA.class, false);
-	private final Grid<Vencimiento>      gridVencimientos     = new Grid<>(Vencimiento.class, false);
+	// ── Panel resultado (contenedor dinámico) ─────────────────────────────────
+	private final VerticalLayout panelResultado = new VerticalLayout();
 
 	public ConversorView(ArchivoService archivoService, DocumentoConvertidoService documentoConvertidoService) {
 		this.archivoService = archivoService;
@@ -95,10 +86,9 @@ public class ConversorView extends FormView {
 			boolean hayArchivo = archivoSeleccionado != null;
 			btnVerArchivo.setEnabled(hayArchivo);
 			if (hayArchivo) {
+				panelResultado.removeAll();
 				panelResultado.setVisible(false);
 				panelProgreso.setVisible(false);
-				jsonViewer.setText("");
-				barraDescarga.removeAll();
 			}
 		});
 
@@ -136,7 +126,24 @@ public class ConversorView extends FormView {
 		panelProgreso.setVisible(false);
 		panelProgreso.getStyle().set("margin-top", "20px");
 
-		// ── Panel datos clave ─────────────────────────────────────────────────
+		// ── Panel resultado (contenedor dinámico, se llena en ejecutarConversion) ──
+		panelResultado.setPadding(false);
+		panelResultado.setSpacing(true);
+		panelResultado.setVisible(false);
+		panelResultado.getStyle().set("margin-top", "20px");
+
+		contenidoPrincipal.add(archivoCombo, botones, panelProgreso, panelResultado);
+		barraBotones.setVisible(false);
+	}
+
+	// ── Contenido completo de una factura ─────────────────────────────────────
+	private VerticalLayout crearContenidoFactura(DocumentoConvertido doc) {
+		VerticalLayout contenido = new VerticalLayout();
+		contenido.setPadding(false);
+		contenido.setSpacing(true);
+
+		// Panel datos clave
+		HorizontalLayout panelDatos = new HorizontalLayout();
 		panelDatos.setWidthFull();
 		panelDatos.setSpacing(false);
 		panelDatos.getStyle()
@@ -148,14 +155,20 @@ public class ConversorView extends FormView {
 				.set("flex-direction", "row")
 				.set("align-items", "flex-start")
 				.set("gap", "40px");
-		panelDatos.setVisible(false);
+		panelDatos.add(
+			crearCampoInfo("CUIT del Emisor",  estaVacio(doc.getCuit())              ? "—" : doc.getCuit()),
+			crearCampoInfo("N° Comprobante",    estaVacio(doc.getNumeroComprobante()) ? "—" : doc.getNumeroComprobante()),
+			crearCampoInfo("Centro de Emisión", estaVacio(doc.getCentroEmision())     ? "—" : doc.getCentroEmision()),
+			crearCampoInfo("Total",             estaVacio(doc.getTotal())             ? "—" : doc.getTotal())
+		);
 
-		// ── Panel resultado ───────────────────────────────────────────────────
+		// Resultado JSON (colapsable)
 		H3 tituloResultado = new H3("Resultado JSON");
 		tituloResultado.getStyle()
 				.set("color", "#1e293b").set("margin", "0").set("font-weight", "700")
 				.set("font-size", "1rem").set("letter-spacing", "-0.2px");
 
+		Pre jsonViewer = new Pre();
 		jsonViewer.getStyle()
 				.set("background-color", "#1e1e2e").set("color", "#cdd6f4").set("border", "none")
 				.set("border-radius", "12px").set("padding", "20px")
@@ -163,34 +176,23 @@ public class ConversorView extends FormView {
 				.set("font-size", "13px").set("width", "100%").set("white-space", "pre-wrap")
 				.set("word-break", "break-word").set("box-shadow", "inset 0 2px 8px rgba(0,0,0,0.4)")
 				.set("line-height", "1.6");
+		jsonViewer.setText(doc.getJsonResultado());
 		jsonViewer.setVisible(false);
 
+		Button btnVerMas   = new Button("Ver más",   VaadinIcon.CHEVRON_DOWN.create());
+		Button btnVerMenos = new Button("Ver menos", VaadinIcon.CHEVRON_UP.create());
 		btnVerMas.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 		btnVerMas.getStyle().set("align-self", "flex-start");
-		btnVerMas.addClickListener(e -> {
-			jsonViewer.setVisible(true);
-			btnVerMas.setVisible(false);
-			btnVerMenos.setVisible(true);
-		});
-
 		btnVerMenos.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 		btnVerMenos.getStyle().set("align-self", "flex-start");
 		btnVerMenos.setVisible(false);
-		btnVerMenos.addClickListener(e -> {
-			jsonViewer.setVisible(false);
-			btnVerMas.setVisible(true);
-			btnVerMenos.setVisible(false);
-		});
-
-		parrafoNotas.getStyle()
-				.set("color", "#92400e").set("font-size", "0.875rem").set("margin-top", "10px")
-				.set("white-space", "pre-line").set("background-color", "#fffbeb")
-				.set("border", "1px solid #fde68a").set("border-radius", "8px").set("padding", "12px");
-		parrafoNotas.setVisible(false);
+		btnVerMas.addClickListener(e -> { jsonViewer.setVisible(true);  btnVerMas.setVisible(false); btnVerMenos.setVisible(true); });
+		btnVerMenos.addClickListener(e -> { jsonViewer.setVisible(false); btnVerMas.setVisible(true); btnVerMenos.setVisible(false); });
 
 		// ── Grid productos/conceptos ──────────────────────────────────────────
 		H4 tituloProductos = new H4("Productos / Conceptos");
 		tituloProductos.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
+		Grid<ProductoConcepto> gridProductos = new Grid<>(ProductoConcepto.class, false);
 		gridProductos.addColumn(ProductoConcepto::getSku).setHeader("SKU").setWidth("130px").setFlexGrow(0);
 		gridProductos.addColumn(ProductoConcepto::getDescripcion).setHeader("Descripción").setFlexGrow(1);
 		gridProductos.addColumn(ProductoConcepto::getCantidad).setHeader("Cant.").setWidth("70px").setFlexGrow(0);
@@ -202,60 +204,134 @@ public class ConversorView extends FormView {
 		gridProductos.addColumn(ProductoConcepto::getRemito).setHeader("Remito").setWidth("130px").setFlexGrow(0);
 		gridProductos.setAllRowsVisible(true);
 		gridProductos.getStyle().set("margin-top", "4px");
-		gridProductos.setVisible(false);
+		boolean hayProductos = !doc.getProductosConceptos().isEmpty();
+		if (hayProductos) gridProductos.setItems(doc.getProductosConceptos());
+		tituloProductos.setVisible(hayProductos);
+		gridProductos.setVisible(hayProductos);
 
 		// ── Grid netos gravados ───────────────────────────────────────────────
 		H4 tituloNetos = new H4("Netos Gravados e IVA");
 		tituloNetos.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
+		Grid<NetoGravado> gridNetosGravados = new Grid<>(NetoGravado.class, false);
 		gridNetosGravados.addColumn(NetoGravado::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
 		gridNetosGravados.addColumn(NetoGravado::getImporteNetoGravado).setHeader("Importe Neto Gravado").setFlexGrow(1);
 		gridNetosGravados.addColumn(NetoGravado::getIva).setHeader("IVA").setWidth("130px").setFlexGrow(0);
 		gridNetosGravados.setAllRowsVisible(true);
 		gridNetosGravados.getStyle().set("margin-top", "4px");
-		gridNetosGravados.setVisible(false);
+		boolean hayNetos = !doc.getNetosGravados().isEmpty();
+		if (hayNetos) gridNetosGravados.setItems(doc.getNetosGravados());
+		tituloNetos.setVisible(hayNetos);
+		gridNetosGravados.setVisible(hayNetos);
 
 		// ── Grid percepciones IIBB ────────────────────────────────────────────
 		H4 tituloPercepcionesIIBB = new H4("Percepciones IIBB");
 		tituloPercepcionesIIBB.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
+		Grid<PercepcionIIBB> gridPercepcionesIIBB = new Grid<>(PercepcionIIBB.class, false);
 		gridPercepcionesIIBB.addColumn(PercepcionIIBB::getProvincia).setHeader("Provincia").setFlexGrow(1);
 		gridPercepcionesIIBB.addColumn(PercepcionIIBB::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
 		gridPercepcionesIIBB.addColumn(PercepcionIIBB::getImporte).setHeader("Importe").setWidth("130px").setFlexGrow(0);
 		gridPercepcionesIIBB.setAllRowsVisible(true);
 		gridPercepcionesIIBB.getStyle().set("margin-top", "4px");
-		gridPercepcionesIIBB.setVisible(false);
+		boolean hayIIBB = !doc.getPercepcionesIIBB().isEmpty();
+		if (hayIIBB) gridPercepcionesIIBB.setItems(doc.getPercepcionesIIBB());
+		tituloPercepcionesIIBB.setVisible(hayIIBB);
+		gridPercepcionesIIBB.setVisible(hayIIBB);
 
 		// ── Grid percepciones IVA ─────────────────────────────────────────────
 		H4 tituloPercepcionesIVA = new H4("Percepciones IVA");
 		tituloPercepcionesIVA.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
+		Grid<PercepcionIVA> gridPercepcionesIVA = new Grid<>(PercepcionIVA.class, false);
 		gridPercepcionesIVA.addColumn(PercepcionIVA::getAlicuota).setHeader("Alícuota").setWidth("150px").setFlexGrow(0);
 		gridPercepcionesIVA.addColumn(PercepcionIVA::getImporte).setHeader("Importe").setFlexGrow(1);
 		gridPercepcionesIVA.setAllRowsVisible(true);
 		gridPercepcionesIVA.getStyle().set("margin-top", "4px");
-		gridPercepcionesIVA.setVisible(false);
+		boolean hayIVA = !doc.getPercepcionesIVA().isEmpty();
+		if (hayIVA) gridPercepcionesIVA.setItems(doc.getPercepcionesIVA());
+		tituloPercepcionesIVA.setVisible(hayIVA);
+		gridPercepcionesIVA.setVisible(hayIVA);
 
 		// ── Grid vencimientos ─────────────────────────────────────────────────
 		H4 tituloVencimientos = new H4("Vencimientos");
 		tituloVencimientos.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
+		Grid<Vencimiento> gridVencimientos = new Grid<>(Vencimiento.class, false);
 		gridVencimientos.addColumn(Vencimiento::getFecha).setHeader("Fecha").setWidth("150px").setFlexGrow(0);
 		gridVencimientos.addColumn(Vencimiento::getImporte).setHeader("Importe").setFlexGrow(1);
 		gridVencimientos.setAllRowsVisible(true);
 		gridVencimientos.getStyle().set("margin-top", "4px");
-		gridVencimientos.setVisible(false);
+		boolean hayVencimientos = !doc.getVencimientos().isEmpty();
+		if (hayVencimientos) gridVencimientos.setItems(doc.getVencimientos());
+		tituloVencimientos.setVisible(hayVencimientos);
+		gridVencimientos.setVisible(hayVencimientos);
 
-		panelResultado.add(panelDatos, tituloResultado, btnVerMas, jsonViewer, btnVerMenos,
+		// ── Notas campos opcionales faltantes ────────────────────────────────
+		Paragraph parrafoNotas = new Paragraph();
+		parrafoNotas.getStyle()
+				.set("color", "#92400e").set("font-size", "0.875rem").set("margin-top", "10px")
+				.set("white-space", "pre-line").set("background-color", "#fffbeb")
+				.set("border", "1px solid #fde68a").set("border-radius", "8px").set("padding", "12px");
+		parrafoNotas.setVisible(false);
+
+		StringBuilder notas = new StringBuilder();
+		if (estaVacio(doc.getRazonSocial()))          notas.append("• Razón social\n");
+		if (estaVacio(doc.getSituacionIva()))         notas.append("• Situación ante IVA\n");
+		if (estaVacio(doc.getDireccion()))            notas.append("• Dirección\n");
+		if (estaVacio(doc.getCiudad()))               notas.append("• Ciudad/Localidad\n");
+		if (estaVacio(doc.getCodigoPostal()))         notas.append("• Código postal\n");
+		if (estaVacio(doc.getProvincia()))            notas.append("• Provincia\n");
+		if (estaVacio(doc.getPais()))                 notas.append("• País\n");
+		if (estaVacio(doc.getTelefono()))             notas.append("• Teléfono\n");
+		if (estaVacio(doc.getMail()))                 notas.append("• Mail\n");
+		if (estaVacio(doc.getLetra()))                notas.append("• Letra del comprobante\n");
+		if (estaVacio(doc.getCae()))                  notas.append("• CAE\n");
+		if (estaVacio(doc.getFechaVencimientoCae()))  notas.append("• Fecha venc. CAE\n");
+		if (estaVacio(doc.getCotizacion()))           notas.append("• Cotización\n");
+		if (estaVacio(doc.getOrdenCompra()))          notas.append("• Orden de compra\n");
+		if (doc.getProductosConceptos().isEmpty())    notas.append("• Productos/Conceptos\n");
+		if (doc.getNetosGravados().isEmpty())         notas.append("• Netos gravados e IVA\n");
+		if (estaVacio(doc.getSubTotalNoGravado()))    notas.append("• Importe neto no gravado\n");
+		if (doc.getPercepcionesIIBB().isEmpty())      notas.append("• Percepciones IIBB\n");
+		if (doc.getPercepcionesIVA().isEmpty())       notas.append("• Percepciones IVA\n");
+		if (doc.getVencimientos().isEmpty())          notas.append("• Vencimientos\n");
+		if (notas.length() > 0) {
+			parrafoNotas.setText("⚠ Campos no encontrados:\n" + notas);
+			parrafoNotas.setVisible(true);
+		}
+
+		contenido.add(panelDatos,
+				tituloResultado, btnVerMas, jsonViewer, btnVerMenos,
 				tituloProductos, gridProductos,
 				tituloNetos, gridNetosGravados,
 				tituloPercepcionesIIBB, gridPercepcionesIIBB,
 				tituloPercepcionesIVA, gridPercepcionesIVA,
 				tituloVencimientos, gridVencimientos,
-				parrafoNotas, barraDescarga);
-		panelResultado.setPadding(false);
-		panelResultado.setSpacing(true);
-		panelResultado.setVisible(false);
-		panelResultado.getStyle().set("margin-top", "20px");
+				parrafoNotas,
+				crearBotonDescarga(doc));
+		return contenido;
+	}
 
-		contenidoPrincipal.add(archivoCombo, botones, panelProgreso, panelResultado);
-		barraBotones.setVisible(false);
+	// ── Panel inline para facturas que no pudieron convertirse ────────────────
+	private Component crearPanelFallas(List<String> mensajes) {
+		VerticalLayout panel = new VerticalLayout();
+		panel.setPadding(false);
+		panel.setSpacing(false);
+		panel.setWidthFull();
+		panel.getStyle()
+				.set("background-color", "#fef2f2")
+				.set("border", "1px solid #fecaca")
+				.set("border-radius", "8px")
+				.set("padding", "12px")
+				.set("gap", "4px");
+
+		Span titulo = new Span("⚠  Facturas no convertidas:");
+		titulo.getStyle().set("font-weight", "600").set("color", "#dc2626").set("font-size", "0.85rem");
+		panel.add(titulo);
+
+		for (String msg : mensajes) {
+			Span item = new Span("• " + msg);
+			item.getStyle().set("color", "#991b1b").set("font-size", "0.82rem");
+			panel.add(item);
+		}
+		return panel;
 	}
 
 	// ── Abrir archivo en nueva pestaña ────────────────────────────────────────
@@ -294,7 +370,6 @@ public class ConversorView extends FormView {
 		btnVerArchivo.setEnabled(false);
 
 		final Archivo archivoAConvertir = archivoSeleccionado;
-		// Limpiar selección antes de iniciar para que desaparezca del combo
 		archivoSeleccionado = null;
 		archivoCombo.limpiar();
 		archivoCombo.refrescar();
@@ -303,112 +378,78 @@ public class ConversorView extends FormView {
 
 		new Thread(() -> {
 			try {
-				final List<DocumentoConvertido> resultados = documentoConvertidoService.convertir(archivoAConvertir);
-				final DocumentoConvertido resultado = resultados.get(0);
-				final int totalFacturas = resultados.size();
-
-				// Detectar campos obligatorios faltantes en la primera factura (para mostrar al usuario)
-				final List<String> camposFaltantes = new ArrayList<>();
-				if (estaVacio(resultado.getCuit()))              camposFaltantes.add("CUIT del Emisor");
-				if (estaVacio(resultado.getCodigoArca()))        camposFaltantes.add("Código ARCA");
-				if (estaVacio(resultado.getCentroEmision()))     camposFaltantes.add("Centro de Emisión (Punto de Venta)");
-				if (estaVacio(resultado.getNumeroComprobante())) camposFaltantes.add("N° Comprobante");
-				if (estaVacio(resultado.getFechaEmision()))      camposFaltantes.add("Fecha de Emisión");
-				if (estaVacio(resultado.getMoneda()))            camposFaltantes.add("Moneda");
-				if (estaVacio(resultado.getTotal()))             camposFaltantes.add("Total");
+				final ResultadoConversion resultados = documentoConvertidoService.convertir(archivoAConvertir);
+				final List<DocumentoConvertido> exitosos = resultados.getExitosos();
+				final List<ErrorFactura>        errores  = resultados.getErrores();
 
 				ui.access(() -> {
 					panelProgreso.setVisible(false);
 					btnConvertir.setEnabled(true);
 
-					if (!camposFaltantes.isEmpty()) {
-						mostrarDialogoNoFactura(camposFaltantes);
+					// Separar exitosos en "válidos para tab" y "con campos obligatorios faltantes"
+					List<DocumentoConvertido> tabWorthy      = new ArrayList<>();
+					List<String>             mensajesFallas = new ArrayList<>();
+
+					for (int i = 0; i < exitosos.size(); i++) {
+						DocumentoConvertido doc = exitosos.get(i);
+						List<String> faltantes = verificarCamposObligatorios(doc);
+						if (!faltantes.isEmpty()) {
+							mensajesFallas.add("Factura " + (i + 1)
+									+ " — Campos obligatorios faltantes: "
+									+ String.join(", ", faltantes));
+						} else {
+							tabWorthy.add(doc);
+						}
+					}
+
+					// Caso especial: factura única con campos faltantes → diálogo (comportamiento original)
+					if (exitosos.size() == 1 && errores.isEmpty() && !mensajesFallas.isEmpty()) {
+						mostrarDialogoNoFactura(verificarCamposObligatorios(exitosos.get(0)));
 						return;
 					}
 
-					// Si hay múltiples facturas, mostrar diálogo informativo antes de mostrar la primera
-					if (totalFacturas > 1) {
-						mostrarDialogoMultiFactura(resultados);
+					// Agregar errores del servicio (duplicadas, total negativo)
+					for (ErrorFactura e : errores) {
+						mensajesFallas.add("Factura " + e.getNumero() + " — " + e.getDetalle());
 					}
 
-					// Panel de datos clave
-					panelDatos.removeAll();
-					panelDatos.add(
-						crearCampoInfo("CUIT del Emisor",  estaVacio(resultado.getCuit())              ? "—" : resultado.getCuit()),
-						crearCampoInfo("N° Comprobante",    estaVacio(resultado.getNumeroComprobante()) ? "—" : resultado.getNumeroComprobante()),
-						crearCampoInfo("Centro de Emisión", estaVacio(resultado.getCentroEmision())     ? "—" : resultado.getCentroEmision()),
-						crearCampoInfo("Total",             estaVacio(resultado.getTotal())             ? "—" : resultado.getTotal())
-					);
-					panelDatos.setVisible(true);
+					// Construir UI de resultado
+					panelResultado.removeAll();
 
-					// Mostrar JSON de la primera factura (colapsado por defecto)
-					jsonViewer.setText(resultado.getJsonResultado());
-					jsonViewer.setVisible(false);
-					btnVerMas.setVisible(true);
-					btnVerMenos.setVisible(false);
-
-					// Cargar grids
-					if (!resultado.getProductosConceptos().isEmpty()) {
-						gridProductos.setItems(resultado.getProductosConceptos());
-						gridProductos.setVisible(true);
-					} else { gridProductos.setVisible(false); }
-
-					if (!resultado.getNetosGravados().isEmpty()) {
-						gridNetosGravados.setItems(resultado.getNetosGravados());
-						gridNetosGravados.setVisible(true);
-					} else { gridNetosGravados.setVisible(false); }
-
-					if (!resultado.getPercepcionesIIBB().isEmpty()) {
-						gridPercepcionesIIBB.setItems(resultado.getPercepcionesIIBB());
-						gridPercepcionesIIBB.setVisible(true);
-					} else { gridPercepcionesIIBB.setVisible(false); }
-
-					if (!resultado.getPercepcionesIVA().isEmpty()) {
-						gridPercepcionesIVA.setItems(resultado.getPercepcionesIVA());
-						gridPercepcionesIVA.setVisible(true);
-					} else { gridPercepcionesIVA.setVisible(false); }
-
-					if (!resultado.getVencimientos().isEmpty()) {
-						gridVencimientos.setItems(resultado.getVencimientos());
-						gridVencimientos.setVisible(true);
-					} else { gridVencimientos.setVisible(false); }
-
-					generarBotonDescarga(resultado);
-
-					// Notas de campos opcionales faltantes
-					StringBuilder notas = new StringBuilder();
-					if (estaVacio(resultado.getRazonSocial()))          notas.append("• Razón social\n");
-					if (estaVacio(resultado.getSituacionIva()))         notas.append("• Situación ante IVA\n");
-					if (estaVacio(resultado.getDireccion()))            notas.append("• Dirección\n");
-					if (estaVacio(resultado.getCiudad()))               notas.append("• Ciudad/Localidad\n");
-					if (estaVacio(resultado.getCodigoPostal()))         notas.append("• Código postal\n");
-					if (estaVacio(resultado.getProvincia()))            notas.append("• Provincia\n");
-					if (estaVacio(resultado.getPais()))                 notas.append("• País\n");
-					if (estaVacio(resultado.getTelefono()))             notas.append("• Teléfono\n");
-					if (estaVacio(resultado.getMail()))                 notas.append("• Mail\n");
-					if (estaVacio(resultado.getLetra()))                notas.append("• Letra del comprobante\n");
-					if (estaVacio(resultado.getCae()))                  notas.append("• CAE\n");
-					if (estaVacio(resultado.getFechaVencimientoCae()))  notas.append("• Fecha venc. CAE\n");
-					if (estaVacio(resultado.getCotizacion()))           notas.append("• Cotización\n");
-					if (estaVacio(resultado.getOrdenCompra()))          notas.append("• Orden de compra\n");
-					if (resultado.getProductosConceptos().isEmpty())    notas.append("• Productos/Conceptos\n");
-					if (resultado.getNetosGravados().isEmpty())         notas.append("• Netos gravados e IVA\n");
-					if (estaVacio(resultado.getSubTotalNoGravado()))    notas.append("• Importe neto no gravado\n");
-					if (resultado.getPercepcionesIIBB().isEmpty())      notas.append("• Percepciones IIBB\n");
-					if (resultado.getPercepcionesIVA().isEmpty())       notas.append("• Percepciones IVA\n");
-					if (resultado.getVencimientos().isEmpty())          notas.append("• Vencimientos\n");
-
-					if (notas.length() > 0) {
-						parrafoNotas.setText("⚠ Campos no encontrados:\n" + notas);
-						parrafoNotas.setVisible(true);
-					} else {
-						parrafoNotas.setVisible(false);
+					if (!mensajesFallas.isEmpty()) {
+						panelResultado.add(crearPanelFallas(mensajesFallas));
 					}
 
-					panelResultado.setVisible(true);
-					if (totalFacturas == 1) {
-						Notification.show("¡Archivo convertido exitosamente!")
-								.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+					if (tabWorthy.size() == 1) {
+						panelResultado.add(crearContenidoFactura(tabWorthy.get(0)));
+					} else if (tabWorthy.size() > 1) {
+						TabSheet tabs = new TabSheet();
+						tabs.setWidthFull();
+						for (int i = 0; i < tabWorthy.size(); i++) {
+							DocumentoConvertido doc = tabWorthy.get(i);
+							String nro   = doc.getNumeroComprobante();
+							String label = estaVacio(nro) ? "Factura " + (i + 1) : "Nro " + nro;
+							tabs.add(label, crearContenidoFactura(doc));
+						}
+						panelResultado.add(tabs);
+					}
+
+					if (!tabWorthy.isEmpty() || !mensajesFallas.isEmpty()) {
+						panelResultado.setVisible(true);
+					}
+
+					// Notificación
+					if (!tabWorthy.isEmpty()) {
+						if (mensajesFallas.isEmpty()) {
+							String msg = tabWorthy.size() == 1
+									? "¡Archivo convertido exitosamente!"
+									: tabWorthy.size() + " facturas convertidas exitosamente.";
+							Notification.show(msg).addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+						} else {
+							Notification.show(tabWorthy.size() + " factura(s) convertida(s). "
+									+ mensajesFallas.size() + " con errores.")
+									.addThemeVariants(NotificationVariant.LUMO_WARNING);
+						}
 					}
 				});
 
@@ -419,7 +460,6 @@ public class ConversorView extends FormView {
 					btnConvertir.setEnabled(true);
 					mostrarDialogoDuplicada(dup);
 				});
-				// Marcar como error para que no vuelva a aparecer en el combo
 				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
 
 			} catch (TotalNegativoException ex) {
@@ -429,7 +469,6 @@ public class ConversorView extends FormView {
 					btnConvertir.setEnabled(true);
 					mostrarDialogoTotalNegativo(neg);
 				});
-				// Marcar como error para que no vuelva a aparecer en el combo
 				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
 
 			} catch (Exception ex) {
@@ -439,10 +478,22 @@ public class ConversorView extends FormView {
 					Notification.show("Error al convertir: " + ex.getMessage())
 							.addThemeVariants(NotificationVariant.LUMO_ERROR);
 				});
-				// Marcar el archivo como error para que no vuelva a aparecer en el combo
 				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
 			}
 		}).start();
+	}
+
+	// ── Verificar campos obligatorios de una factura ──────────────────────────
+	private List<String> verificarCamposObligatorios(DocumentoConvertido doc) {
+		List<String> faltantes = new ArrayList<>();
+		if (estaVacio(doc.getCuit()))              faltantes.add("CUIT del Emisor");
+		if (estaVacio(doc.getCodigoArca()))        faltantes.add("Código ARCA");
+		if (estaVacio(doc.getCentroEmision()))     faltantes.add("Centro de Emisión (Punto de Venta)");
+		if (estaVacio(doc.getNumeroComprobante())) faltantes.add("N° Comprobante");
+		if (estaVacio(doc.getFechaEmision()))      faltantes.add("Fecha de Emisión");
+		if (estaVacio(doc.getMoneda()))            faltantes.add("Moneda");
+		if (estaVacio(doc.getTotal()))             faltantes.add("Total");
+		return faltantes;
 	}
 
 	// ── Diálogo de error con lista de campos faltantes ────────────────────────
@@ -490,68 +541,6 @@ public class ConversorView extends FormView {
 		Button btnAceptar = new Button("Aceptar", e -> dialog.close());
 		btnAceptar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 		btnAceptar.getStyle().set("background-color", "#dc2626").set("color", "white");
-
-		dialog.add(contenido);
-		dialog.getFooter().add(btnAceptar);
-		dialog.open();
-	}
-
-	// ── Diálogo informativo cuando se detectan múltiples facturas ────────────
-	private void mostrarDialogoMultiFactura(List<DocumentoConvertido> resultados) {
-		Dialog dialog = new Dialog();
-		dialog.setModal(true);
-		dialog.setWidth("520px");
-
-		Icon icono = VaadinIcon.CHECK_CIRCLE.create();
-		icono.setSize("48px");
-		icono.setColor("#16a34a");
-
-		H3 titulo = new H3(resultados.size() + " facturas detectadas en el archivo");
-		titulo.getStyle().set("color", "#16a34a").set("margin", "8px 0 0 0").set("font-weight", "700")
-				.set("text-align", "center");
-
-		Paragraph mensaje = new Paragraph(
-				"Todas fueron convertidas y guardadas correctamente.\n"
-				+ "A continuación se muestran los datos de la primera factura.");
-		mensaje.getStyle()
-				.set("text-align", "center").set("color", "#475569")
-				.set("font-size", "0.875rem").set("white-space", "pre-line").set("margin", "0");
-
-		VerticalLayout listaFacturas = new VerticalLayout();
-		listaFacturas.setPadding(false);
-		listaFacturas.setSpacing(false);
-		listaFacturas.getStyle()
-				.set("background-color", "#f0fdf4").set("border", "1px solid #bbf7d0")
-				.set("border-radius", "8px").set("padding", "12px").set("gap", "4px")
-				.set("width", "100%").set("margin-top", "8px");
-
-		Span tituloLista = new Span("Facturas encontradas:");
-		tituloLista.getStyle().set("font-weight", "600").set("color", "#15803d").set("font-size", "0.8rem");
-		listaFacturas.add(tituloLista);
-
-		for (int i = 0; i < resultados.size(); i++) {
-			DocumentoConvertido doc = resultados.get(i);
-			String nro  = estaVacio(doc.getNumeroComprobante()) ? "Sin número" : doc.getNumeroComprobante();
-			String cuit = estaVacio(doc.getCuit())              ? "Sin CUIT"   : doc.getCuit();
-			String label = (i == 0 ? "★ " : "   ") + "Factura " + (i + 1) + "  —  Nro: " + nro + "  |  CUIT: " + cuit;
-			Span item = new Span(label);
-			item.getStyle().set("color", i == 0 ? "#14532d" : "#166534")
-					.set("font-size", "0.82rem")
-					.set("font-weight", i == 0 ? "600" : "400");
-			listaFacturas.add(item);
-		}
-
-		Span nota = new Span("Podés ver todas en Lista de JSONs del menú lateral.");
-		nota.getStyle().set("color", "#6b7280").set("font-size", "0.8rem").set("margin-top", "10px");
-
-		VerticalLayout contenido = new VerticalLayout(icono, titulo, mensaje, listaFacturas, nota);
-		contenido.setAlignItems(FlexComponent.Alignment.CENTER);
-		contenido.setPadding(true);
-		contenido.setSpacing(true);
-
-		Button btnAceptar = new Button("Aceptar", e -> dialog.close());
-		btnAceptar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-		btnAceptar.getStyle().set("background-color", "#16a34a").set("color", "white");
 
 		dialog.add(contenido);
 		dialog.getFooter().add(btnAceptar);
@@ -662,8 +651,7 @@ public class ConversorView extends FormView {
 		dialog.open();
 	}
 
-	private void generarBotonDescarga(DocumentoConvertido resultado) {
-		barraDescarga.removeAll();
+	private Component crearBotonDescarga(DocumentoConvertido resultado) {
 		String nombreArchivo = resultado.getArchivo().getNombre().replaceAll("\\s+", "_") + ".json";
 		StreamResource resource = new StreamResource(nombreArchivo,
 				() -> new ByteArrayInputStream(resultado.getJsonResultado().getBytes(StandardCharsets.UTF_8)));
@@ -672,7 +660,7 @@ public class ConversorView extends FormView {
 		Button botonDescarga = new Button("Descargar JSON", VaadinIcon.DOWNLOAD.create());
 		botonDescarga.getStyle().set("background-color", "#2563eb").set("color", "white");
 		btnDescargar.add(botonDescarga);
-		barraDescarga.add(btnDescargar);
+		return btnDescargar;
 	}
 
 	@Override
@@ -705,21 +693,8 @@ public class ConversorView extends FormView {
 		archivoCombo.limpiar();
 		archivoSeleccionado = null;
 		btnVerArchivo.setEnabled(false);
-		panelDatos.removeAll();
-		panelDatos.setVisible(false);
+		panelResultado.removeAll();
 		panelResultado.setVisible(false);
 		panelProgreso.setVisible(false);
-		jsonViewer.setText("");
-		jsonViewer.setVisible(false);
-		btnVerMas.setVisible(true);
-		btnVerMenos.setVisible(false);
-		gridProductos.setItems(Collections.emptyList());    gridProductos.setVisible(false);
-		gridNetosGravados.setItems(Collections.emptyList()); gridNetosGravados.setVisible(false);
-		gridPercepcionesIIBB.setItems(Collections.emptyList()); gridPercepcionesIIBB.setVisible(false);
-		gridPercepcionesIVA.setItems(Collections.emptyList());  gridPercepcionesIVA.setVisible(false);
-		gridVencimientos.setItems(Collections.emptyList());  gridVencimientos.setVisible(false);
-		barraDescarga.removeAll();
-		parrafoNotas.setVisible(false);
-		parrafoNotas.setText("");
 	}
 }

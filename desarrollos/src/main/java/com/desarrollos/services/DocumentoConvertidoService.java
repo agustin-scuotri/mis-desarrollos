@@ -42,7 +42,7 @@ public class DocumentoConvertidoService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Transactional
-    public List<DocumentoConvertido> convertir(Archivo archivo) throws Exception {
+    public ResultadoConversion convertir(Archivo archivo) throws Exception {
         Archivo archivoCompleto = archivoService.buscarPorIdConContenido(archivo.getId());
 
         String mimeType = detectarMimeType(archivoCompleto.getNombreOriginal());
@@ -58,33 +58,43 @@ public class DocumentoConvertidoService {
                 "Intentá dividir el archivo en páginas más cortas o reducir la cantidad de productos por archivo.", e);
         }
 
-        List<DocumentoConvertido> resultados = new ArrayList<>();
+        List<DocumentoConvertido> exitosos = new ArrayList<>();
+        List<ErrorFactura>        errores  = new ArrayList<>();
 
         if (raiz.isArray()) {
-            // El modelo detectó múltiples facturas distintas en el mismo archivo
+            // El modelo detectó múltiples facturas distintas en el mismo archivo.
+            // Cada factura se procesa de forma independiente para no cancelar las demás ante un error.
+            int indice = 1;
             for (JsonNode nodo : raiz) {
-                DocumentoConvertido doc = mapearDesdeNodo(nodo, archivoCompleto, nodo.toString());
-                validarNoDuplicada(doc);
-                validarTotalNoNegativo(doc);
-                repository.save(doc);
-                resultados.add(doc);
+                try {
+                    DocumentoConvertido doc = mapearDesdeNodo(nodo, archivoCompleto, nodo.toString());
+                    validarNoDuplicada(doc);
+                    validarTotalNoNegativo(doc);
+                    repository.save(doc);
+                    exitosos.add(doc);
+                } catch (FacturaDuplicadaException ex) {
+                    errores.add(ErrorFactura.duplicada(indice, ex));
+                } catch (TotalNegativoException ex) {
+                    errores.add(ErrorFactura.totalNegativo(indice, ex));
+                }
+                indice++;
             }
         } else {
-            // Factura única (caso normal)
+            // Factura única (caso normal) — mantiene el comportamiento original lanzando la excepción
             DocumentoConvertido doc = mapearDesdeNodo(raiz, archivoCompleto, jsonTexto);
             validarNoDuplicada(doc);
             validarTotalNoNegativo(doc);
             repository.save(doc);
-            resultados.add(doc);
+            exitosos.add(doc);
         }
 
         // PROCESADO si todas las facturas tienen los campos obligatorios; PROCESADO_ERROR si alguna falla
-        boolean todosOk = resultados.stream().allMatch(this::camposObligatoriosOk);
+        boolean todosOk = exitosos.stream().allMatch(this::camposObligatoriosOk) && errores.isEmpty();
         archivoCompleto.setConvertido(true);
         archivoCompleto.setEstadoConversion(todosOk ? "PROCESADO" : "PROCESADO_ERROR");
         archivoService.guardar(archivoCompleto);
 
-        return resultados;
+        return new ResultadoConversion(exitosos, errores);
     }
 
     /** Construye un DocumentoConvertido a partir de un nodo JSON y su texto original. */
