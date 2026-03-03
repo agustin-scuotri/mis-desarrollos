@@ -50,7 +50,7 @@ public class AbmArchivosView extends CrudView<Archivo> implements BeforeEnterObs
                         .map(o -> Sort.by(
                                 o.getDirection() == SortDirection.ASCENDING ? Sort.Direction.ASC : Sort.Direction.DESC,
                                 "codigoNumerico"))
-                        .orElse(Sort.by(Sort.Direction.DESC, "fechaCreacion"));
+                        .orElse(Sort.by(Sort.Direction.ASC, "codigoNumerico"));
                 int pageSize = Math.max(query.getLimit(), 1);
                 int pageNum  = query.getOffset() / pageSize;
                 return service.listarPaginado(pageNum, pageSize, codigo, nombre, estadoDB, sort).stream();

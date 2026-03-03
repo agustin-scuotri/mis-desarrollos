@@ -23,8 +23,7 @@ public interface DocumentoConvertidoRepository extends JpaRepository<DocumentoCo
            "(:nombre = '' OR (a IS NOT NULL AND LOWER(a.nombre) LIKE CONCAT('%', :nombre, '%'))) AND " +
            "(:cuit = '' OR d.cuit LIKE CONCAT('%', :cuit, '%')) AND " +
            "(:centroEmision = '' OR LOWER(d.centroEmision) LIKE CONCAT('%', :centroEmision, '%')) AND " +
-           "(:comprobante = '' OR d.numeroComprobante LIKE CONCAT('%', :comprobante, '%')) " +
-           "ORDER BY d.fechaConversion DESC")
+           "(:comprobante = '' OR d.numeroComprobante LIKE CONCAT('%', :comprobante, '%'))")
     List<DocumentoConvertido> findFiltrado(@Param("codigo") String codigo,
                                            @Param("nombre") String nombre,
                                            @Param("cuit") String cuit,
