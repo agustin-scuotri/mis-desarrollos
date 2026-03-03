@@ -1,5 +1,6 @@
 package com.desarrollos.services;
 
+import java.time.Duration;
 import java.util.Base64;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -54,6 +55,7 @@ public class ClaudeVisionService {
                 .header("anthropic-version", "2023-06-01")
                 .bodyValue(requestBody)
                 .exchangeToMono(response -> response.bodyToMono(String.class))
+                .timeout(Duration.ofMinutes(2))
                 .block();
 
         JsonNode root = objectMapper.readTree(respuesta);

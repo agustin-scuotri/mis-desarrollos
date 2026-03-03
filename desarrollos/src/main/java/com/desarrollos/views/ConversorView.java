@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.desarrollos.base.FormView;
 import com.desarrollos.combos.ArchivoCombo;
@@ -380,148 +381,146 @@ public class ConversorView extends FormView {
 		final UI ui = UI.getCurrent();
 
 		new Thread(() -> {
-			String[] mensajes = {
-				"Procesando imagen con IA...",
-				"Esto puede demorar algunos minutos..."
-			};
-			long deadline = System.currentTimeMillis() + 120_000; // 2 minutos
-			int msgIdx = 1; // primera espera arranca con el segundo mensaje
-
-			while (true) {
-				try {
-					final ResultadoConversion resultados = documentoConvertidoService.convertir(archivoAConvertir);
-					final List<DocumentoConvertido> exitosos = resultados.getExitosos();
-					final List<ErrorFactura>        errores  = resultados.getErrores();
-
-					ui.access(() -> {
-						panelProgreso.setVisible(false);
-						btnConvertir.setEnabled(true);
-						mensajeProcesando.setText("Procesando imagen con IA...");
-
-						// Separar exitosos en "válidos para tab" y "con campos obligatorios faltantes"
-						List<DocumentoConvertido> tabWorthy      = new ArrayList<>();
-						List<String>             mensajesFallas = new ArrayList<>();
-
-						for (int i = 0; i < exitosos.size(); i++) {
-							DocumentoConvertido doc = exitosos.get(i);
-							List<String> faltantes = verificarCamposObligatorios(doc);
-							if (!faltantes.isEmpty()) {
-								mensajesFallas.add("Factura " + (i + 1)
-										+ " — Campos obligatorios faltantes: "
-										+ String.join(", ", faltantes));
-							} else {
-								tabWorthy.add(doc);
-							}
-						}
-
-						// Caso especial: factura única con campos faltantes → diálogo (comportamiento original)
-						if (exitosos.size() == 1 && errores.isEmpty() && !mensajesFallas.isEmpty()) {
-							mostrarDialogoNoFactura(verificarCamposObligatorios(exitosos.get(0)));
-							return;
-						}
-
-						// Agregar errores del servicio (duplicadas, total negativo)
-						for (ErrorFactura e : errores) {
-							mensajesFallas.add("Factura " + e.getNumero() + " — " + e.getDetalle());
-						}
-
-						// Construir UI de resultado
-						panelResultado.removeAll();
-
-						if (!mensajesFallas.isEmpty()) {
-							panelResultado.add(crearPanelFallas(mensajesFallas));
-						}
-
-						if (tabWorthy.size() == 1) {
-							panelResultado.add(crearContenidoFactura(tabWorthy.get(0)));
-						} else if (tabWorthy.size() > 1) {
-							TabSheet tabs = new TabSheet();
-							tabs.setWidthFull();
-							for (int i = 0; i < tabWorthy.size(); i++) {
-								DocumentoConvertido doc = tabWorthy.get(i);
-								String nro   = doc.getNumeroComprobante();
-								String label = estaVacio(nro) ? "Factura " + (i + 1) : "Nro " + nro;
-								tabs.add(label, crearContenidoFactura(doc));
-							}
-							panelResultado.add(tabs);
-						}
-
-						if (!tabWorthy.isEmpty() || !mensajesFallas.isEmpty()) {
-							panelResultado.setVisible(true);
-						}
-
-						// Notificación
-						if (!tabWorthy.isEmpty()) {
-							if (mensajesFallas.isEmpty()) {
-								String msg = tabWorthy.size() == 1
-										? "¡Archivo convertido exitosamente!"
-										: tabWorthy.size() + " facturas convertidas exitosamente.";
-								Notification.show(msg).addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-							} else {
-								Notification.show(tabWorthy.size() + " factura(s) convertida(s). "
-										+ mensajesFallas.size() + " con errores.")
-										.addThemeVariants(NotificationVariant.LUMO_WARNING);
-							}
-						}
-					});
-					return;
-
-				} catch (ApiSaturadaException ex) {
-					if (System.currentTimeMillis() >= deadline) {
-						ui.access(() -> {
-							mensajeProcesando.setText("Procesando imagen con IA...");
-							panelProgreso.setVisible(false);
-							btnConvertir.setEnabled(true);
-							Notification.show("La API está saturada. Esperá unos minutos e intentá de nuevo.")
-									.addThemeVariants(NotificationVariant.LUMO_WARNING);
-						});
-						return;
-					}
-					// Esperar 15 s rotando mensajes antes del siguiente intento
-					try {
-						for (int s = 0; s < 15 && System.currentTimeMillis() < deadline; s++) {
-							if (s % 5 == 0) {
-								final String msg = mensajes[msgIdx % 2];
-								msgIdx++;
-								ui.access(() -> mensajeProcesando.setText(msg));
-							}
-							Thread.sleep(1000);
-						}
-					} catch (InterruptedException ie) {
-						Thread.currentThread().interrupt();
-						return;
-					}
-
-				} catch (FacturaDuplicadaException ex) {
-					final FacturaDuplicadaException dup = ex;
-					ui.access(() -> {
-						panelProgreso.setVisible(false);
-						btnConvertir.setEnabled(true);
-						mostrarDialogoDuplicada(dup);
-					});
-					try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
-					return;
-
-				} catch (TotalNegativoException ex) {
-					final TotalNegativoException neg = ex;
-					ui.access(() -> {
-						panelProgreso.setVisible(false);
-						btnConvertir.setEnabled(true);
-						mostrarDialogoTotalNegativo(neg);
-					});
-					try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
-					return;
-
-				} catch (Exception ex) {
-					ui.access(() -> {
-						panelProgreso.setVisible(false);
-						btnConvertir.setEnabled(true);
-						Notification.show("Error al convertir: " + ex.getMessage())
-								.addThemeVariants(NotificationVariant.LUMO_ERROR);
-					});
-					try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
-					return;
+			final java.util.concurrent.atomic.AtomicBoolean procesando = new java.util.concurrent.atomic.AtomicBoolean(true);
+			final Thread rotador = new Thread(() -> {
+				final String[] mensajes = { "Procesando imagen con IA...", "Esto puede demorar algunos minutos..." };
+				int idx = 0;
+				while (procesando.get()) {
+					try { Thread.sleep(5_000); } catch (InterruptedException e) { break; }
+					if (!procesando.get()) break;
+					final String msg = mensajes[idx % 2];
+					idx++;
+					ui.access(() -> mensajeProcesando.setText(msg));
 				}
+			});
+			rotador.setDaemon(true);
+			rotador.start();
+
+			try {
+				final ResultadoConversion resultados = documentoConvertidoService.convertir(archivoAConvertir);
+				final List<DocumentoConvertido> exitosos = resultados.getExitosos();
+				final List<ErrorFactura>        errores  = resultados.getErrores();
+
+				procesando.set(false);
+				rotador.interrupt();
+				ui.access(() -> {
+					mensajeProcesando.setText("Procesando imagen con IA...");
+					panelProgreso.setVisible(false);
+					btnConvertir.setEnabled(true);
+
+					// Separar exitosos en "válidos para tab" y "con campos obligatorios faltantes"
+					List<DocumentoConvertido> tabWorthy      = new ArrayList<>();
+					List<String>             mensajesFallas = new ArrayList<>();
+
+					for (int i = 0; i < exitosos.size(); i++) {
+						DocumentoConvertido doc = exitosos.get(i);
+						List<String> faltantes = verificarCamposObligatorios(doc);
+						if (!faltantes.isEmpty()) {
+							mensajesFallas.add("Factura " + (i + 1)
+									+ " — Campos obligatorios faltantes: "
+									+ String.join(", ", faltantes));
+						} else {
+							tabWorthy.add(doc);
+						}
+					}
+
+					// Caso especial: factura única con campos faltantes → diálogo (comportamiento original)
+					if (exitosos.size() == 1 && errores.isEmpty() && !mensajesFallas.isEmpty()) {
+						mostrarDialogoNoFactura(verificarCamposObligatorios(exitosos.get(0)));
+						return;
+					}
+
+					// Agregar errores del servicio (duplicadas, total negativo)
+					for (ErrorFactura e : errores) {
+						mensajesFallas.add("Factura " + e.getNumero() + " — " + e.getDetalle());
+					}
+
+					// Construir UI de resultado
+					panelResultado.removeAll();
+
+					if (!mensajesFallas.isEmpty()) {
+						panelResultado.add(crearPanelFallas(mensajesFallas));
+					}
+
+					if (tabWorthy.size() == 1) {
+						panelResultado.add(crearContenidoFactura(tabWorthy.get(0)));
+					} else if (tabWorthy.size() > 1) {
+						TabSheet tabs = new TabSheet();
+						tabs.setWidthFull();
+						for (int i = 0; i < tabWorthy.size(); i++) {
+							DocumentoConvertido doc = tabWorthy.get(i);
+							String nro   = doc.getNumeroComprobante();
+							String label = estaVacio(nro) ? "Factura " + (i + 1) : "Nro " + nro;
+							tabs.add(label, crearContenidoFactura(doc));
+						}
+						panelResultado.add(tabs);
+					}
+
+					if (!tabWorthy.isEmpty() || !mensajesFallas.isEmpty()) {
+						panelResultado.setVisible(true);
+					}
+
+					// Notificación
+					if (!tabWorthy.isEmpty()) {
+						if (mensajesFallas.isEmpty()) {
+							String msg = tabWorthy.size() == 1
+									? "¡Archivo convertido exitosamente!"
+									: tabWorthy.size() + " facturas convertidas exitosamente.";
+							Notification.show(msg).addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+						} else {
+							Notification.show(tabWorthy.size() + " factura(s) convertida(s). "
+									+ mensajesFallas.size() + " con errores.")
+									.addThemeVariants(NotificationVariant.LUMO_WARNING);
+						}
+					}
+				});
+
+			} catch (ApiSaturadaException ex) {
+				procesando.set(false);
+				rotador.interrupt();
+				ui.access(() -> {
+					mensajeProcesando.setText("Procesando imagen con IA...");
+					panelProgreso.setVisible(false);
+					btnConvertir.setEnabled(true);
+					Notification.show("La API está saturada. Esperá unos minutos e intentá de nuevo.")
+							.addThemeVariants(NotificationVariant.LUMO_WARNING);
+				});
+
+			} catch (FacturaDuplicadaException ex) {
+				procesando.set(false);
+				rotador.interrupt();
+				final FacturaDuplicadaException dup = ex;
+				ui.access(() -> {
+					mensajeProcesando.setText("Procesando imagen con IA...");
+					panelProgreso.setVisible(false);
+					btnConvertir.setEnabled(true);
+					mostrarDialogoDuplicada(dup);
+				});
+				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
+
+			} catch (TotalNegativoException ex) {
+				procesando.set(false);
+				rotador.interrupt();
+				final TotalNegativoException neg = ex;
+				ui.access(() -> {
+					mensajeProcesando.setText("Procesando imagen con IA...");
+					panelProgreso.setVisible(false);
+					btnConvertir.setEnabled(true);
+					mostrarDialogoTotalNegativo(neg);
+				});
+				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
+
+			} catch (Exception ex) {
+				procesando.set(false);
+				rotador.interrupt();
+				ui.access(() -> {
+					mensajeProcesando.setText("Procesando imagen con IA...");
+					panelProgreso.setVisible(false);
+					btnConvertir.setEnabled(true);
+					Notification.show("Error al convertir: " + ex.getMessage())
+							.addThemeVariants(NotificationVariant.LUMO_ERROR);
+				});
+				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
 			}
 		}).start();
 	}
