@@ -3,8 +3,6 @@ package com.desarrollos.combos;
 import java.io.ByteArrayInputStream;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
 
 import com.desarrollos.entities.Archivo;
 import com.desarrollos.services.ArchivoService;
@@ -12,7 +10,7 @@ import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Shortcuts;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.combobox.MultiSelectComboBox;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
@@ -37,7 +35,7 @@ public class ArchivoCombo extends HorizontalLayout {
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    private final MultiSelectComboBox<Archivo> combo = new MultiSelectComboBox<>();
+    private final ComboBox<Archivo> combo = new ComboBox<>();
     private final Button btnBuscar = new Button(VaadinIcon.SEARCH.create());
     private final Span badge = new Span();
     private final Div wrapperLupa = new Div();
@@ -54,11 +52,10 @@ public class ArchivoCombo extends HorizontalLayout {
         setSpacing(true);
         setPadding(false);
 
-        // ── MultiSelectComboBox ───────────────────────────────────────────────
-        combo.setWidth("450px");
+        // ── ComboBox ──────────────────────────────────────────────────────────
+        combo.setWidth("400px");
         combo.setClearButtonVisible(true);
         combo.setItemLabelGenerator(a -> a.getCodigo() + " - " + a.getNombre());
-        combo.setPlaceholder("Seleccioná uno o varios archivos...");
 
         dataProvider = DataProvider.fromFilteringCallbacks(
             (CallbackDataProvider.FetchCallback<Archivo, String>) query -> {
@@ -121,7 +118,7 @@ public class ArchivoCombo extends HorizontalLayout {
     }
 
     // ── API pública ───────────────────────────────────────────────────────────
-    public Set<Archivo> getValor() {
+    public Archivo getValor() {
         return combo.getValue();
     }
 
@@ -134,10 +131,10 @@ public class ArchivoCombo extends HorizontalLayout {
     }
 
     public void limpiar() {
-        combo.deselectAll();
+        combo.clear();
     }
 
-    public MultiSelectComboBox<Archivo> getCombo() {
+    public ComboBox<Archivo> getCombo() {
         return combo;
     }
 
@@ -170,9 +167,8 @@ public class ArchivoCombo extends HorizontalLayout {
         dialog.setHeight("560px");
         dialog.setHeaderTitle(getTranslation("conversor.seleccione.archivo"));
 
-        // ── Grilla con selección múltiple ─────────────────────────────────────
+        // ── Grilla ────────────────────────────────────────────────────────────
         Grid<Archivo> grilla = new Grid<>(Archivo.class, false);
-        grilla.setSelectionMode(Grid.SelectionMode.MULTI);
         grilla.setSizeFull();
         grilla.addThemeVariants(GridVariant.LUMO_ROW_STRIPES, GridVariant.LUMO_COLUMN_BORDERS);
         grilla.getStyle()
@@ -208,7 +204,7 @@ public class ArchivoCombo extends HorizontalLayout {
             return estadoBadge;
         }).setHeader("Estado").setWidth("110px").setFlexGrow(0);
 
-        // ── Columna Fecha (más reciente primero por defecto) ──────────────────
+        // ── Columna Fecha ─────────────────────────────────────────────────────
         grilla.addColumn(a -> a.getFechaCreacion() != null
                         ? a.getFechaCreacion().format(FMT) : "")
                 .setHeader("Fecha")
@@ -216,7 +212,7 @@ public class ArchivoCombo extends HorizontalLayout {
                 .setWidth("135px")
                 .setFlexGrow(0);
 
-        // ── Panel de preview lateral (oculto inicialmente) ────────────────────
+        // ── Panel de preview lateral ──────────────────────────────────────────
         VerticalLayout previewPanel = new VerticalLayout();
         previewPanel.setVisible(false);
         previewPanel.setWidth("480px");
@@ -280,11 +276,16 @@ public class ArchivoCombo extends HorizontalLayout {
         grilla.setItems(gridProvider);
         grilla.setEmptyStateText("No hay archivos pendientes de conversión");
 
-        // Pre-seleccionar los que ya están en el combo
-        Set<Archivo> yaSeleccionados = combo.getValue();
-        if (!yaSeleccionados.isEmpty()) {
-            grilla.asMultiSelect().setValue(new HashSet<>(yaSeleccionados));
-        }
+        // ── Selección ─────────────────────────────────────────────────────────
+        final Archivo[] seleccionado = {null};
+        grilla.addSelectionListener(e ->
+                seleccionado[0] = e.getFirstSelectedItem().orElse(null));
+
+        grilla.addItemDoubleClickListener(e -> {
+            dataProvider.refreshAll();
+            combo.setValue(e.getItem());
+            dialog.close();
+        });
 
         // ── Buscador ──────────────────────────────────────────────────────────
         TextField buscadorDialog = new TextField();
@@ -317,10 +318,9 @@ public class ArchivoCombo extends HorizontalLayout {
         btnCerrar.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         Button btnSeleccionar = new Button("Seleccionar", VaadinIcon.CHECK.create(), ev -> {
-            Set<Archivo> sel = grilla.getSelectedItems();
-            if (!sel.isEmpty()) {
+            if (seleccionado[0] != null) {
                 dataProvider.refreshAll();
-                combo.setValue(new HashSet<>(sel));
+                combo.setValue(seleccionado[0]);
                 dialog.close();
             }
         });
@@ -328,12 +328,11 @@ public class ArchivoCombo extends HorizontalLayout {
 
         dialog.getFooter().add(btnCerrar, btnSeleccionar);
 
-        // ── Shortcuts: Enter confirma selección; Escape cierra ────────────────
+        // ── Shortcuts: Enter selecciona; Escape cierra ────────────────────────
         Shortcuts.addShortcutListener(grilla, e -> {
-            Set<Archivo> sel = grilla.getSelectedItems();
-            if (!sel.isEmpty()) {
+            if (seleccionado[0] != null) {
                 dataProvider.refreshAll();
-                combo.setValue(new HashSet<>(sel));
+                combo.setValue(seleccionado[0]);
                 dialog.close();
             }
         }, Key.ENTER);
