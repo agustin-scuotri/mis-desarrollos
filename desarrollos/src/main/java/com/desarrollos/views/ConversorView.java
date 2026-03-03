@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.desarrollos.base.FormView;
@@ -56,7 +57,7 @@ public class ConversorView extends FormView {
 	private final ArchivoService archivoService;
 	private final DocumentoConvertidoService documentoConvertidoService;
 	private ArchivoCombo archivoCombo;
-	private Archivo archivoSeleccionado;
+	private List<Archivo> archivosSeleccionados = new ArrayList<>();
 
 	// ── Botones principales ───────────────────────────────────────────────────
 	private final Button btnConvertir  = new Button("Convertir",   VaadinIcon.BOLT.create());
@@ -87,10 +88,11 @@ public class ConversorView extends FormView {
 		archivoCombo.setLabel("Archivo");
 		archivoCombo.setPlaceholder(getTranslation("conversor.seleccione.archivo"));
 		archivoCombo.getCombo().addValueChangeListener(e -> {
-			archivoSeleccionado = e.getValue();
-			boolean hayArchivo = archivoSeleccionado != null;
-			btnVerArchivo.setEnabled(hayArchivo);
-			if (hayArchivo) {
+			archivosSeleccionados = new ArrayList<>(e.getValue());
+			boolean hayArchivos = !archivosSeleccionados.isEmpty();
+			// "Ver archivo" solo disponible cuando hay exactamente uno seleccionado
+			btnVerArchivo.setEnabled(hayArchivos && archivosSeleccionados.size() == 1);
+			if (hayArchivos) {
 				panelResultado.removeAll();
 				panelResultado.setVisible(false);
 				panelProgreso.setVisible(false);
@@ -340,9 +342,9 @@ public class ConversorView extends FormView {
 
 	// ── Abrir archivo en nueva pestaña ────────────────────────────────────────
 	private void abrirArchivo() {
-		if (archivoSeleccionado == null) return;
+		if (archivosSeleccionados.isEmpty()) return;
 		try {
-			Archivo completo = archivoService.buscarPorIdConContenido(archivoSeleccionado.getId());
+			Archivo completo = archivoService.buscarPorIdConContenido(archivosSeleccionados.get(0).getId());
 			if (completo.getContenido() == null) {
 				Notification.show("El archivo no tiene contenido adjunto")
 						.addThemeVariants(NotificationVariant.LUMO_WARNING);
@@ -362,8 +364,8 @@ public class ConversorView extends FormView {
 
 	// ── Conversión en hilo de fondo (evita Connection Reset) ─────────────────
 	private void ejecutarConversion() {
-		if (archivoSeleccionado == null) {
-			Notification.show("Seleccioná un archivo antes de convertir")
+		if (archivosSeleccionados.isEmpty()) {
+			Notification.show("Seleccioná al menos un archivo antes de convertir")
 					.addThemeVariants(NotificationVariant.LUMO_WARNING);
 			return;
 		}
@@ -372,9 +374,10 @@ public class ConversorView extends FormView {
 		panelResultado.setVisible(false);
 		btnConvertir.setEnabled(false);
 		btnVerArchivo.setEnabled(false);
+		mensajeProcesando.setText("Procesando imagen con IA...");
 
-		final Archivo archivoAConvertir = archivoSeleccionado;
-		archivoSeleccionado = null;
+		final List<Archivo> archivosAConvertir = new ArrayList<>(archivosSeleccionados);
+		archivosSeleccionados = new ArrayList<>();
 		archivoCombo.limpiar();
 		archivoCombo.refrescar();
 
@@ -396,126 +399,106 @@ public class ConversorView extends FormView {
 			rotador.setDaemon(true);
 			rotador.start();
 
-			try {
-				final ResultadoConversion resultados = documentoConvertidoService.convertir(archivoAConvertir);
-				final List<DocumentoConvertido> exitosos = resultados.getExitosos();
-				final List<ErrorFactura>        errores  = resultados.getErrores();
+			// Acumuladores de resultados de todos los archivos
+			final List<DocumentoConvertido> todosExitosos = new ArrayList<>();
+			final List<ErrorFactura>        todosErrores  = new ArrayList<>();
+			final List<String>              todosErrorMsg = new ArrayList<>();
 
-				procesando.set(false);
-				rotador.interrupt();
-				ui.access(() -> {
-					mensajeProcesando.setText("Procesando imagen con IA...");
-					panelProgreso.setVisible(false);
-					btnConvertir.setEnabled(true);
-
-					// Separar exitosos en "válidos para tab" y "con campos obligatorios faltantes"
-					List<DocumentoConvertido> tabWorthy      = new ArrayList<>();
-					List<String>             mensajesFallas = new ArrayList<>();
-
-					for (int i = 0; i < exitosos.size(); i++) {
-						DocumentoConvertido doc = exitosos.get(i);
-						List<String> faltantes = verificarCamposObligatorios(doc);
-						if (!faltantes.isEmpty()) {
-							mensajesFallas.add("Factura " + (i + 1)
-									+ " — Campos obligatorios faltantes: "
-									+ String.join(", ", faltantes));
-						} else {
-							tabWorthy.add(doc);
-						}
-					}
-
-					// Caso especial: factura única con campos faltantes → diálogo (comportamiento original)
-					if (exitosos.size() == 1 && errores.isEmpty() && !mensajesFallas.isEmpty()) {
-						mostrarDialogoNoFactura(verificarCamposObligatorios(exitosos.get(0)));
-						return;
-					}
-
-					// Agregar errores del servicio (duplicadas, total negativo)
-					for (ErrorFactura e : errores) {
-						mensajesFallas.add("Factura " + e.getNumero() + " — " + e.getDetalle());
-					}
-
-					// Construir UI de resultado
-					panelResultado.removeAll();
-
-					if (!mensajesFallas.isEmpty()) {
-						panelResultado.add(crearPanelFallas(mensajesFallas));
-					}
-
-					if (tabWorthy.size() == 1) {
-						panelResultado.add(crearContenidoFactura(tabWorthy.get(0)));
-					} else if (tabWorthy.size() > 1) {
-						TabSheet tabs = new TabSheet();
-						tabs.setWidthFull();
-						for (int i = 0; i < tabWorthy.size(); i++) {
-							DocumentoConvertido doc = tabWorthy.get(i);
-							String nro   = doc.getNumeroComprobante();
-							String label = estaVacio(nro) ? "Factura " + (i + 1) : "Nro " + nro;
-							tabs.add(label, crearContenidoFactura(doc));
-						}
-						panelResultado.add(tabs);
-					}
-
-					if (!tabWorthy.isEmpty() || !mensajesFallas.isEmpty()) {
-						panelResultado.setVisible(true);
-					}
-
-					// Diálogo de resultado
-					if (!tabWorthy.isEmpty() || !mensajesFallas.isEmpty()) {
-						mostrarDialogoResultado(tabWorthy.size(), mensajesFallas);
-					}
-				});
-
-			} catch (ApiSaturadaException ex) {
-				procesando.set(false);
-				rotador.interrupt();
-				ui.access(() -> {
-					mensajeProcesando.setText("Procesando imagen con IA...");
-					panelProgreso.setVisible(false);
-					btnConvertir.setEnabled(true);
-					Notification.show("La API está saturada. Esperá unos minutos e intentá de nuevo.")
-							.addThemeVariants(NotificationVariant.LUMO_WARNING);
-				});
-
-			} catch (FacturaDuplicadaException ex) {
-				procesando.set(false);
-				rotador.interrupt();
-				final FacturaDuplicadaException dup = ex;
-				ui.access(() -> {
-					mensajeProcesando.setText("Procesando imagen con IA...");
-					panelProgreso.setVisible(false);
-					btnConvertir.setEnabled(true);
-					mostrarDialogoDuplicada(dup);
-				});
-				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
-
-			} catch (TotalNegativoException ex) {
-				procesando.set(false);
-				rotador.interrupt();
-				final TotalNegativoException neg = ex;
-				ui.access(() -> {
-					mensajeProcesando.setText("Procesando imagen con IA...");
-					panelProgreso.setVisible(false);
-					btnConvertir.setEnabled(true);
-					mostrarDialogoTotalNegativo(neg);
-				});
-				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
-
-			} catch (Exception ex) {
-				procesando.set(false);
-				rotador.interrupt();
-				ui.access(() -> {
-					mensajeProcesando.setText("Procesando imagen con IA...");
-					panelProgreso.setVisible(false);
-					btnConvertir.setEnabled(true);
-					Notification.show("Error al convertir: " + ex.getMessage())
-							.addThemeVariants(NotificationVariant.LUMO_ERROR);
-				});
-				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
+			int total = archivosAConvertir.size();
+			for (int i = 0; i < total; i++) {
+				Archivo archivo = archivosAConvertir.get(i);
+				if (total > 1) {
+					final String progreso = "Procesando archivo " + (i + 1) + " de " + total + "...";
+					ui.access(() -> mensajeProcesando.setText(progreso));
+				}
+				try {
+					ResultadoConversion resultado = documentoConvertidoService.convertir(archivo);
+					todosExitosos.addAll(resultado.getExitosos());
+					todosErrores.addAll(resultado.getErrores());
+				} catch (ApiSaturadaException ex) {
+					todosErrorMsg.add(archivo.getNombre() + ": API saturada, intentá de nuevo en unos minutos");
+				} catch (FacturaDuplicadaException ex) {
+					todosErrorMsg.add(archivo.getNombre() + ": Factura duplicada"
+							+ " (CUIT: " + ex.getCuit() + ", Nro: " + ex.getNumeroComprobante() + ")");
+					try { archivoService.actualizarEstado(archivo, "PROCESADO_ERROR"); } catch (Exception ignored) {}
+				} catch (TotalNegativoException ex) {
+					todosErrorMsg.add(archivo.getNombre() + ": Total negativo (" + ex.getTotal() + ")");
+					try { archivoService.actualizarEstado(archivo, "PROCESADO_ERROR"); } catch (Exception ignored) {}
+				} catch (Exception ex) {
+					todosErrorMsg.add(archivo.getNombre() + ": " + ex.getMessage());
+					try { archivoService.actualizarEstado(archivo, "PROCESADO_ERROR"); } catch (Exception ignored) {}
+				}
 			}
+
+			procesando.set(false);
+			rotador.interrupt();
+
+			ui.access(() -> {
+				mensajeProcesando.setText("Procesando imagen con IA...");
+				panelProgreso.setVisible(false);
+				btnConvertir.setEnabled(true);
+
+				// Clasificar exitosos: tabWorthy (campos OK) vs mensajesFallas (campos faltantes)
+				List<DocumentoConvertido> tabWorthy      = new ArrayList<>();
+				List<String>             mensajesFallas = new ArrayList<>();
+
+				for (int i = 0; i < todosExitosos.size(); i++) {
+					DocumentoConvertido doc = todosExitosos.get(i);
+					List<String> faltantes = verificarCamposObligatorios(doc);
+					if (!faltantes.isEmpty()) {
+						mensajesFallas.add("Factura " + (i + 1)
+								+ " — Campos obligatorios faltantes: "
+								+ String.join(", ", faltantes));
+					} else {
+						tabWorthy.add(doc);
+					}
+				}
+
+				// Caso especial: un solo archivo seleccionado, un exitoso con campos faltantes
+				if (archivosAConvertir.size() == 1 && todosExitosos.size() == 1
+						&& todosErrores.isEmpty() && todosErrorMsg.isEmpty()
+						&& !mensajesFallas.isEmpty()) {
+					mostrarDialogoNoFactura(verificarCamposObligatorios(todosExitosos.get(0)));
+					return;
+				}
+
+				// Agregar errores del servicio y de excepciones
+				for (ErrorFactura e : todosErrores) {
+					mensajesFallas.add("Factura " + e.getNumero() + " — " + e.getDetalle());
+				}
+				mensajesFallas.addAll(todosErrorMsg);
+
+				// Construir UI de resultado
+				panelResultado.removeAll();
+
+				if (!mensajesFallas.isEmpty()) {
+					panelResultado.add(crearPanelFallas(mensajesFallas));
+				}
+
+				if (tabWorthy.size() == 1) {
+					panelResultado.add(crearContenidoFactura(tabWorthy.get(0)));
+				} else if (tabWorthy.size() > 1) {
+					TabSheet tabs = new TabSheet();
+					tabs.setWidthFull();
+					for (int i = 0; i < tabWorthy.size(); i++) {
+						DocumentoConvertido doc = tabWorthy.get(i);
+						String nro   = doc.getNumeroComprobante();
+						String label = estaVacio(nro) ? "Factura " + (i + 1) : "Nro " + nro;
+						tabs.add(label, crearContenidoFactura(doc));
+					}
+					panelResultado.add(tabs);
+				}
+
+				if (!tabWorthy.isEmpty() || !mensajesFallas.isEmpty()) {
+					panelResultado.setVisible(true);
+				}
+
+				if (!tabWorthy.isEmpty() || !mensajesFallas.isEmpty()) {
+					mostrarDialogoResultado(tabWorthy.size(), mensajesFallas);
+				}
+			});
 		}).start();
 	}
-
 	// ── Verificar campos obligatorios de una factura ──────────────────────────
 	private List<String> verificarCamposObligatorios(DocumentoConvertido doc) {
 		List<String> faltantes = new ArrayList<>();
@@ -793,7 +776,7 @@ public class ConversorView extends FormView {
 	@Override
 	protected void accionCancelar() {
 		archivoCombo.limpiar();
-		archivoSeleccionado = null;
+		archivosSeleccionados = new ArrayList<>();
 		btnVerArchivo.setEnabled(false);
 		panelResultado.removeAll();
 		panelResultado.setVisible(false);
