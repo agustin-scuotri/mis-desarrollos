@@ -85,12 +85,17 @@ public class DocumentoConvertidoService {
                 indice++;
             }
         } else {
-            // Factura única (caso normal) — mantiene el comportamiento original lanzando la excepción
+            // Factura única — misma lógica que el array: validar campos antes de guardar
             DocumentoConvertido doc = mapearDesdeNodo(raiz, archivoCompleto, jsonTexto);
-            validarNoDuplicada(doc);
-            validarTotalNoNegativo(doc);
-            repository.save(doc);
-            exitosos.add(doc);
+            List<String> faltantes = obtenerCamposFaltantes(doc);
+            if (!faltantes.isEmpty()) {
+                errores.add(ErrorFactura.camposFaltantes(1, faltantes));
+            } else {
+                validarNoDuplicada(doc);
+                validarTotalNoNegativo(doc);
+                repository.save(doc);
+                exitosos.add(doc);
+            }
         }
 
         // PROCESADO si al menos una factura fue guardada; PROCESADO_ERROR solo si ninguna pudo guardarse

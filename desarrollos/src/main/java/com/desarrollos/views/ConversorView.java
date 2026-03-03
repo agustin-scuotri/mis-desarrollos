@@ -408,23 +408,14 @@ public class ConversorView extends FormView {
 					panelProgreso.setVisible(false);
 					btnConvertir.setEnabled(true);
 
-					List<DocumentoConvertido> tabWorthy      = new ArrayList<>();
+					// El servicio ya valida campos antes de guardar: exitosos siempre son válidos
+					List<DocumentoConvertido> tabWorthy      = new ArrayList<>(exitosos);
 					List<String>             mensajesFallas = new ArrayList<>();
 
-					for (int i = 0; i < exitosos.size(); i++) {
-						DocumentoConvertido doc = exitosos.get(i);
-						List<String> faltantes = verificarCamposObligatorios(doc);
-						if (!faltantes.isEmpty()) {
-							mensajesFallas.add("Factura " + (i + 1)
-									+ " — Campos obligatorios faltantes: "
-									+ String.join(", ", faltantes));
-						} else {
-							tabWorthy.add(doc);
-						}
-					}
-
-					if (exitosos.size() == 1 && errores.isEmpty() && !mensajesFallas.isEmpty()) {
-						mostrarDialogoNoFactura(verificarCamposObligatorios(exitosos.get(0)));
+					// Caso: documento único que no es una factura (ningún campo obligatorio presente)
+					if (exitosos.isEmpty() && errores.size() == 1
+							&& errores.get(0).getTipo() == ErrorFactura.Tipo.CAMPOS_FALTANTES) {
+						mostrarDialogoNoFactura(errores.get(0).getCamposFaltantes());
 						return;
 					}
 
