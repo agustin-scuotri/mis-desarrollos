@@ -7,6 +7,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -77,8 +78,8 @@ public class ArchivoService {
     }
 
     // ── Paginación server-side para AbmArchivosView ───────────────────────────
-    public List<Archivo> listarPaginado(int page, int size, String codigo, String nombre, String estado) {
-        Pageable pageable = PageRequest.of(page, Math.max(size, 1));
+    public List<Archivo> listarPaginado(int page, int size, String codigo, String nombre, String estado, Sort sort) {
+        Pageable pageable = PageRequest.of(page, Math.max(size, 1), sort);
         return repository.findFiltrado(
                 codigo != null ? codigo : "",
                 nombre != null ? nombre.toLowerCase() : "",

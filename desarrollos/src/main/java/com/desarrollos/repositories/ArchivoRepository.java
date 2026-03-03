@@ -27,8 +27,7 @@ public interface ArchivoRepository extends JpaRepository<Archivo, Long> {
     @Query("SELECT a FROM Archivo a WHERE " +
            "(:codigo = '' OR a.codigo LIKE CONCAT('%', :codigo, '%')) AND " +
            "(:nombre = '' OR LOWER(a.nombre) LIKE CONCAT('%', :nombre, '%')) AND " +
-           "(:estado = '' OR a.estadoConversion = :estado) " +
-           "ORDER BY a.fechaCreacion DESC")
+           "(:estado = '' OR a.estadoConversion = :estado)")
     List<Archivo> findFiltrado(@Param("codigo") String codigo,
                                @Param("nombre") String nombre,
                                @Param("estado") String estado,

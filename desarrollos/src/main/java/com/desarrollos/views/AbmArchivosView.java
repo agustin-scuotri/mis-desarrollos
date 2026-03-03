@@ -18,6 +18,8 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.provider.CallbackDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
+import com.vaadin.flow.data.provider.SortDirection;
+import org.springframework.data.domain.Sort;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -43,9 +45,15 @@ public class AbmArchivosView extends CrudView<Archivo> implements BeforeEnterObs
                 String codigo   = filtrosActivos.getOrDefault(getTranslation("archivo.codigo"), "");
                 String nombre   = filtrosActivos.getOrDefault(getTranslation("archivo.nombre"), "");
                 String estadoDB = mapearEstado(filtrosActivos.getOrDefault(getTranslation("archivo.estado"), ""));
+                Sort sort = query.getSortOrders().stream()
+                        .findFirst()
+                        .map(o -> Sort.by(
+                                o.getDirection() == SortDirection.ASCENDING ? Sort.Direction.ASC : Sort.Direction.DESC,
+                                "codigo"))
+                        .orElse(Sort.by(Sort.Direction.DESC, "fechaCreacion"));
                 int pageSize = Math.max(query.getLimit(), 1);
                 int pageNum  = query.getOffset() / pageSize;
-                return service.listarPaginado(pageNum, pageSize, codigo, nombre, estadoDB).stream();
+                return service.listarPaginado(pageNum, pageSize, codigo, nombre, estadoDB, sort).stream();
             },
             (Query<Archivo, Void> query) -> {
                 String codigo   = filtrosActivos.getOrDefault(getTranslation("archivo.codigo"), "");
