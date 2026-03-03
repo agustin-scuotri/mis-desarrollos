@@ -133,6 +133,11 @@ public abstract class CrudView<T> extends VerticalLayout {
                 "    border-bottom: 2px solid rgba(0,32,96,0.12) !important;" +
                 "    background-color: #f8fafc !important;" +
                 "    font-weight: 600;" +
+                "    overflow: hidden;" +
+                "  }" +
+                "  [part~='header-cell'][frozen-to-end] {" +
+                "    box-shadow: -2px 0 6px rgba(0,0,0,0.08);" +
+                "    overflow: hidden;" +
                 "  }" +
                 "  [part~='cell']:not([part~='header-cell']) {" +
                 "    border-right: 1px solid rgba(0,32,96,0.06) !important;" +
