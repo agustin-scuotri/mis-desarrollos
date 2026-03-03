@@ -18,14 +18,17 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.provider.CallbackDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 @PageTitle("Archivos")
 @Route(value = "ABMarchivos", layout = MainLayout.class)
-public class AbmArchivosView extends CrudView<Archivo> {
+public class AbmArchivosView extends CrudView<Archivo> implements BeforeEnterObserver {
     private final ArchivoService service;
     private CallbackDataProvider<Archivo, Void> gridProvider;
+    private ComboBox<String> filtroEstado;
 
     public AbmArchivosView(ArchivoService service) {
         super(Archivo.class);
@@ -83,6 +86,7 @@ public class AbmArchivosView extends CrudView<Archivo> {
 
     private void agregarColumnaEstado(String cabecera) {
         ComboBox<String> filtro = new ComboBox<>();
+        this.filtroEstado = filtro;
         filtro.setItems("Todos", "Pendiente a procesar", "Procesado", "Procesado error");
         filtro.setValue("Todos");
         filtro.setClearButtonVisible(true);
@@ -151,6 +155,15 @@ public class AbmArchivosView extends CrudView<Archivo> {
         .setKey(cabecera)
         .setTextAlign(ColumnTextAlign.CENTER)
         .setAutoWidth(true);
+    }
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        java.util.List<String> estadoParam = event.getLocation()
+                .getQueryParameters().getParameters().get("estado");
+        if (estadoParam != null && !estadoParam.isEmpty() && filtroEstado != null) {
+            filtroEstado.setValue(estadoParam.get(0));
+        }
     }
 
     @Override

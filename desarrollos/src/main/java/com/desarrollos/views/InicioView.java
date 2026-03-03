@@ -2,6 +2,7 @@ package com.desarrollos.views;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.desarrollos.entities.Archivo;
@@ -20,6 +21,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.router.Route;
 
 @PageTitle("Inicio")
@@ -70,13 +72,23 @@ public class InicioView extends VerticalLayout {
         errores     = archivos.stream().filter(a -> "PROCESADO_ERROR".equals(a.getEstadoConversion())).count();
         long documentos = documentoConvertidoService.listarTodos().size();
 
+        VerticalLayout cardArchivos   = crearCard("Archivos Cargados", String.valueOf(total),      VaadinIcon.COPY_O,       "#2563eb", "#eff6ff");
+        VerticalLayout cardProcesados = crearCard("Procesados",        String.valueOf(procesados), VaadinIcon.CHECK_CIRCLE, "#16a34a", "#f0fdf4");
+        VerticalLayout cardPendientes = crearCard("Pendientes",        String.valueOf(pendientes), VaadinIcon.CLOCK,        "#d97706", "#fffbeb");
+        VerticalLayout cardErrores    = crearCard("Errores",           String.valueOf(errores),    VaadinIcon.WARNING,      "#dc2626", "#fef2f2");
+        VerticalLayout cardConvert    = crearCard("Docs. Convertidos", String.valueOf(documentos), VaadinIcon.FILE_TABLE,   "#7c3aed", "#f5f3ff");
+
+        hacerClickeable(cardArchivos,   () -> getUI().ifPresent(ui -> ui.navigate("ABMarchivos")));
+        hacerClickeable(cardProcesados, () -> getUI().ifPresent(ui -> ui.navigate("ABMarchivos",
+                new QueryParameters(Map.of("estado", List.of("Procesado"))))));
+        hacerClickeable(cardPendientes, () -> getUI().ifPresent(ui -> ui.navigate("ABMarchivos",
+                new QueryParameters(Map.of("estado", List.of("Pendiente a procesar"))))));
+        hacerClickeable(cardErrores,    () -> getUI().ifPresent(ui -> ui.navigate("ABMarchivos",
+                new QueryParameters(Map.of("estado", List.of("Procesado error"))))));
+        hacerClickeable(cardConvert,    () -> getUI().ifPresent(ui -> ui.navigate("lista-jsons")));
+
         HorizontalLayout cards = new HorizontalLayout(
-            crearCard("Archivos Cargados", String.valueOf(total),      VaadinIcon.COPY_O,       "#2563eb", "#eff6ff"),
-            crearCard("Procesados",        String.valueOf(procesados), VaadinIcon.CHECK_CIRCLE, "#16a34a", "#f0fdf4"),
-            crearCard("Pendientes",        String.valueOf(pendientes), VaadinIcon.CLOCK,        "#d97706", "#fffbeb"),
-            crearCard("Errores",           String.valueOf(errores),    VaadinIcon.WARNING,      "#dc2626", "#fef2f2"),
-            crearCard("Docs. Convertidos", String.valueOf(documentos), VaadinIcon.FILE_TABLE,   "#7c3aed", "#f5f3ff")
-        );
+                cardArchivos, cardProcesados, cardPendientes, cardErrores, cardConvert);
         cards.setWidthFull();
         cards.setSpacing(true);
         cards.getStyle().set("flex-wrap", "wrap");
@@ -220,6 +232,22 @@ public class InicioView extends VerticalLayout {
                 .set("color", "white")
                 .set("font-weight", "600")
                 .set("border-color", "#002060");
+    }
+
+    // ── Hace una card navegable con hover ─────────────────────────────────────
+    private void hacerClickeable(VerticalLayout card, Runnable accion) {
+        card.getStyle()
+                .set("cursor", "pointer")
+                .set("transition", "box-shadow 0.15s ease, transform 0.1s ease");
+        card.getElement().addEventListener("mouseenter", e ->
+                card.getStyle()
+                        .set("box-shadow", "0 4px 12px rgba(0,0,0,0.12)")
+                        .set("transform", "translateY(-2px)"));
+        card.getElement().addEventListener("mouseleave", e ->
+                card.getStyle()
+                        .set("box-shadow", "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05)")
+                        .set("transform", "translateY(0)"));
+        card.addClickListener(e -> accion.run());
     }
 
     // ── Card métrica ──────────────────────────────────────────────────────────
