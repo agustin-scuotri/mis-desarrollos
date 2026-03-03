@@ -48,6 +48,15 @@ public class ClaudeVisionService {
                 """, model, contentBlock);
 
         // exchangeToMono lee siempre el body sin importar el HTTP status code.
+        return llamarApi(requestBody, true);
+    }
+
+    /**
+     * Hace la llamada HTTP a Claude.
+     * Si la API responde rate_limit_error espera ~65 s y reintenta una vez.
+     * Si responde overloaded_error lanza ApiSaturadaException inmediatamente.
+     */
+    private String llamarApi(String requestBody, boolean permitirReintentoRateLimit) throws Exception {
         String respuesta = webClient.post()
                 .uri(apiUrl)
                 .header("Content-Type", "application/json")
@@ -64,9 +73,22 @@ public class ClaudeVisionService {
         if ("error".equals(root.path("type").asText())) {
             String tipo    = root.path("error").path("type").asText();
             String mensaje = root.path("error").path("message").asText();
+
             if ("overloaded_error".equals(tipo)) {
-                throw new ApiSaturadaException();   // el reintento lo maneja la vista
+                throw new ApiSaturadaException();
             }
+
+            if ("rate_limit_error".equals(tipo)) {
+                if (permitirReintentoRateLimit) {
+                    // El bucket de tokens se recarga en 1 minuto; esperamos 65 s por seguridad
+                    try { Thread.sleep(65_000); }
+                    catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+                    return llamarApi(requestBody, false);
+                }
+                throw new RuntimeException(
+                        "Límite de tokens por minuto alcanzado. Esperá un momento e intentá de nuevo.");
+            }
+
             throw new RuntimeException("Error Claude [" + tipo + "]: " + mensaje);
         }
 
