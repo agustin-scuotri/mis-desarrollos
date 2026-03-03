@@ -51,19 +51,19 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
     private void inicializarDataProvider() {
         gridProvider = DataProvider.fromCallbacks(
             (Query<DocumentoConvertido, Void> query) -> {
-                String codigo        = filtrosActivos.getOrDefault("CODIGO", "");
-                String nombre        = filtrosActivos.getOrDefault("NOMBRE", "");
-                String cuit          = filtrosActivos.getOrDefault("CUIT DEL EMISOR", "");
-                String comprobante   = filtrosActivos.getOrDefault("NUMERO DE COMPROBANTE", "");
+                String codigo        = filtrosActivos.getOrDefault("Código", "");
+                String nombre        = filtrosActivos.getOrDefault("Nombre", "");
+                String cuit          = filtrosActivos.getOrDefault("Cuit del emisor", "");
+                String comprobante   = filtrosActivos.getOrDefault("Nro. comprobante", "");
                 int pageSize = Math.max(query.getLimit(), 1);
                 int pageNum  = query.getOffset() / pageSize;
                 return service.listarPaginado(pageNum, pageSize, codigo, nombre, cuit, "", comprobante).stream();
             },
             (Query<DocumentoConvertido, Void> query) -> {
-                String codigo        = filtrosActivos.getOrDefault("CODIGO", "");
-                String nombre        = filtrosActivos.getOrDefault("NOMBRE", "");
-                String cuit          = filtrosActivos.getOrDefault("CUIT DEL EMISOR", "");
-                String comprobante   = filtrosActivos.getOrDefault("NUMERO DE COMPROBANTE", "");
+                String codigo        = filtrosActivos.getOrDefault("Código", "");
+                String nombre        = filtrosActivos.getOrDefault("Nombre", "");
+                String cuit          = filtrosActivos.getOrDefault("Cuit del emisor", "");
+                String comprobante   = filtrosActivos.getOrDefault("Nro. comprobante", "");
                 return (int) service.contarFiltrado(codigo, nombre, cuit, "", comprobante);
             }
         );
@@ -103,14 +103,14 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
     protected void configurarColumnasEspecificas() {
         grid.removeAllColumns();
 
-        agregarColumna(doc -> doc.getArchivo() != null ? doc.getArchivo().getCodigo() : "", "CODIGO");
+        agregarColumna(doc -> doc.getArchivo() != null ? doc.getArchivo().getCodigo() : "", "Código");
         agregarColumna(doc -> {
             String n = doc.getArchivo() != null ? doc.getArchivo().getNombre() : "";
             if (n == null || n.isEmpty()) return "";
             return n.length() > 25 ? n.substring(0, 25) + "..." : n;
-        }, "NOMBRE");
-        agregarColumna(DocumentoConvertido::getCuit, "CUIT DEL EMISOR");
-        agregarColumna(DocumentoConvertido::getNumeroComprobante, "NUMERO DE COMPROBANTE");
+        }, "Nombre");
+        agregarColumna(DocumentoConvertido::getCuit, "Cuit del emisor");
+        agregarColumna(DocumentoConvertido::getNumeroComprobante, "Nro. comprobante");
     }
 
     @Override
