@@ -56,27 +56,32 @@ public class ClaudeVisionService {
                 catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
             }
             try {
+                // exchangeToMono lee siempre el body, sin importar el HTTP status code.
+                // Así evitamos que onStatus envuelva la excepción de forma opaca.
                 String respuesta = webClient.post()
                         .uri(apiUrl)
                         .header("Content-Type", "application/json")
                         .header("x-api-key", apiKey)
                         .header("anthropic-version", "2023-06-01")
                         .bodyValue(requestBody)
-                        .retrieve()
-                        .onStatus(status -> status.isError(), clientResponse ->
-                                clientResponse.bodyToMono(String.class)
-                                        .map(body -> new RuntimeException("Error Claude: " + body)))
-                        .bodyToMono(String.class)
+                        .exchangeToMono(response -> response.bodyToMono(String.class))
                         .block();
 
-                // Extraemos el texto de la respuesta formato Anthropic
                 JsonNode root = objectMapper.readTree(respuesta);
+
+                // Detectar errores devueltos por la API de Claude (overloaded, auth, etc.)
+                if ("error".equals(root.path("type").asText())) {
+                    String tipo    = root.path("error").path("type").asText();
+                    String mensaje = root.path("error").path("message").asText();
+                    throw new RuntimeException("Error Claude [" + tipo + "]: " + mensaje);
+                }
+
                 return root.path("content").get(0).path("text").asText();
 
             } catch (RuntimeException e) {
                 ultimoError = e;
                 String msg = e.getMessage();
-                // Solo reintenta si es overloaded_error y quedan intentos disponibles
+                // Solo reintenta ante saturación si quedan intentos disponibles
                 if (msg != null && msg.contains("overloaded_error") && intento < esperas.length) {
                     continue;
                 }
