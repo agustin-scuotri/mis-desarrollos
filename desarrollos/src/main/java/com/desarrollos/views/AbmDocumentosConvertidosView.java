@@ -58,7 +58,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
                 String comprobante   = filtrosActivos.getOrDefault("Nro. comprobante", "");
                 int pageSize = Math.max(query.getLimit(), 1);
                 int pageNum  = query.getOffset() / pageSize;
-                Sort sort = Sort.by(Sort.Direction.ASC, "archivo.codigoNumerico");
+                Sort sort = Sort.by(Sort.Direction.ASC, "archivo.id");
                 return service.listarPaginado(pageNum, pageSize, codigo, nombre, cuit, "", comprobante, sort).stream();
             },
             (Query<DocumentoConvertido, Void> query) -> {

@@ -1,5 +1,6 @@
 package com.desarrollos.views;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
@@ -103,40 +104,38 @@ public class MainLayout extends AppLayout {
 		btnTema.getElement().setAttribute("title", "Activar modo oscuro");
 		btnTema.getStyle().set("cursor", "pointer");
 
-		// Leer preferencia guardada en localStorage y sincronizar icono
-		getElement().executeJs(
-			"if (localStorage.getItem('dark-mode') === '1') {" +
-			"  document.documentElement.setAttribute('theme', 'dark'); }")
-			.then(__ -> {
-				// sync icon: ask client about current state
-				getElement().executeJs("return localStorage.getItem('dark-mode') === '1';")
-					.then(Boolean.class, dark -> {
-						if (Boolean.TRUE.equals(dark)) {
-							isDark[0] = true;
-							Icon ic = VaadinIcon.SUN_O.create();
-							ic.setSize("18px");
-							ic.getStyle().set("color", "rgba(255,255,255,0.85)");
-							btnTema.setIcon(ic);
-							btnTema.getElement().setAttribute("title", "Activar modo claro");
-						}
-					});
-			});
+		// Inicializar tema desde localStorage al adjuntar el componente
+		addAttachListener((AttachEvent ae) ->
+			ae.getUI().getPage().executeJs(
+				"const d = localStorage.getItem('dark-mode') === '1';" +
+				"if (d) document.documentElement.setAttribute('theme','dark');" +
+				"return d;")
+			.then(Boolean.class, dark -> {
+				if (Boolean.TRUE.equals(dark)) {
+					isDark[0] = true;
+					Icon ic = VaadinIcon.SUN_O.create();
+					ic.setSize("18px");
+					ic.getStyle().set("color", "rgba(255,255,255,0.85)");
+					btnTema.setIcon(ic);
+					btnTema.getElement().setAttribute("title", "Activar modo claro");
+				}
+			}));
 
 		btnTema.addClickListener(e -> {
 			isDark[0] = !isDark[0];
 			if (isDark[0]) {
-				getElement().executeJs(
-					"document.documentElement.setAttribute('theme', 'dark');" +
-					"localStorage.setItem('dark-mode', '1');");
+				e.getSource().getUI().ifPresent(ui -> ui.getPage().executeJs(
+					"document.documentElement.setAttribute('theme','dark');" +
+					"localStorage.setItem('dark-mode','1');"));
 				Icon ic = VaadinIcon.SUN_O.create();
 				ic.setSize("18px");
 				ic.getStyle().set("color", "rgba(255,255,255,0.85)");
 				btnTema.setIcon(ic);
 				btnTema.getElement().setAttribute("title", "Activar modo claro");
 			} else {
-				getElement().executeJs(
+				e.getSource().getUI().ifPresent(ui -> ui.getPage().executeJs(
 					"document.documentElement.removeAttribute('theme');" +
-					"localStorage.removeItem('dark-mode');");
+					"localStorage.removeItem('dark-mode');"));
 				Icon ic = VaadinIcon.MOON.create();
 				ic.setSize("18px");
 				ic.getStyle().set("color", "rgba(255,255,255,0.85)");
