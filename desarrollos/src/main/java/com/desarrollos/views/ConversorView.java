@@ -68,6 +68,9 @@ public class ConversorView extends FormView {
 	// ── Panel resultado (contenedor dinámico) ─────────────────────────────────
 	private final VerticalLayout panelResultado = new VerticalLayout();
 
+	// ── Mensaje de error inline (debajo del combo) ──────────────────────────
+	private final HorizontalLayout mensajeErrorArchivo = new HorizontalLayout();
+
 	// ── Mensaje de progreso (reutilizado en el hilo para countdown) ───────────
 	private final H3 mensajeProcesando = new H3("Procesando imagen con IA...");
 
@@ -90,11 +93,25 @@ public class ConversorView extends FormView {
 			boolean hayArchivo = archivoSeleccionado != null;
 			btnVerArchivo.setEnabled(hayArchivo);
 			if (hayArchivo) {
+				mensajeErrorArchivo.setVisible(false);
 				panelResultado.removeAll();
 				panelResultado.setVisible(false);
 				panelProgreso.setVisible(false);
 			}
 		});
+
+		// ── Mensaje de error inline ──────────────────────────────────────────────
+		Icon iconoError = VaadinIcon.EXCLAMATION_CIRCLE_O.create();
+		iconoError.setSize("16px");
+		iconoError.setColor("#dc2626");
+		Span textoError = new Span("Seleccioná un archivo antes de convertir");
+		textoError.getStyle().set("color", "#dc2626").set("font-size", "0.85rem").set("font-weight", "500");
+		mensajeErrorArchivo.add(iconoError, textoError);
+		mensajeErrorArchivo.setAlignItems(FlexComponent.Alignment.CENTER);
+		mensajeErrorArchivo.setSpacing(false);
+		mensajeErrorArchivo.setPadding(false);
+		mensajeErrorArchivo.getStyle().set("gap", "6px").set("margin-top", "2px");
+		mensajeErrorArchivo.setVisible(false);
 
 		// ── Botón convertir ───────────────────────────────────────────────────
 		btnConvertir.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -135,7 +152,7 @@ public class ConversorView extends FormView {
 		panelResultado.setVisible(false);
 		panelResultado.getStyle().set("margin-top", "20px");
 
-		contenidoPrincipal.add(archivoCombo, botones, panelProgreso, panelResultado);
+		contenidoPrincipal.add(archivoCombo, mensajeErrorArchivo, botones, panelProgreso, panelResultado);
 		barraBotones.setVisible(false);
 	}
 
@@ -362,8 +379,7 @@ public class ConversorView extends FormView {
 	// ── Conversión en hilo de fondo (evita Connection Reset) ─────────────────
 	private void ejecutarConversion() {
 		if (archivoSeleccionado == null) {
-			Notification.show("Seleccioná un archivo antes de convertir")
-					.addThemeVariants(NotificationVariant.LUMO_WARNING);
+			mensajeErrorArchivo.setVisible(true);
 			return;
 		}
 
