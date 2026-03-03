@@ -1,8 +1,10 @@
 package com.desarrollos.services;
 
+import java.util.List;
+
 public class ErrorFactura {
 
-    public enum Tipo { DUPLICADA, TOTAL_NEGATIVO }
+    public enum Tipo { DUPLICADA, TOTAL_NEGATIVO, CAMPOS_FALTANTES }
 
     private final int    numero;
     private final Tipo   tipo;
@@ -22,6 +24,11 @@ public class ErrorFactura {
     public static ErrorFactura totalNegativo(int numero, TotalNegativoException ex) {
         return new ErrorFactura(numero, Tipo.TOTAL_NEGATIVO,
                 "Total negativo (" + ex.getTotal() + ")");
+    }
+
+    public static ErrorFactura camposFaltantes(int numero, List<String> faltantes) {
+        return new ErrorFactura(numero, Tipo.CAMPOS_FALTANTES,
+                "Campos obligatorios faltantes: " + String.join(", ", faltantes));
     }
 
     public int    getNumero()  { return numero; }

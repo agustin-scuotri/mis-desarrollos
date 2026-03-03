@@ -46,25 +46,44 @@ public class ClaudeVisionService {
                 }
                 """, model, contentBlock);
 
-        String respuesta = webClient.post()
-                .uri(apiUrl)
-                .header("Content-Type", "application/json")
-                .header("x-api-key", apiKey)
-                .header("anthropic-version", "2023-06-01")
-                .bodyValue(requestBody)
-                .retrieve()
-                .onStatus(status -> status.isError(), clientResponse ->
-                        clientResponse.bodyToMono(String.class)
-                                .map(body -> new RuntimeException("Error Claude: " + body)))
-                .bodyToMono(String.class)
-                .block();
+        // Reintentos automáticos ante saturación de la API (overloaded_error)
+        int[] esperas = { 5_000, 10_000, 20_000 };
+        RuntimeException ultimoError = null;
 
-        // Extraemos el texto de la respuesta formato Anthropic
-        JsonNode root = objectMapper.readTree(respuesta);
-        return root.path("content")
-                   .get(0)
-                   .path("text")
-                   .asText();
+        for (int intento = 0; intento <= esperas.length; intento++) {
+            if (intento > 0) {
+                try { Thread.sleep(esperas[intento - 1]); }
+                catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+            }
+            try {
+                String respuesta = webClient.post()
+                        .uri(apiUrl)
+                        .header("Content-Type", "application/json")
+                        .header("x-api-key", apiKey)
+                        .header("anthropic-version", "2023-06-01")
+                        .bodyValue(requestBody)
+                        .retrieve()
+                        .onStatus(status -> status.isError(), clientResponse ->
+                                clientResponse.bodyToMono(String.class)
+                                        .map(body -> new RuntimeException("Error Claude: " + body)))
+                        .bodyToMono(String.class)
+                        .block();
+
+                // Extraemos el texto de la respuesta formato Anthropic
+                JsonNode root = objectMapper.readTree(respuesta);
+                return root.path("content").get(0).path("text").asText();
+
+            } catch (RuntimeException e) {
+                ultimoError = e;
+                String msg = e.getMessage();
+                // Solo reintenta si es overloaded_error y quedan intentos disponibles
+                if (msg != null && msg.contains("overloaded_error") && intento < esperas.length) {
+                    continue;
+                }
+                throw e;
+            }
+        }
+        throw ultimoError != null ? ultimoError : new RuntimeException("Error inesperado al llamar a Claude");
     }
 
     private String buildContentBlock(String mimeType, String base64Data) {

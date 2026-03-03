@@ -63,15 +63,20 @@ public class DocumentoConvertidoService {
 
         if (raiz.isArray()) {
             // El modelo detectó múltiples facturas distintas en el mismo archivo.
-            // Cada factura se procesa de forma independiente para no cancelar las demás ante un error.
+            // Cada factura se procesa de forma independiente: solo se guardan las completamente válidas.
             int indice = 1;
             for (JsonNode nodo : raiz) {
                 try {
                     DocumentoConvertido doc = mapearDesdeNodo(nodo, archivoCompleto, nodo.toString());
-                    validarNoDuplicada(doc);
-                    validarTotalNoNegativo(doc);
-                    repository.save(doc);
-                    exitosos.add(doc);
+                    List<String> faltantes = obtenerCamposFaltantes(doc);
+                    if (!faltantes.isEmpty()) {
+                        errores.add(ErrorFactura.camposFaltantes(indice, faltantes));
+                    } else {
+                        validarNoDuplicada(doc);
+                        validarTotalNoNegativo(doc);
+                        repository.save(doc);
+                        exitosos.add(doc);
+                    }
                 } catch (FacturaDuplicadaException ex) {
                     errores.add(ErrorFactura.duplicada(indice, ex));
                 } catch (TotalNegativoException ex) {
@@ -88,10 +93,9 @@ public class DocumentoConvertidoService {
             exitosos.add(doc);
         }
 
-        // PROCESADO si todas las facturas tienen los campos obligatorios; PROCESADO_ERROR si alguna falla
-        boolean todosOk = exitosos.stream().allMatch(this::camposObligatoriosOk) && errores.isEmpty();
+        // PROCESADO si al menos una factura fue guardada; PROCESADO_ERROR solo si ninguna pudo guardarse
         archivoCompleto.setConvertido(true);
-        archivoCompleto.setEstadoConversion(todosOk ? "PROCESADO" : "PROCESADO_ERROR");
+        archivoCompleto.setEstadoConversion(!exitosos.isEmpty() ? "PROCESADO" : "PROCESADO_ERROR");
         archivoService.guardar(archivoCompleto);
 
         return new ResultadoConversion(exitosos, errores);
@@ -205,14 +209,21 @@ public class DocumentoConvertidoService {
         return doc;
     }
 
+    /** Devuelve la lista de campos obligatorios ausentes (vacía si la factura es válida). */
+    private List<String> obtenerCamposFaltantes(DocumentoConvertido doc) {
+        List<String> faltantes = new ArrayList<>();
+        if (estaVacio(doc.getCuit()))              faltantes.add("CUIT del Emisor");
+        if (estaVacio(doc.getCodigoArca()))        faltantes.add("Código ARCA");
+        if (estaVacio(doc.getCentroEmision()))     faltantes.add("Centro de Emisión");
+        if (estaVacio(doc.getNumeroComprobante())) faltantes.add("N° Comprobante");
+        if (estaVacio(doc.getFechaEmision()))      faltantes.add("Fecha de Emisión");
+        if (estaVacio(doc.getMoneda()))            faltantes.add("Moneda");
+        if (estaVacio(doc.getTotal()))             faltantes.add("Total");
+        return faltantes;
+    }
+
     private boolean camposObligatoriosOk(DocumentoConvertido doc) {
-        return !estaVacio(doc.getCuit())
-                && !estaVacio(doc.getCodigoArca())
-                && !estaVacio(doc.getCentroEmision())
-                && !estaVacio(doc.getNumeroComprobante())
-                && !estaVacio(doc.getFechaEmision())
-                && !estaVacio(doc.getMoneda())
-                && !estaVacio(doc.getTotal());
+        return obtenerCamposFaltantes(doc).isEmpty();
     }
 
     public List<DocumentoConvertido> listarTodos() {
