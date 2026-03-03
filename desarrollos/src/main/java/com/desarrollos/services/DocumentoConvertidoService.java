@@ -240,8 +240,8 @@ public class DocumentoConvertidoService {
 
     // ── Paginación server-side para AbmDocumentosConvertidosView ─────────────
     public List<DocumentoConvertido> listarPaginado(int page, int size,
-            String codigo, String nombre, String cuit, String centroEmision, String comprobante, Sort sort) {
-        Pageable pageable = PageRequest.of(page, Math.max(size, 1), sort);
+            String codigo, String nombre, String cuit, String centroEmision, String comprobante) {
+        Pageable pageable = PageRequest.of(page, Math.max(size, 1));
         return repository.findFiltrado(
                 codigo != null ? codigo : "",
                 nombre != null ? nombre.toLowerCase() : "",

@@ -14,7 +14,6 @@ import com.desarrollos.services.DocumentoConvertidoService;
 import com.vaadin.flow.data.provider.CallbackDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
-import org.springframework.data.domain.Sort;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
@@ -58,8 +57,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
                 String comprobante   = filtrosActivos.getOrDefault("Nro. comprobante", "");
                 int pageSize = Math.max(query.getLimit(), 1);
                 int pageNum  = query.getOffset() / pageSize;
-                Sort sort = Sort.by(Sort.Direction.ASC, "archivo.id");
-                return service.listarPaginado(pageNum, pageSize, codigo, nombre, cuit, "", comprobante, sort).stream();
+                return service.listarPaginado(pageNum, pageSize, codigo, nombre, cuit, "", comprobante).stream();
             },
             (Query<DocumentoConvertido, Void> query) -> {
                 String codigo        = filtrosActivos.getOrDefault("Código", "");
