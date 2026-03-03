@@ -380,8 +380,14 @@ public class ConversorView extends FormView {
 		final UI ui = UI.getCurrent();
 
 		new Thread(() -> {
-			int[] esperas = {5, 10, 20};
-			for (int intento = 0; intento <= esperas.length; intento++) {
+			String[] mensajes = {
+				"Procesando imagen con IA...",
+				"Esto puede demorar algunos minutos..."
+			};
+			long deadline = System.currentTimeMillis() + 120_000; // 2 minutos
+			int msgIdx = 1; // primera espera arranca con el segundo mensaje
+
+			while (true) {
 				try {
 					final ResultadoConversion resultados = documentoConvertidoService.convertir(archivoAConvertir);
 					final List<DocumentoConvertido> exitosos = resultados.getExitosos();
@@ -461,7 +467,7 @@ public class ConversorView extends FormView {
 					return;
 
 				} catch (ApiSaturadaException ex) {
-					if (intento >= esperas.length) {
+					if (System.currentTimeMillis() >= deadline) {
 						ui.access(() -> {
 							mensajeProcesando.setText("Procesando imagen con IA...");
 							panelProgreso.setVisible(false);
@@ -471,14 +477,16 @@ public class ConversorView extends FormView {
 						});
 						return;
 					}
-					int segs = esperas[intento];
+					// Esperar 15 s rotando mensajes antes del siguiente intento
 					try {
-						for (int s = segs; s > 0; s--) {
-							final int seg = s;
-							ui.access(() -> mensajeProcesando.setText("API saturada — reintentando en " + seg + " s..."));
+						for (int s = 0; s < 15 && System.currentTimeMillis() < deadline; s++) {
+							if (s % 5 == 0) {
+								final String msg = mensajes[msgIdx % 2];
+								msgIdx++;
+								ui.access(() -> mensajeProcesando.setText(msg));
+							}
 							Thread.sleep(1000);
 						}
-						ui.access(() -> mensajeProcesando.setText("Procesando imagen con IA..."));
 					} catch (InterruptedException ie) {
 						Thread.currentThread().interrupt();
 						return;
