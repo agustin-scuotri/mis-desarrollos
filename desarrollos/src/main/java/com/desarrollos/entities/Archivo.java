@@ -17,6 +17,9 @@ public class Archivo {
     @Column(unique = true)
     private String codigo;
 
+    @org.hibernate.annotations.Formula("CAST(codigo AS INTEGER)")
+    private Integer codigoNumerico;
+
     @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
 

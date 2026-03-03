@@ -49,7 +49,7 @@ public class AbmArchivosView extends CrudView<Archivo> implements BeforeEnterObs
                         .findFirst()
                         .map(o -> Sort.by(
                                 o.getDirection() == SortDirection.ASCENDING ? Sort.Direction.ASC : Sort.Direction.DESC,
-                                "codigo"))
+                                "codigoNumerico"))
                         .orElse(Sort.by(Sort.Direction.DESC, "fechaCreacion"));
                 int pageSize = Math.max(query.getLimit(), 1);
                 int pageNum  = query.getOffset() / pageSize;
