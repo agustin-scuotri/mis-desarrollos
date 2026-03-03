@@ -460,18 +460,9 @@ public class ConversorView extends FormView {
 						panelResultado.setVisible(true);
 					}
 
-					// Notificación
-					if (!tabWorthy.isEmpty()) {
-						if (mensajesFallas.isEmpty()) {
-							String msg = tabWorthy.size() == 1
-									? "¡Archivo convertido exitosamente!"
-									: tabWorthy.size() + " facturas convertidas exitosamente.";
-							Notification.show(msg).addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-						} else {
-							Notification.show(tabWorthy.size() + " factura(s) convertida(s). "
-									+ mensajesFallas.size() + " con errores.")
-									.addThemeVariants(NotificationVariant.LUMO_WARNING);
-						}
+					// Diálogo de resultado
+					if (!tabWorthy.isEmpty() || !mensajesFallas.isEmpty()) {
+						mostrarDialogoResultado(tabWorthy.size(), mensajesFallas);
 					}
 				});
 
@@ -687,6 +678,75 @@ public class ConversorView extends FormView {
 		Button btnAceptar = new Button("Aceptar", e -> dialog.close());
 		btnAceptar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 		btnAceptar.getStyle().set("background-color", "#dc2626").set("color", "white");
+
+		dialog.add(contenido);
+		dialog.getFooter().add(btnAceptar);
+		dialog.open();
+	}
+
+	// ── Diálogo de resultado de conversión ───────────────────────────────────
+	private void mostrarDialogoResultado(int exitosas, List<String> fallas) {
+		Dialog dialog = new Dialog();
+		dialog.setModal(true);
+		dialog.setWidth("480px");
+
+		boolean hayFallas = !fallas.isEmpty();
+
+		Icon icono = hayFallas
+				? VaadinIcon.WARNING.create()
+				: VaadinIcon.CHECK_CIRCLE.create();
+		icono.setSize("48px");
+		icono.setColor(hayFallas ? "#d97706" : "#16a34a");
+
+		String titulotxt = hayFallas
+				? "Conversión finalizada con observaciones"
+				: (exitosas == 1 ? "¡Factura convertida exitosamente!" : "¡Facturas convertidas exitosamente!");
+
+		H3 titulo = new H3(titulotxt);
+		titulo.getStyle()
+				.set("color", hayFallas ? "#92400e" : "#14532d")
+				.set("margin", "8px 0 0 0")
+				.set("font-weight", "700")
+				.set("text-align", "center");
+
+		VerticalLayout contenido = new VerticalLayout(icono, titulo);
+		contenido.setAlignItems(FlexComponent.Alignment.CENTER);
+		contenido.setPadding(true);
+		contenido.setSpacing(true);
+
+		if (exitosas > 0) {
+			Span linea = new Span("✔  " + exitosas + (exitosas == 1 ? " factura convertida." : " facturas convertidas."));
+			linea.getStyle().set("color", "#15803d").set("font-weight", "600").set("font-size", "0.95rem");
+			contenido.add(linea);
+		}
+
+		if (hayFallas) {
+			VerticalLayout panelFallas = new VerticalLayout();
+			panelFallas.setPadding(false);
+			panelFallas.setSpacing(false);
+			panelFallas.setWidthFull();
+			panelFallas.getStyle()
+					.set("background-color", "#fffbeb").set("border", "1px solid #fde68a")
+					.set("border-radius", "8px").set("padding", "12px").set("gap", "4px")
+					.set("margin-top", "4px");
+
+			Span tituloFallas = new Span("Facturas con errores:");
+			tituloFallas.getStyle().set("font-weight", "600").set("color", "#92400e").set("font-size", "0.82rem");
+			panelFallas.add(tituloFallas);
+
+			for (String msg : fallas) {
+				Span item = new Span("• " + msg);
+				item.getStyle().set("color", "#78350f").set("font-size", "0.82rem");
+				panelFallas.add(item);
+			}
+			contenido.add(panelFallas);
+		}
+
+		Button btnAceptar = new Button("Aceptar", e -> dialog.close());
+		btnAceptar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+		btnAceptar.getStyle()
+				.set("background-color", hayFallas ? "#d97706" : "#16a34a")
+				.set("color", "white");
 
 		dialog.add(contenido);
 		dialog.getFooter().add(btnAceptar);
