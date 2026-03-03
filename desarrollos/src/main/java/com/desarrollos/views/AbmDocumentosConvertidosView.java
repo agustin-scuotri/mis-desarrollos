@@ -54,19 +54,17 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
                 String codigo        = filtrosActivos.getOrDefault("CODIGO", "");
                 String nombre        = filtrosActivos.getOrDefault("NOMBRE", "");
                 String cuit          = filtrosActivos.getOrDefault("CUIT DEL EMISOR", "");
-                String centroEmision = filtrosActivos.getOrDefault("CENTRO DE EMISION", "");
                 String comprobante   = filtrosActivos.getOrDefault("NUMERO DE COMPROBANTE", "");
                 int pageSize = Math.max(query.getLimit(), 1);
                 int pageNum  = query.getOffset() / pageSize;
-                return service.listarPaginado(pageNum, pageSize, codigo, nombre, cuit, centroEmision, comprobante).stream();
+                return service.listarPaginado(pageNum, pageSize, codigo, nombre, cuit, "", comprobante).stream();
             },
             (Query<DocumentoConvertido, Void> query) -> {
                 String codigo        = filtrosActivos.getOrDefault("CODIGO", "");
                 String nombre        = filtrosActivos.getOrDefault("NOMBRE", "");
                 String cuit          = filtrosActivos.getOrDefault("CUIT DEL EMISOR", "");
-                String centroEmision = filtrosActivos.getOrDefault("CENTRO DE EMISION", "");
                 String comprobante   = filtrosActivos.getOrDefault("NUMERO DE COMPROBANTE", "");
-                return (int) service.contarFiltrado(codigo, nombre, cuit, centroEmision, comprobante);
+                return (int) service.contarFiltrado(codigo, nombre, cuit, "", comprobante);
             }
         );
         grid.setItems(gridProvider);
@@ -112,7 +110,6 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
             return n.length() > 25 ? n.substring(0, 25) + "..." : n;
         }, "NOMBRE");
         agregarColumna(DocumentoConvertido::getCuit, "CUIT DEL EMISOR");
-        agregarColumna(DocumentoConvertido::getCentroEmision, "CENTRO DE EMISION");
         agregarColumna(DocumentoConvertido::getNumeroComprobante, "NUMERO DE COMPROBANTE");
     }
 
