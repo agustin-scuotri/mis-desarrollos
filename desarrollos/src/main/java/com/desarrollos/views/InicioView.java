@@ -100,7 +100,7 @@ public class InicioView extends VerticalLayout {
         donutCanvas.getElement().executeJs(loaderScript(donutScript(donutLabels, donutData, donutColors)));
         donutCanvas.getElement()
                 .addEventListener("donut-click", e -> {
-                    int index = (int) e.getEventData().getNumber("event.detail.index");
+                    int index = e.getEventData().get("event.detail.index").asInt();
                     abrirDialogoArchivos(index);
                 })
                 .addEventData("event.detail.index");
