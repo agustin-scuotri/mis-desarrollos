@@ -2,10 +2,12 @@ package com.desarrollos.services;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -278,6 +280,43 @@ public class DocumentoConvertidoService {
         for (int i = 0; i < 7; i++) {
             labels[i] = hoy.minusDays(6 - i).format(fmt);
         }
+        return labels;
+    }
+
+    public long[] conversionesPorMes() {
+        LocalDate hoy = LocalDate.now();
+        LocalDateTime desde = hoy.minusDays(29).atStartOfDay();
+        Map<LocalDate, Long> mapa = repository.findFechasDesde(desde).stream()
+                .filter(f -> f != null)
+                .collect(Collectors.groupingBy(LocalDateTime::toLocalDate, Collectors.counting()));
+        long[] datos = new long[30];
+        for (int i = 0; i < 30; i++) datos[i] = mapa.getOrDefault(hoy.minusDays(29 - i), 0L);
+        return datos;
+    }
+
+    public String[] etiquetasMes() {
+        LocalDate hoy = LocalDate.now();
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM");
+        String[] labels = new String[30];
+        for (int i = 0; i < 30; i++) labels[i] = hoy.minusDays(29 - i).format(fmt);
+        return labels;
+    }
+
+    public long[] conversionesPorAnio() {
+        LocalDate hoy = LocalDate.now();
+        LocalDateTime desde = hoy.minusMonths(11).withDayOfMonth(1).atStartOfDay();
+        Map<YearMonth, Long> mapa = repository.findFechasDesde(desde).stream()
+                .filter(f -> f != null)
+                .collect(Collectors.groupingBy(f -> YearMonth.from(f), Collectors.counting()));
+        long[] datos = new long[12];
+        for (int i = 0; i < 12; i++) datos[i] = mapa.getOrDefault(YearMonth.now().minusMonths(11 - i), 0L);
+        return datos;
+    }
+
+    public String[] etiquetasAnio() {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMM yy", new Locale("es", "AR"));
+        String[] labels = new String[12];
+        for (int i = 0; i < 12; i++) labels[i] = YearMonth.now().minusMonths(11 - i).format(fmt);
         return labels;
     }
 

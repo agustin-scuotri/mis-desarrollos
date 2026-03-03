@@ -7,6 +7,10 @@ import java.util.stream.Collectors;
 import com.desarrollos.entities.Archivo;
 import com.desarrollos.services.ArchivoService;
 import com.desarrollos.services.DocumentoConvertidoService;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
@@ -22,7 +26,19 @@ import com.vaadin.flow.router.Route;
 @Route(value = "", layout = MainLayout.class)
 public class InicioView extends VerticalLayout {
 
+    private final ArchivoService archivoService;
+    private final DocumentoConvertidoService documentoConvertidoService;
+
+    private List<Archivo> archivos;
+    private long procesados, pendientes, errores;
+
+    private Div barCanvas;
+    private Button btnActivo;
+
     public InicioView(ArchivoService archivoService, DocumentoConvertidoService documentoConvertidoService) {
+        this.archivoService = archivoService;
+        this.documentoConvertidoService = documentoConvertidoService;
+
         setPadding(true);
         setSpacing(false);
         getStyle()
@@ -45,16 +61,15 @@ public class InicioView extends VerticalLayout {
                 .set("margin", "0 0 28px 0");
 
         // ── Métricas ──────────────────────────────────────────────────────────
-        List<Archivo> archivos = archivoService.listarTodos();
-        long total      = archivos.size();
-        long procesados = archivos.stream().filter(a -> "PROCESADO".equals(a.getEstadoConversion())).count();
-        long pendientes = archivos.stream()
+        archivos = archivoService.listarTodos();
+        long total  = archivos.size();
+        procesados  = archivos.stream().filter(a -> "PROCESADO".equals(a.getEstadoConversion())).count();
+        pendientes  = archivos.stream()
                 .filter(a -> a.getEstadoConversion() == null || "PENDIENTE".equals(a.getEstadoConversion()))
                 .count();
-        long errores    = archivos.stream().filter(a -> "PROCESADO_ERROR".equals(a.getEstadoConversion())).count();
+        errores     = archivos.stream().filter(a -> "PROCESADO_ERROR".equals(a.getEstadoConversion())).count();
         long documentos = documentoConvertidoService.listarTodos().size();
 
-        // ── Cards de métricas (colores Lumo → adaptan a dark mode) ───────────
         HorizontalLayout cards = new HorizontalLayout(
             crearCard("Archivos Cargados", String.valueOf(total),      VaadinIcon.COPY_O,       "#2563eb", "#eff6ff"),
             crearCard("Procesados",        String.valueOf(procesados), VaadinIcon.CHECK_CIRCLE, "#16a34a", "#f0fdf4"),
@@ -75,24 +90,136 @@ public class InicioView extends VerticalLayout {
                 .set("margin-top", "20px")
                 .set("flex-wrap", "wrap");
 
-        // Chart 1 ── Donut de distribución de archivos por estado
+        // Chart 1 ── Donut interactivo
         String donutData   = "[" + procesados + "," + pendientes + "," + errores + "]";
         String donutLabels = "[\"Procesados\",\"Pendientes\",\"Errores\"]";
         String donutColors = "[\"#16a34a\",\"#d97706\",\"#dc2626\"]";
-        Div donutCard = crearCardChart("Estado de Archivos", donutScript(donutLabels, donutData, donutColors),
-                "1", "250px", "340px");
 
-        // Chart 2 ── Barras de actividad últimos 7 días
-        long[]   datosBar     = documentoConvertidoService.conversionesPorDia();
-        String[] etiquetasBar = documentoConvertidoService.etiquetasDias();
-        String barData   = Arrays.stream(datosBar).mapToObj(String::valueOf).collect(Collectors.joining(",", "[", "]"));
-        String barLabels = "[\"" + String.join("\",\"", etiquetasBar) + "\"]";
-        Div barCard = crearCardChart("Actividad — Últimos 7 días", barScript(barLabels, barData),
-                "2", "250px", null);
+        Div donutCanvas = new Div();
+        donutCanvas.getStyle().set("width", "100%").set("max-height", "220px");
+        donutCanvas.getElement().executeJs(loaderScript(donutScript(donutLabels, donutData, donutColors)));
+        donutCanvas.getElement()
+                .addEventListener("donut-click", e -> {
+                    int index = (int) e.getEventData().getNumber("event.detail.index");
+                    abrirDialogoArchivos(index);
+                })
+                .addEventData("event.detail.index");
+
+        Div donutCard = crearCardChart("Estado de Archivos", donutCanvas, "1", "250px", "340px");
+
+        // Chart 2 ── Barras con toggle de período
+        barCanvas = new Div();
+        barCanvas.getStyle().set("width", "100%").set("max-height", "220px");
+        cargarBarChart("7d");
+
+        Button btn7d   = crearBotonPeriodo("7 días");
+        Button btnMes  = crearBotonPeriodo("Mes");
+        Button btnAnio = crearBotonPeriodo("Año");
+        activarBoton(btn7d);
+
+        btn7d.addClickListener(e  -> { activarBoton(btn7d);  cargarBarChart("7d");   });
+        btnMes.addClickListener(e -> { activarBoton(btnMes); cargarBarChart("mes");  });
+        btnAnio.addClickListener(e -> { activarBoton(btnAnio); cargarBarChart("anio"); });
+
+        HorizontalLayout toggles = new HorizontalLayout(btn7d, btnMes, btnAnio);
+        toggles.setSpacing(false);
+        toggles.getStyle().set("gap", "6px").set("margin-bottom", "10px");
+
+        Div barCard = crearCardChartConToggle("Actividad", toggles, barCanvas, "2", "250px", null);
 
         chartsRow.add(donutCard, barCard);
-
         add(titulo, subtitulo, cards, chartsRow);
+    }
+
+    // ── Carga/recarga el gráfico de barras según período ──────────────────────
+    private void cargarBarChart(String periodo) {
+        long[]   datos;
+        String[] etiquetas;
+        switch (periodo) {
+            case "mes":
+                datos     = documentoConvertidoService.conversionesPorMes();
+                etiquetas = documentoConvertidoService.etiquetasMes();
+                break;
+            case "anio":
+                datos     = documentoConvertidoService.conversionesPorAnio();
+                etiquetas = documentoConvertidoService.etiquetasAnio();
+                break;
+            default:
+                datos     = documentoConvertidoService.conversionesPorDia();
+                etiquetas = documentoConvertidoService.etiquetasDias();
+        }
+        String barData   = Arrays.stream(datos).mapToObj(String::valueOf).collect(Collectors.joining(",", "[", "]"));
+        String barLabels = "[\"" + String.join("\",\"", etiquetas) + "\"]";
+        barCanvas.getElement().executeJs(loaderScript(barScript(barLabels, barData)));
+    }
+
+    // ── Abre diálogo con archivos del estado clickeado ────────────────────────
+    private void abrirDialogoArchivos(int index) {
+        String[] estadosFiltro = {"PROCESADO", "PENDIENTE", "PROCESADO_ERROR"};
+        String[] titulos       = {"Archivos Procesados", "Archivos Pendientes", "Archivos con Error"};
+
+        String estadoFiltro = estadosFiltro[index];
+        List<Archivo> filtrados = archivos.stream()
+                .filter(a -> {
+                    String e = a.getEstadoConversion();
+                    if ("PENDIENTE".equals(estadoFiltro)) return e == null || "PENDIENTE".equals(e);
+                    return estadoFiltro.equals(e);
+                })
+                .collect(Collectors.toList());
+
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle(titulos[index] + " (" + filtrados.size() + ")");
+        dialog.setWidth("500px");
+        dialog.setCloseOnEsc(true);
+        dialog.setCloseOnOutsideClick(true);
+
+        if (filtrados.isEmpty()) {
+            Span vacio = new Span("No hay archivos en este estado.");
+            vacio.getStyle().set("color", "#64748b").set("padding", "16px").set("display", "block");
+            dialog.add(vacio);
+        } else {
+            Grid<Archivo> grid = new Grid<>(Archivo.class, false);
+            grid.addColumn(Archivo::getCodigo).setHeader("Código").setAutoWidth(true).setFlexGrow(0);
+            grid.addColumn(Archivo::getNombre).setHeader("Nombre").setFlexGrow(1);
+            grid.setItems(filtrados);
+            grid.setHeight("300px");
+            grid.getStyle().set("border", "none");
+            dialog.add(grid);
+        }
+
+        Button cerrar = new Button("Cerrar", e -> dialog.close());
+        cerrar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        dialog.getFooter().add(cerrar);
+        dialog.open();
+    }
+
+    // ── Botón de período ──────────────────────────────────────────────────────
+    private Button crearBotonPeriodo(String label) {
+        Button btn = new Button(label);
+        btn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+        btn.getStyle()
+                .set("border", "1px solid #e2e8f0")
+                .set("border-radius", "8px")
+                .set("font-size", "0.8rem")
+                .set("cursor", "pointer")
+                .set("transition", "all 0.15s ease");
+        return btn;
+    }
+
+    private void activarBoton(Button btn) {
+        if (btnActivo != null) {
+            btnActivo.getStyle()
+                    .set("background", "transparent")
+                    .set("color", "#64748b")
+                    .set("font-weight", "400")
+                    .set("border-color", "#e2e8f0");
+        }
+        btnActivo = btn;
+        btn.getStyle()
+                .set("background", "#002060")
+                .set("color", "white")
+                .set("font-weight", "600")
+                .set("border-color", "#002060");
     }
 
     // ── Card métrica ──────────────────────────────────────────────────────────
@@ -139,8 +266,8 @@ public class InicioView extends VerticalLayout {
         return card;
     }
 
-    // ── Card contenedor de gráfico ────────────────────────────────────────────
-    private Div crearCardChart(String titulo, String chartJs, String flex,
+    // ── Card contenedor de gráfico (simple) ───────────────────────────────────
+    private Div crearCardChart(String titulo, Div canvas, String flex,
                                String minWidth, String maxWidth) {
         Div card = new Div();
         card.getStyle()
@@ -160,25 +287,53 @@ public class InicioView extends VerticalLayout {
                 .set("display", "block")
                 .set("margin-bottom", "14px");
 
-        Div canvas = new Div();
-        canvas.getStyle().set("width", "100%").set("max-height", "220px");
-
-        // Cargar Chart.js desde CDN si no está disponible y renderizar
-        String loaderJs =
-                "const me = this;" +
-                "const render = () => { " + chartJs + " };" +
-                "if (typeof Chart !== 'undefined') { render(); } else {" +
-                "  const s = document.createElement('script');" +
-                "  s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';" +
-                "  s.onload = render;" +
-                "  document.head.appendChild(s); }";
-        canvas.getElement().executeJs(loaderJs);
-
         card.add(tituloSpan, canvas);
         return card;
     }
 
-    // ── Script Chart.js: Donut ────────────────────────────────────────────────
+    // ── Card contenedor de gráfico con toggle de período ─────────────────────
+    private Div crearCardChartConToggle(String titulo, HorizontalLayout toggles, Div canvas,
+                                        String flex, String minWidth, String maxWidth) {
+        Div card = new Div();
+        card.getStyle()
+                .set("background", "var(--lumo-base-color, white)")
+                .set("border-radius", "14px")
+                .set("box-shadow", "0 1px 3px rgba(0,0,0,0.08)")
+                .set("padding", "20px 24px")
+                .set("flex", flex)
+                .set("min-width", minWidth);
+        if (maxWidth != null) card.getStyle().set("max-width", maxWidth);
+
+        Span tituloSpan = new Span(titulo);
+        tituloSpan.getStyle()
+                .set("font-weight", "600")
+                .set("font-size", "0.9rem")
+                .set("color", "var(--lumo-header-text-color, #1e293b)");
+
+        Div header = new Div();
+        header.getStyle()
+                .set("display", "flex")
+                .set("justify-content", "space-between")
+                .set("align-items", "center")
+                .set("margin-bottom", "14px");
+        header.add(tituloSpan, toggles);
+
+        card.add(header, canvas);
+        return card;
+    }
+
+    // ── Envuelve el script con el loader de Chart.js ──────────────────────────
+    private String loaderScript(String chartJs) {
+        return "const me = this;" +
+               "const render = () => { " + chartJs + " };" +
+               "if (typeof Chart !== 'undefined') { render(); } else {" +
+               "  const s = document.createElement('script');" +
+               "  s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';" +
+               "  s.onload = render;" +
+               "  document.head.appendChild(s); }";
+    }
+
+    // ── Script Chart.js: Donut interactivo ────────────────────────────────────
     private String donutScript(String labels, String data, String colors) {
         return "const isDark = document.documentElement.getAttribute('theme') === 'dark';" +
                "const cvs = document.createElement('canvas'); cvs.style.maxHeight = '200px'; me.appendChild(cvs);" +
@@ -187,6 +342,14 @@ public class InicioView extends VerticalLayout {
                "  datasets: [{ data: " + data + ", backgroundColor: " + colors + "," +
                "    borderColor: isDark ? '#1e293b' : 'white', borderWidth: 2 }]" +
                "}, options: { responsive: true, maintainAspectRatio: true," +
+               "  onClick: (evt, elements) => {" +
+               "    if (elements.length > 0) {" +
+               "      me.dispatchEvent(new CustomEvent('donut-click', { bubbles: true, detail: { index: elements[0].index } }));" +
+               "    }" +
+               "  }," +
+               "  onHover: (evt, elements) => {" +
+               "    evt.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';" +
+               "  }," +
                "  plugins: { legend: { position: 'bottom', labels: {" +
                "    color: isDark ? '#94a3b8' : '#475569'," +
                "    font: { size: 12, family: 'Inter, sans-serif' }, boxWidth: 12, padding: 10" +
@@ -194,15 +357,19 @@ public class InicioView extends VerticalLayout {
                "});";
     }
 
-    // ── Script Chart.js: Barras ───────────────────────────────────────────────
+    // ── Script Chart.js: Barras (reutiliza canvas, destruye chart previo) ─────
     private String barScript(String labels, String data) {
         return "const isDark = document.documentElement.getAttribute('theme') === 'dark';" +
-               "const barColor   = isDark ? 'rgba(96,165,250,0.75)' : 'rgba(37,99,235,0.75)';" +
-               "const borderClr  = isDark ? '#60a5fa' : '#2563eb';" +
-               "const tickClr    = isDark ? '#94a3b8' : '#64748b';" +
-               "const gridClr    = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)';" +
-               "const cvs = document.createElement('canvas'); cvs.style.maxHeight = '200px'; me.appendChild(cvs);" +
-               "new Chart(cvs, { type: 'bar', data: {" +
+               "const barColor  = isDark ? 'rgba(96,165,250,0.75)' : 'rgba(37,99,235,0.75)';" +
+               "const borderClr = isDark ? '#60a5fa' : '#2563eb';" +
+               "const tickClr   = isDark ? '#94a3b8' : '#64748b';" +
+               "const gridClr   = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)';" +
+               "if (me._barChart) { me._barChart.destroy(); }" +
+               "const cvs = me._barCvs || (() => {" +
+               "  const c = document.createElement('canvas'); c.style.maxHeight='200px';" +
+               "  me.appendChild(c); me._barCvs = c; return c;" +
+               "})();" +
+               "me._barChart = new Chart(cvs, { type: 'bar', data: {" +
                "  labels: " + labels + "," +
                "  datasets: [{ label: 'Conversiones', data: " + data + "," +
                "    backgroundColor: barColor, borderColor: borderClr," +
