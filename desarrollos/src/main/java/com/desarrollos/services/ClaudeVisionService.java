@@ -46,49 +46,30 @@ public class ClaudeVisionService {
                 }
                 """, model, contentBlock);
 
-        // Reintentos automáticos ante saturación de la API (overloaded_error)
-        int[] esperas = { 5_000, 10_000, 20_000 };
-        RuntimeException ultimoError = null;
+        // exchangeToMono lee siempre el body sin importar el HTTP status code.
+        String respuesta = webClient.post()
+                .uri(apiUrl)
+                .header("Content-Type", "application/json")
+                .header("x-api-key", apiKey)
+                .header("anthropic-version", "2023-06-01")
+                .bodyValue(requestBody)
+                .exchangeToMono(response -> response.bodyToMono(String.class))
+                .block();
 
-        for (int intento = 0; intento <= esperas.length; intento++) {
-            if (intento > 0) {
-                try { Thread.sleep(esperas[intento - 1]); }
-                catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+        JsonNode root = objectMapper.readTree(respuesta);
+
+        // Detectar errores devueltos por la API de Claude
+        if ("error".equals(root.path("type").asText())) {
+            String tipo    = root.path("error").path("type").asText();
+            String mensaje = root.path("error").path("message").asText();
+            if ("overloaded_error".equals(tipo)) {
+                throw new ApiSaturadaException();   // el reintento lo maneja la vista
             }
-            try {
-                // exchangeToMono lee siempre el body, sin importar el HTTP status code.
-                // Así evitamos que onStatus envuelva la excepción de forma opaca.
-                String respuesta = webClient.post()
-                        .uri(apiUrl)
-                        .header("Content-Type", "application/json")
-                        .header("x-api-key", apiKey)
-                        .header("anthropic-version", "2023-06-01")
-                        .bodyValue(requestBody)
-                        .exchangeToMono(response -> response.bodyToMono(String.class))
-                        .block();
-
-                JsonNode root = objectMapper.readTree(respuesta);
-
-                // Detectar errores devueltos por la API de Claude (overloaded, auth, etc.)
-                if ("error".equals(root.path("type").asText())) {
-                    String tipo    = root.path("error").path("type").asText();
-                    String mensaje = root.path("error").path("message").asText();
-                    throw new RuntimeException("Error Claude [" + tipo + "]: " + mensaje);
-                }
-
-                return root.path("content").get(0).path("text").asText();
-
-            } catch (RuntimeException e) {
-                ultimoError = e;
-                String msg = e.getMessage();
-                // Solo reintenta ante saturación si quedan intentos disponibles
-                if (msg != null && msg.contains("overloaded_error") && intento < esperas.length) {
-                    continue;
-                }
-                throw e;
-            }
+            throw new RuntimeException("Error Claude [" + tipo + "]: " + mensaje);
         }
-        throw ultimoError != null ? ultimoError : new RuntimeException("Error inesperado al llamar a Claude");
+
+        // Extraemos el texto de la respuesta formato Anthropic
+        return root.path("content").get(0).path("text").asText();
     }
 
     private String buildContentBlock(String mimeType, String base64Data) {
