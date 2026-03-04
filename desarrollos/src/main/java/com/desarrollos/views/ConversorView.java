@@ -506,14 +506,25 @@ public class ConversorView extends FormView {
 			} catch (Exception ex) {
 				procesando.set(false);
 				rotador.interrupt();
-				ui.access(() -> {
-					mensajeProcesando.setText("Procesando imagen con IA...");
-					panelProgreso.setVisible(false);
-					btnConvertir.setEnabled(true);
-					Notification.show("Error al convertir: " + ex.getMessage())
-							.addThemeVariants(NotificationVariant.LUMO_ERROR);
-				});
-				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
+				if (esErrorDeConexion(ex)) {
+					try { archivoService.actualizarEstado(archivoAConvertir, "PENDIENTE"); } catch (Exception ignored) {}
+					ui.access(() -> {
+						mensajeProcesando.setText("Procesando imagen con IA...");
+						panelProgreso.setVisible(false);
+						btnConvertir.setEnabled(true);
+						archivoCombo.refrescar();
+						mostrarDialogoErrorConexion();
+					});
+				} else {
+					try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
+					ui.access(() -> {
+						mensajeProcesando.setText("Procesando imagen con IA...");
+						panelProgreso.setVisible(false);
+						btnConvertir.setEnabled(true);
+						Notification.show("Error al convertir: " + ex.getMessage())
+								.addThemeVariants(NotificationVariant.LUMO_ERROR);
+					});
+				}
 			}
 		}).start();
 	}
@@ -799,5 +810,59 @@ public class ConversorView extends FormView {
 		panelResultado.removeAll();
 		panelResultado.setVisible(false);
 		panelProgreso.setVisible(false);
+	}
+
+	// ── Detecta errores de red/conexión (Connection reset, timeout, etc.) ──────
+	private boolean esErrorDeConexion(Throwable ex) {
+		Throwable actual = ex;
+		while (actual != null) {
+			String msg = actual.getMessage();
+			if (msg != null) {
+				String msgLower = msg.toLowerCase();
+				if (msgLower.contains("connection reset")
+						|| msgLower.contains("connection refused")
+						|| msgLower.contains("connection timed out")
+						|| msgLower.contains("broken pipe")
+						|| msgLower.contains("remotely closed")) {
+					return true;
+				}
+			}
+			actual = actual.getCause();
+		}
+		return false;
+	}
+
+	// ── Diálogo de error de conexión (el archivo queda en PENDIENTE) ───────────
+	private void mostrarDialogoErrorConexion() {
+		Dialog dialog = new Dialog();
+		dialog.setModal(true);
+		dialog.setWidth("420px");
+
+		Icon icono = VaadinIcon.WARNING.create();
+		icono.setSize("48px");
+		icono.setColor("#d97706");
+
+		H3 titulo = new H3("Error de conexión");
+		titulo.getStyle().set("color", "#d97706").set("margin", "8px 0 0 0").set("font-weight", "700");
+
+		Paragraph mensaje = new Paragraph(
+				"Ocurrió un error de conexión al procesar el archivo.\n"
+				+ "El archivo quedó en estado Pendiente. Por favor, volvé a intentarlo.");
+		mensaje.getStyle()
+				.set("text-align", "center").set("color", "#475569")
+				.set("font-size", "0.875rem").set("white-space", "pre-line").set("margin", "0");
+
+		VerticalLayout contenido = new VerticalLayout(icono, titulo, mensaje);
+		contenido.setAlignItems(FlexComponent.Alignment.CENTER);
+		contenido.setPadding(true);
+		contenido.setSpacing(true);
+
+		Button btnAceptar = new Button("Aceptar", e -> dialog.close());
+		btnAceptar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+		btnAceptar.getStyle().set("background-color", "#d97706").set("color", "white");
+
+		dialog.add(contenido);
+		dialog.getFooter().add(btnAceptar);
+		dialog.open();
 	}
 }
