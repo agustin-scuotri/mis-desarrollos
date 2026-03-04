@@ -555,8 +555,7 @@ public class ConversorView extends FormView {
 		titulo.getStyle().set("color", "#dc2626").set("margin", "8px 0 0 0").set("font-weight", "700");
 
 		Paragraph mensaje = new Paragraph(
-				"El documento procesado no es una factura válida o le faltan campos obligatorios.\n"
-				+ "Se guardó con estado 'Procesado error' y no volverá a aparecer en el selector de archivos.");
+				"El documento procesado no es una factura válida o le faltan campos obligatorios.");
 		mensaje.getStyle()
 				.set("text-align", "center").set("color", "#475569")
 				.set("font-size", "0.875rem").set("white-space", "pre-line").set("margin", "0");
