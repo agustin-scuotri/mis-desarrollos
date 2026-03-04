@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.Base64;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,10 +21,22 @@ public class ClaudeVisionService {
     @Value("${claude.api.model}")
     private String model;
 
-    private final WebClient webClient = WebClient.create();
+    private static final int MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
+
+    private final WebClient webClient = WebClient.builder()
+            .exchangeStrategies(ExchangeStrategies.builder()
+                    .codecs(c -> c.defaultCodecs().maxInMemorySize(50 * 1024 * 1024))
+                    .build())
+            .build();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public String extraerDatos(byte[] contenido, String mimeType) throws Exception {
+        if (contenido.length > MAX_FILE_SIZE_BYTES) {
+            throw new RuntimeException(
+                    "El archivo supera el tamaño máximo permitido de 20 MB. "
+                    + "Reducí la resolución del escaneo o dividí el documento en partes más pequeñas.");
+        }
+
         String contenidoBase64 = Base64.getEncoder().encodeToString(contenido);
 
         String contentBlock = buildContentBlock(mimeType, contenidoBase64);
@@ -64,7 +77,7 @@ public class ClaudeVisionService {
                 .header("anthropic-version", "2023-06-01")
                 .bodyValue(requestBody)
                 .exchangeToMono(response -> response.bodyToMono(String.class))
-                .timeout(Duration.ofMinutes(2))
+                .timeout(Duration.ofMinutes(5))
                 .block();
 
         JsonNode root = objectMapper.readTree(respuesta);
