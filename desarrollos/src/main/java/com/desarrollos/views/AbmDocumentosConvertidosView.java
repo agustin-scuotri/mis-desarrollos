@@ -9,6 +9,7 @@ import com.desarrollos.entities.NetoGravado;
 import com.desarrollos.entities.PercepcionIIBB;
 import com.desarrollos.entities.PercepcionIVA;
 import com.desarrollos.entities.ProductoConcepto;
+import com.desarrollos.entities.Tasa;
 import com.desarrollos.entities.Vencimiento;
 import com.desarrollos.services.DocumentoConvertidoService;
 import com.vaadin.flow.data.provider.CallbackDataProvider;
@@ -261,6 +262,19 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
             contenido.add(t, g);
         }
 
+        // ── Tasas ─────────────────────────────────────────────────────────────
+        if (!doc.getTasas().isEmpty()) {
+            H4 t = new H4("Tasas");
+            t.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
+            Grid<Tasa> g = new Grid<>(Tasa.class, false);
+            g.addColumn(Tasa::getDescripcion).setHeader("Descripción").setFlexGrow(1);
+            g.addColumn(Tasa::getImporte).setHeader("Importe").setWidth("130px").setFlexGrow(0);
+            g.setItems(doc.getTasas());
+            g.setAllRowsVisible(true);
+            g.getStyle().set("margin-top", "4px");
+            contenido.add(t, g);
+        }
+
         // ── Vencimientos ──────────────────────────────────────────────────────
         if (!doc.getVencimientos().isEmpty()) {
             H4 t = new H4("Vencimientos");
@@ -381,7 +395,8 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         if (estaVacio(doc.getSubTotalNoGravado()))  notas.append("• No se encontró el importe neto no gravado.\n");
         if (estaVacio(doc.getImpuestoInterno()))    notas.append("• No se encontró impuesto interno / otros tributos.\n");
         if (doc.getPercepcionesIIBB().isEmpty())    notas.append("• No se encontraron percepciones de IIBB.\n");
-        if (doc.getPercepcionesIVA().isEmpty())     notas.append("• No se encontraron percepciones de IVA.\n");
+        if (doc.getPercepcionesIVA().isEmpty())      notas.append("• No se encontraron percepciones de IVA.\n");
+        if (doc.getTasas().isEmpty())                notas.append("• No se encontraron tasas.\n");
         if (estaVacio(doc.getTotal()))              notas.append("• No se encontró el total del comprobante.\n");
         if (doc.getVencimientos().isEmpty())        notas.append("• No se encontraron vencimientos.\n");
         return notas.toString();

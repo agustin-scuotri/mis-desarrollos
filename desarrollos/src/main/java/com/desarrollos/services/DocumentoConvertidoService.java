@@ -24,6 +24,7 @@ import com.desarrollos.entities.NetoGravado;
 import com.desarrollos.entities.PercepcionIIBB;
 import com.desarrollos.entities.PercepcionIVA;
 import com.desarrollos.entities.ProductoConcepto;
+import com.desarrollos.entities.Tasa;
 import com.desarrollos.entities.Vencimiento;
 import com.desarrollos.repositories.DocumentoConvertidoRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -215,6 +216,17 @@ public class DocumentoConvertidoService {
             }
         }
 
+        JsonNode tasasNode = json.path("tasas");
+        if (tasasNode.isArray()) {
+            for (JsonNode tasaNode : tasasNode) {
+                Tasa tasa = new Tasa();
+                tasa.setDocumento(doc);
+                tasa.setDescripcion(tasaNode.path("descripcion").asText(null));
+                tasa.setImporte(tasaNode.path("importe").asText(null));
+                doc.getTasas().add(tasa);
+            }
+        }
+
         return doc;
     }
 
@@ -332,6 +344,7 @@ public class DocumentoConvertidoService {
         doc.getPercepcionesIIBB().size();
         doc.getPercepcionesIVA().size();
         doc.getVencimientos().size();
+        doc.getTasas().size();
         return doc;
     }
 

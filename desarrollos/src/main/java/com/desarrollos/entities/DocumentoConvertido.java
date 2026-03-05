@@ -64,6 +64,10 @@ public class DocumentoConvertido {
     @OneToMany(mappedBy = "documento", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PercepcionIVA> percepcionesIVA = new ArrayList<>();
 
+    // Tasas
+    @OneToMany(mappedBy = "documento", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Tasa> tasas = new ArrayList<>();
+
     // Total (1.9)
     private String total;
 
@@ -139,6 +143,8 @@ public class DocumentoConvertido {
     public void setPercepcionesIIBB(List<PercepcionIIBB> percepcionesIIBB) { this.percepcionesIIBB = percepcionesIIBB; }
     public List<PercepcionIVA> getPercepcionesIVA() { return percepcionesIVA; }
     public void setPercepcionesIVA(List<PercepcionIVA> percepcionesIVA) { this.percepcionesIVA = percepcionesIVA; }
+    public List<Tasa> getTasas() { return tasas; }
+    public void setTasas(List<Tasa> tasas) { this.tasas = tasas; }
     public String getTotal() { return total; }
     public void setTotal(String total) { this.total = total; }
     public String getImpuestoInterno() { return impuestoInterno; }
