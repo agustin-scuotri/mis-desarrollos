@@ -3,15 +3,12 @@ package com.desarrollos.views;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.desarrollos.entities.Archivo;
 import com.desarrollos.services.ArchivoService;
 import com.desarrollos.services.DocumentoConvertidoService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
@@ -110,10 +107,15 @@ public class InicioView extends VerticalLayout {
         Div donutCanvas = new Div();
         donutCanvas.getStyle().set("width", "100%").set("max-height", "220px");
         donutCanvas.getElement().executeJs(loaderScript(donutScript(donutLabels, donutData, donutColors)));
+        String[] estadosNav = {"Procesado", "Pendiente a procesar", "Procesado error"};
         donutCanvas.getElement()
                 .addEventListener("donut-click", e -> {
                     int index = e.getEventData().get("event.detail.index").asInt();
-                    abrirDialogoArchivos(index);
+                    if (index >= 0 && index < estadosNav.length) {
+                        String estadoParam = estadosNav[index];
+                        getUI().ifPresent(ui -> ui.navigate("ABMarchivos",
+                                new QueryParameters(Map.of("estado", List.of(estadoParam)))));
+                    }
                 })
                 .addEventData("event.detail.index");
 
@@ -163,46 +165,6 @@ public class InicioView extends VerticalLayout {
         String barData   = Arrays.stream(datos).mapToObj(String::valueOf).collect(Collectors.joining(",", "[", "]"));
         String barLabels = "[\"" + String.join("\",\"", etiquetas) + "\"]";
         barCanvas.getElement().executeJs(loaderScript(barScript(barLabels, barData)));
-    }
-
-    // ── Abre diálogo con archivos del estado clickeado ────────────────────────
-    private void abrirDialogoArchivos(int index) {
-        String[] estadosFiltro = {"PROCESADO", "PENDIENTE", "PROCESADO_ERROR"};
-        String[] titulos       = {"Archivos Procesados", "Archivos Pendientes", "Archivos con Error"};
-
-        String estadoFiltro = estadosFiltro[index];
-        List<Archivo> filtrados = archivos.stream()
-                .filter(a -> {
-                    String e = a.getEstadoConversion();
-                    if ("PENDIENTE".equals(estadoFiltro)) return e == null || "PENDIENTE".equals(e);
-                    return estadoFiltro.equals(e);
-                })
-                .collect(Collectors.toList());
-
-        Dialog dialog = new Dialog();
-        dialog.setHeaderTitle(titulos[index] + " (" + filtrados.size() + ")");
-        dialog.setWidth("500px");
-        dialog.setCloseOnEsc(true);
-        dialog.setCloseOnOutsideClick(true);
-
-        if (filtrados.isEmpty()) {
-            Span vacio = new Span("No hay archivos en este estado.");
-            vacio.getStyle().set("color", "#64748b").set("padding", "16px").set("display", "block");
-            dialog.add(vacio);
-        } else {
-            Grid<Archivo> grid = new Grid<>(Archivo.class, false);
-            grid.addColumn(Archivo::getCodigo).setHeader("Código").setAutoWidth(true).setFlexGrow(0);
-            grid.addColumn(Archivo::getNombre).setHeader("Nombre").setFlexGrow(1);
-            grid.setItems(filtrados);
-            grid.setHeight("300px");
-            grid.getStyle().set("border", "none");
-            dialog.add(grid);
-        }
-
-        Button cerrar = new Button("Cerrar", e -> dialog.close());
-        cerrar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        dialog.getFooter().add(cerrar);
-        dialog.open();
     }
 
     // ── Botón de período ──────────────────────────────────────────────────────
