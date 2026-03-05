@@ -111,12 +111,7 @@ public class AbmArchivosView extends CrudView<Archivo> implements BeforeEnterObs
             ejecutarFiltro(cabecera, (sel == null || sel.equals("Todos")) ? "" : sel);
         });
 
-        Span textoCabecera = new Span(cabecera);
-        textoCabecera.getStyle()
-                .set("font-weight", "600")
-                .set("color", "#334155");
-
-        VerticalLayout layoutCabecera = new VerticalLayout(textoCabecera, filtro);
+        VerticalLayout layoutCabecera = new VerticalLayout(crearTituloCabecera(cabecera), filtro);
         layoutCabecera.setAlignItems(FlexComponent.Alignment.CENTER);
         layoutCabecera.setSpacing(false);
         layoutCabecera.setPadding(false);

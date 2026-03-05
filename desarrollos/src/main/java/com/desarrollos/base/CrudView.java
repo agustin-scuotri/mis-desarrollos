@@ -177,13 +177,51 @@ public abstract class CrudView<T> extends VerticalLayout {
         // ── Columna acciones ──────────────────────────────────────────────────
         configurarColumnasEspecificas();
 
+        Icon iconoAcciones = VaadinIcon.COG.create();
+        iconoAcciones.setSize("13px");
+        iconoAcciones.getStyle().set("color", "#64748b").set("flex-shrink", "0");
+        Span textoAcciones = new Span(getTranslation("archivo.acciones"));
+        textoAcciones.getStyle().set("font-weight", "600").set("color", "#334155");
+        HorizontalLayout cabeceraAcciones = new HorizontalLayout(iconoAcciones, textoAcciones);
+        cabeceraAcciones.setAlignItems(Alignment.CENTER);
+        cabeceraAcciones.setSpacing(false);
+        cabeceraAcciones.getStyle().set("gap", "5px");
+
         grid.addComponentColumn(item -> crearBotonesAccion(item))
-                .setHeader(getTranslation("archivo.acciones"))
+                .setHeader(cabeceraAcciones)
                 .setKey("acciones")
                 .setFrozenToEnd(true)
                 .setWidth(anchoColumnaAcciones())
                 .setFlexGrow(0)
                 .setTextAlign(ColumnTextAlign.CENTER);
+    }
+
+    // ── Ícono por nombre de cabecera ──────────────────────────────────────────
+    private Icon iconoParaCabecera(String cabecera) {
+        String lower = cabecera == null ? "" : cabecera.toLowerCase();
+        VaadinIcon vi;
+        if (lower.contains("código") || lower.contains("codigo"))      vi = VaadinIcon.HASH;
+        else if (lower.contains("nombre"))                              vi = VaadinIcon.TAG;
+        else if (lower.contains("estado"))                              vi = VaadinIcon.FLAG;
+        else if (lower.contains("cuit"))                                vi = VaadinIcon.BUILDING;
+        else if (lower.contains("comprobante") || lower.contains("nro.")) vi = VaadinIcon.FILE_TEXT;
+        else if (lower.contains("fecha"))                               vi = VaadinIcon.CALENDAR;
+        else                                                            vi = VaadinIcon.LINES;
+        Icon icon = vi.create();
+        icon.setSize("13px");
+        icon.getStyle().set("color", "#64748b").set("flex-shrink", "0");
+        return icon;
+    }
+
+    // ── Cabecera con ícono + texto ─────────────────────────────────────────────
+    protected HorizontalLayout crearTituloCabecera(String cabecera) {
+        Span texto = new Span(cabecera);
+        texto.getStyle().set("font-weight", "600").set("color", "#334155");
+        HorizontalLayout hl = new HorizontalLayout(iconoParaCabecera(cabecera), texto);
+        hl.setAlignItems(Alignment.CENTER);
+        hl.setSpacing(false);
+        hl.getStyle().set("gap", "5px");
+        return hl;
     }
 
     // ── Columna texto con filtro ──────────────────────────────────────────────
@@ -207,12 +245,7 @@ public abstract class CrudView<T> extends VerticalLayout {
 
         filtro.addValueChangeListener(e -> ejecutarFiltro(cabecera, e.getValue()));
 
-        Span textoCabecera = new Span(cabecera);
-        textoCabecera.getStyle()
-                .set("font-weight", "600")
-                .set("color", "#334155");
-
-        VerticalLayout layoutCabecera = new VerticalLayout(textoCabecera, filtro);
+        VerticalLayout layoutCabecera = new VerticalLayout(crearTituloCabecera(cabecera), filtro);
         layoutCabecera.setAlignItems(Alignment.CENTER);
         layoutCabecera.setSpacing(false);
         layoutCabecera.setPadding(false);
@@ -229,12 +262,7 @@ public abstract class CrudView<T> extends VerticalLayout {
     protected Grid.Column<T> agregarColumnaFecha(ValueProvider<T, LocalDateTime> valueProvider, String cabecera) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-        Span textoCabecera = new Span(cabecera);
-        textoCabecera.getStyle()
-                .set("font-weight", "600")
-                .set("color", "#334155");
-
-        VerticalLayout layoutCabecera = new VerticalLayout(textoCabecera);
+        VerticalLayout layoutCabecera = new VerticalLayout(crearTituloCabecera(cabecera));
         layoutCabecera.setAlignItems(Alignment.CENTER);
         layoutCabecera.setSpacing(false);
         layoutCabecera.setPadding(false);
@@ -266,12 +294,7 @@ public abstract class CrudView<T> extends VerticalLayout {
                     (seleccion == null || seleccion.equals("Todos")) ? "" : seleccion);
         });
 
-        Span textoCabecera = new Span(cabecera);
-        textoCabecera.getStyle()
-                .set("font-weight", "600")
-                .set("color", "#334155");
-
-        VerticalLayout layoutCabecera = new VerticalLayout(textoCabecera, filtro);
+        VerticalLayout layoutCabecera = new VerticalLayout(crearTituloCabecera(cabecera), filtro);
         layoutCabecera.setAlignItems(Alignment.CENTER);
         layoutCabecera.setSpacing(false);
         layoutCabecera.setPadding(false);
