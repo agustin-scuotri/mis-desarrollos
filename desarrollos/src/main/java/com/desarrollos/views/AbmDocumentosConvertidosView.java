@@ -282,6 +282,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
             t.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
             Grid<DescuentoRecargo> g = new Grid<>(DescuentoRecargo.class, false);
             g.addColumn(DescuentoRecargo::getDescripcion).setHeader("Descripción").setFlexGrow(1);
+            g.addColumn(DescuentoRecargo::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
             g.addColumn(DescuentoRecargo::getImporte).setHeader("Importe").setWidth("130px").setFlexGrow(0);
             g.setItems(doc.getDescuentosRecargos());
             g.setAllRowsVisible(true);

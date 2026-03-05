@@ -234,6 +234,7 @@ public class DocumentoConvertidoService {
                 DescuentoRecargo dr = new DescuentoRecargo();
                 dr.setDocumento(doc);
                 dr.setDescripcion(drNode.path("descripcion").asText(null));
+                dr.setAlicuota(drNode.path("alicuota").asText(null));
                 dr.setImporte(drNode.path("importe").asText(null));
                 doc.getDescuentosRecargos().add(dr);
             }
