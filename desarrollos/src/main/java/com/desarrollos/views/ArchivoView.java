@@ -191,7 +191,18 @@ public class ArchivoView extends FormView implements HasUrlParameter<String> {
 			"this.shadowRoot.appendChild(s);"
 		);
 
-		colIzquierda.add(codigo, nombre);
+		Span nota = new Span("NOTA IMPORTANTE: El archivo que debe cargar puede tener hasta 5 facturas como máximo.");
+		nota.getStyle()
+				.set("font-size", "0.8rem")
+				.set("color", "#b45309")
+				.set("background-color", "#fffbeb")
+				.set("border", "1px solid #fcd34d")
+				.set("border-radius", "6px")
+				.set("padding", "8px 10px")
+				.set("display", "block")
+				.set("line-height", "1.4");
+
+		colIzquierda.add(codigo, nombre, nota);
 
 		VerticalLayout colDerecha = new VerticalLayout();
 		colDerecha.setWidth("60%");
