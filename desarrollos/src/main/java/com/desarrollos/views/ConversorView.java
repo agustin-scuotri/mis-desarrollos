@@ -489,7 +489,7 @@ public class ConversorView extends FormView {
 					btnConvertir.setEnabled(true);
 					mostrarDialogoDuplicada(dup);
 				});
-				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
+				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR", dup.getMessage()); } catch (Exception ignored) {}
 
 			} catch (TotalNegativoException ex) {
 				procesando.set(false);
@@ -501,7 +501,7 @@ public class ConversorView extends FormView {
 					btnConvertir.setEnabled(true);
 					mostrarDialogoTotalNegativo(neg);
 				});
-				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
+				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR", neg.getMessage()); } catch (Exception ignored) {}
 
 			} catch (Exception ex) {
 				procesando.set(false);
@@ -516,7 +516,7 @@ public class ConversorView extends FormView {
 						mostrarDialogoErrorConexion();
 					});
 				} else {
-					try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR"); } catch (Exception ignored) {}
+					try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR", ex.getMessage()); } catch (Exception ignored) {}
 					ui.access(() -> {
 						mensajeProcesando.setText("Procesando imagen con IA...");
 						panelProgreso.setVisible(false);

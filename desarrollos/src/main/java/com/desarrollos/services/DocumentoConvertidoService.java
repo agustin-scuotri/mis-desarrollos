@@ -105,7 +105,14 @@ public class DocumentoConvertidoService {
 
         // PROCESADO si al menos una factura fue guardada; PROCESADO_ERROR solo si ninguna pudo guardarse
         archivoCompleto.setConvertido(true);
-        archivoCompleto.setEstadoConversion(!exitosos.isEmpty() ? "PROCESADO" : "PROCESADO_ERROR");
+        if (!exitosos.isEmpty()) {
+            archivoCompleto.setEstadoConversion("PROCESADO");
+            archivoCompleto.setMensajeError(null);
+        } else {
+            archivoCompleto.setEstadoConversion("PROCESADO_ERROR");
+            String msg = errores.stream().map(ErrorFactura::getDetalle).collect(Collectors.joining("; "));
+            archivoCompleto.setMensajeError(msg);
+        }
         archivoService.guardar(archivoCompleto);
 
         return new ResultadoConversion(exitosos, errores);

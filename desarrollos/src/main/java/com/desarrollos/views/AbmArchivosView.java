@@ -6,6 +6,9 @@ import com.desarrollos.services.ArchivoService;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.combobox.ComboBoxVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -134,6 +137,62 @@ public class AbmArchivosView extends CrudView<Archivo> implements BeforeEnterObs
                 texto = new Span("Error");
                 bgColor = "#fee2e2";
                 fgColor = "#dc2626";
+
+                icono.setSize("13px");
+                icono.getStyle().set("color", fgColor);
+                texto.getStyle().set("font-size", "0.75rem").set("font-weight", "600").set("color", fgColor);
+
+                HorizontalLayout errorPill = new HorizontalLayout(icono, texto);
+                errorPill.setAlignItems(FlexComponent.Alignment.CENTER);
+                errorPill.setSpacing(false);
+                errorPill.setPadding(false);
+                errorPill.getStyle()
+                        .set("background-color", bgColor)
+                        .set("border-radius", "20px")
+                        .set("padding", "4px 10px")
+                        .set("gap", "5px")
+                        .set("display", "inline-flex")
+                        .set("align-items", "center")
+                        .set("cursor", "pointer");
+
+                errorPill.addClickListener(e -> {
+                    Dialog dialog = new Dialog();
+                    dialog.setModal(true);
+                    dialog.setWidth("480px");
+
+                    Icon iconoD = VaadinIcon.WARNING.create();
+                    iconoD.setSize("24px");
+                    iconoD.getStyle().set("color", "#dc2626").set("flex-shrink", "0");
+
+                    Span titulo = new Span("Detalle del error");
+                    titulo.getStyle().set("font-weight", "700").set("font-size", "1rem").set("color", "#1e293b");
+
+                    HorizontalLayout header = new HorizontalLayout(iconoD, titulo);
+                    header.setAlignItems(FlexComponent.Alignment.CENTER);
+                    header.setSpacing(true);
+
+                    String causa = archivo.getMensajeError();
+                    Span detalle = new Span(causa != null && !causa.isBlank() ? causa : "No hay información adicional disponible.");
+                    detalle.getStyle()
+                            .set("font-size", "0.875rem")
+                            .set("color", "#475569")
+                            .set("word-break", "break-word")
+                            .set("white-space", "pre-wrap");
+
+                    Button cerrar = new Button("Cerrar", ev -> dialog.close());
+                    cerrar.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
+
+                    VerticalLayout content = new VerticalLayout(header, detalle, cerrar);
+                    content.setSpacing(true);
+                    content.setPadding(true);
+                    content.setAlignItems(FlexComponent.Alignment.STRETCH);
+                    cerrar.getStyle().set("align-self", "flex-end");
+
+                    dialog.add(content);
+                    dialog.open();
+                });
+
+                return errorPill;
             } else {
                 icono = VaadinIcon.CLOCK.create();
                 texto = new Span("Pendiente");

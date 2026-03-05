@@ -71,9 +71,16 @@ public class ArchivoService {
     @Transactional
     @CacheEvict(value = "archivos-pendientes", allEntries = true)
     public void actualizarEstado(Archivo archivo, String estado) {
+        actualizarEstado(archivo, estado, null);
+    }
+
+    @Transactional
+    @CacheEvict(value = "archivos-pendientes", allEntries = true)
+    public void actualizarEstado(Archivo archivo, String estado, String mensajeError) {
         Archivo managed = repository.findById(archivo.getId())
                 .orElseThrow(() -> new RuntimeException("Archivo no encontrado"));
         managed.setEstadoConversion(estado);
+        managed.setMensajeError(mensajeError);
         repository.save(managed);
     }
 
