@@ -24,6 +24,7 @@ import com.desarrollos.entities.NetoGravado;
 import com.desarrollos.entities.PercepcionIIBB;
 import com.desarrollos.entities.PercepcionIVA;
 import com.desarrollos.entities.ProductoConcepto;
+import com.desarrollos.entities.DescuentoRecargo;
 import com.desarrollos.entities.Tasa;
 import com.desarrollos.entities.Vencimiento;
 import com.desarrollos.repositories.DocumentoConvertidoRepository;
@@ -227,6 +228,17 @@ public class DocumentoConvertidoService {
             }
         }
 
+        JsonNode descuentosNode = json.path("descuentosRecargos");
+        if (descuentosNode.isArray()) {
+            for (JsonNode drNode : descuentosNode) {
+                DescuentoRecargo dr = new DescuentoRecargo();
+                dr.setDocumento(doc);
+                dr.setDescripcion(drNode.path("descripcion").asText(null));
+                dr.setImporte(drNode.path("importe").asText(null));
+                doc.getDescuentosRecargos().add(dr);
+            }
+        }
+
         return doc;
     }
 
@@ -345,6 +357,7 @@ public class DocumentoConvertidoService {
         doc.getPercepcionesIVA().size();
         doc.getVencimientos().size();
         doc.getTasas().size();
+        doc.getDescuentosRecargos().size();
         return doc;
     }
 

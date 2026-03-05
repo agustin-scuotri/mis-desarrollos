@@ -9,6 +9,7 @@ import com.desarrollos.entities.NetoGravado;
 import com.desarrollos.entities.PercepcionIIBB;
 import com.desarrollos.entities.PercepcionIVA;
 import com.desarrollos.entities.ProductoConcepto;
+import com.desarrollos.entities.DescuentoRecargo;
 import com.desarrollos.entities.Tasa;
 import com.desarrollos.entities.Vencimiento;
 import com.desarrollos.services.DocumentoConvertidoService;
@@ -270,6 +271,19 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
             g.addColumn(Tasa::getDescripcion).setHeader("Descripción").setFlexGrow(1);
             g.addColumn(Tasa::getImporte).setHeader("Importe").setWidth("130px").setFlexGrow(0);
             g.setItems(doc.getTasas());
+            g.setAllRowsVisible(true);
+            g.getStyle().set("margin-top", "4px");
+            contenido.add(t, g);
+        }
+
+        // ── Descuentos y Recargos ─────────────────────────────────────────────
+        if (!doc.getDescuentosRecargos().isEmpty()) {
+            H4 t = new H4("Descuentos / Recargos");
+            t.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
+            Grid<DescuentoRecargo> g = new Grid<>(DescuentoRecargo.class, false);
+            g.addColumn(DescuentoRecargo::getDescripcion).setHeader("Descripción").setFlexGrow(1);
+            g.addColumn(DescuentoRecargo::getImporte).setHeader("Importe").setWidth("130px").setFlexGrow(0);
+            g.setItems(doc.getDescuentosRecargos());
             g.setAllRowsVisible(true);
             g.getStyle().set("margin-top", "4px");
             contenido.add(t, g);
