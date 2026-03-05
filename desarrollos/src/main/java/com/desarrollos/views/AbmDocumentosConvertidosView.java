@@ -379,6 +379,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         if (doc.getProductosConceptos().isEmpty())  notas.append("• No se encontraron productos/conceptos.\n");
         if (doc.getNetosGravados().isEmpty())       notas.append("• No se encontraron netos gravados e IVA.\n");
         if (estaVacio(doc.getSubTotalNoGravado()))  notas.append("• No se encontró el importe neto no gravado.\n");
+        if (estaVacio(doc.getImpuestoInterno()))    notas.append("• No se encontró impuesto interno / otros tributos.\n");
         if (doc.getPercepcionesIIBB().isEmpty())    notas.append("• No se encontraron percepciones de IIBB.\n");
         if (doc.getPercepcionesIVA().isEmpty())     notas.append("• No se encontraron percepciones de IVA.\n");
         if (estaVacio(doc.getTotal()))              notas.append("• No se encontró el total del comprobante.\n");

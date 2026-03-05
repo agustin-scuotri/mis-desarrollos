@@ -67,6 +67,9 @@ public class DocumentoConvertido {
     // Total (1.9)
     private String total;
 
+    // Impuesto interno / otros tributos
+    private String impuestoInterno;
+
     // Vencimientos
     @OneToMany(mappedBy = "documento", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Vencimiento> vencimientos = new ArrayList<>();
@@ -138,6 +141,8 @@ public class DocumentoConvertido {
     public void setPercepcionesIVA(List<PercepcionIVA> percepcionesIVA) { this.percepcionesIVA = percepcionesIVA; }
     public String getTotal() { return total; }
     public void setTotal(String total) { this.total = total; }
+    public String getImpuestoInterno() { return impuestoInterno; }
+    public void setImpuestoInterno(String impuestoInterno) { this.impuestoInterno = impuestoInterno; }
     public List<Vencimiento> getVencimientos() { return vencimientos; }
     public void setVencimientos(List<Vencimiento> vencimientos) { this.vencimientos = vencimientos; }
     public String getJsonResultado() { return jsonResultado; }

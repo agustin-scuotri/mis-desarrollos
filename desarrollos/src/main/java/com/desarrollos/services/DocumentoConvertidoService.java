@@ -134,6 +134,7 @@ public class DocumentoConvertidoService {
         doc.setCotizacion(json.path("cotizacion").asText(null));
         doc.setOrdenCompra(json.path("ordenCompra").asText(null));
         doc.setSubTotalNoGravado(json.path("subTotalNoGravado").asText(null));
+        doc.setImpuestoInterno(json.path("impuestoInterno").asText(null));
         doc.setTotal(json.path("total").asText(null));
         // Limitar a 20 000 chars si el JSON es muy grande
         // Guardar el JSON formateado (indentado) para que se vea legible en el visor
