@@ -9,6 +9,8 @@ import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -158,37 +160,46 @@ public class AbmArchivosView extends CrudView<Archivo> implements BeforeEnterObs
                 errorPill.addClickListener(e -> {
                     Dialog dialog = new Dialog();
                     dialog.setModal(true);
-                    dialog.setWidth("480px");
+                    dialog.setWidth("500px");
 
                     Icon iconoD = VaadinIcon.WARNING.create();
-                    iconoD.setSize("24px");
-                    iconoD.getStyle().set("color", "#dc2626").set("flex-shrink", "0");
+                    iconoD.setSize("48px");
+                    iconoD.setColor("#dc2626");
 
-                    Span titulo = new Span("Detalle del error");
-                    titulo.getStyle().set("font-weight", "700").set("font-size", "1rem").set("color", "#1e293b");
-
-                    HorizontalLayout header = new HorizontalLayout(iconoD, titulo);
-                    header.setAlignItems(FlexComponent.Alignment.CENTER);
-                    header.setSpacing(true);
+                    H3 titulo = new H3("Detalle del error");
+                    titulo.getStyle().set("color", "#dc2626").set("margin", "8px 0 0 0").set("font-weight", "700");
 
                     String causa = archivo.getMensajeError();
-                    Span detalle = new Span(causa != null && !causa.isBlank() ? causa : "No hay información adicional disponible.");
-                    detalle.getStyle()
-                            .set("font-size", "0.875rem")
-                            .set("color", "#475569")
-                            .set("word-break", "break-word")
-                            .set("white-space", "pre-wrap");
+                    Paragraph mensaje = new Paragraph(causa != null && !causa.isBlank() ? causa : "No hay información adicional disponible.");
+                    mensaje.getStyle()
+                            .set("text-align", "center").set("color", "#475569")
+                            .set("font-size", "0.875rem").set("white-space", "pre-line").set("margin", "0");
 
-                    Button cerrar = new Button("Cerrar", ev -> dialog.close());
-                    cerrar.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
+                    VerticalLayout cajaDetalle = new VerticalLayout();
+                    cajaDetalle.setPadding(false);
+                    cajaDetalle.setSpacing(false);
+                    cajaDetalle.getStyle()
+                            .set("background-color", "#fef2f2").set("border", "1px solid #fecaca")
+                            .set("border-radius", "8px").set("padding", "12px").set("gap", "4px")
+                            .set("width", "100%").set("margin-top", "8px");
+                    Span tituloDetalle = new Span("Motivo del error:");
+                    tituloDetalle.getStyle().set("font-weight", "600").set("color", "#dc2626").set("font-size", "0.8rem");
+                    Span cuerpo = new Span(causa != null && !causa.isBlank() ? causa : "No hay información adicional disponible.");
+                    cuerpo.getStyle().set("color", "#991b1b").set("font-size", "0.8rem")
+                            .set("word-break", "break-word").set("white-space", "pre-wrap");
+                    cajaDetalle.add(tituloDetalle, cuerpo);
 
-                    VerticalLayout content = new VerticalLayout(header, detalle, cerrar);
-                    content.setSpacing(true);
-                    content.setPadding(true);
-                    content.setAlignItems(FlexComponent.Alignment.STRETCH);
-                    cerrar.getStyle().set("align-self", "flex-end");
+                    VerticalLayout contenido = new VerticalLayout(iconoD, titulo, cajaDetalle);
+                    contenido.setAlignItems(FlexComponent.Alignment.CENTER);
+                    contenido.setPadding(true);
+                    contenido.setSpacing(true);
 
-                    dialog.add(content);
+                    Button btnCerrar = new Button("Cerrar", ev -> dialog.close());
+                    btnCerrar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+                    btnCerrar.getStyle().set("background-color", "#dc2626").set("color", "white");
+
+                    dialog.add(contenido);
+                    dialog.getFooter().add(btnCerrar);
                     dialog.open();
                 });
 
