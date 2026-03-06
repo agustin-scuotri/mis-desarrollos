@@ -150,6 +150,7 @@ public class ArchivoView extends FormView implements HasUrlParameter<String> {
 	private void actualizarInterfazCargaExistente() {
 		if (archivoActual.getNombreOriginal() != null) {
 			nombreArchivoLabel.setText(archivoActual.getNombreOriginal());
+			nombreArchivoLabel.getElement().setAttribute("title", archivoActual.getNombreOriginal());
 			estadoVacio.setVisible(false);
 			estadoCargado.setVisible(true);
 			
@@ -249,6 +250,13 @@ public class ArchivoView extends FormView implements HasUrlParameter<String> {
 		btnVer.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 		btnVer.getStyle().set("z-index", "20");
 		
+		nombreArchivoLabel.getStyle()
+				.set("max-width", "420px")
+				.set("overflow", "hidden")
+				.set("text-overflow", "ellipsis")
+				.set("white-space", "nowrap")
+				.set("display", "block");
+
 		estadoCargado.add(fileIcon, nombreArchivoLabel, btnVer);
 		estadoCargado.setAlignItems(Alignment.CENTER);
 		estadoCargado.setVisible(false);
@@ -282,6 +290,7 @@ public class ArchivoView extends FormView implements HasUrlParameter<String> {
 
 				nombre.setValue(event.getFileName());
 				nombreArchivoLabel.setText(event.getFileName());
+				nombreArchivoLabel.getElement().setAttribute("title", event.getFileName());
 				
 				estadoVacio.setVisible(false);
 				estadoCargado.setVisible(true);
