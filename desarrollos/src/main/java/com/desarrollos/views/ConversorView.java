@@ -463,6 +463,7 @@ public class ConversorView extends FormView {
 						panelResultado.setVisible(true);
 					}
 
+					archivoCombo.refrescar();
 					if (!tabWorthy.isEmpty() || !mensajesFallas.isEmpty()) {
 						mostrarDialogoResultado(tabWorthy.size(), mensajesFallas);
 					}
@@ -487,6 +488,7 @@ public class ConversorView extends FormView {
 					mensajeProcesando.setText("Procesando imagen con IA...");
 					panelProgreso.setVisible(false);
 					btnConvertir.setEnabled(true);
+					archivoCombo.refrescar();
 					mostrarDialogoDuplicada(dup);
 				});
 				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR", dup.getMessage()); } catch (Exception ignored) {}
@@ -499,6 +501,7 @@ public class ConversorView extends FormView {
 					mensajeProcesando.setText("Procesando imagen con IA...");
 					panelProgreso.setVisible(false);
 					btnConvertir.setEnabled(true);
+					archivoCombo.refrescar();
 					mostrarDialogoTotalNegativo(neg);
 				});
 				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR", neg.getMessage()); } catch (Exception ignored) {}
@@ -521,6 +524,7 @@ public class ConversorView extends FormView {
 						mensajeProcesando.setText("Procesando imagen con IA...");
 						panelProgreso.setVisible(false);
 						btnConvertir.setEnabled(true);
+						archivoCombo.refrescar();
 						Notification.show("Error al convertir: " + ex.getMessage())
 								.addThemeVariants(NotificationVariant.LUMO_ERROR);
 					});

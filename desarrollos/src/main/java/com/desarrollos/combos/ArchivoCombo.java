@@ -149,6 +149,7 @@ public class ArchivoCombo extends HorizontalLayout {
         badge.setVisible(count > 0);
         badge.setText(String.valueOf(count));
         btnBuscar.setEnabled(count > 0);
+        combo.setEnabled(count > 0);
         btnBuscar.getElement().setAttribute("title",
                 count == 0 ? "No hay archivos pendientes"
                            : count + " archivo(s) pendiente(s)");
