@@ -484,6 +484,7 @@ public class ConversorView extends FormView {
 				procesando.set(false);
 				rotador.interrupt();
 				final FacturaDuplicadaException dup = ex;
+				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR", dup.getMessage()); } catch (Exception ignored) {}
 				ui.access(() -> {
 					mensajeProcesando.setText("Procesando imagen con IA...");
 					panelProgreso.setVisible(false);
@@ -491,12 +492,12 @@ public class ConversorView extends FormView {
 					archivoCombo.refrescar();
 					mostrarDialogoDuplicada(dup);
 				});
-				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR", dup.getMessage()); } catch (Exception ignored) {}
 
 			} catch (TotalNegativoException ex) {
 				procesando.set(false);
 				rotador.interrupt();
 				final TotalNegativoException neg = ex;
+				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR", neg.getMessage()); } catch (Exception ignored) {}
 				ui.access(() -> {
 					mensajeProcesando.setText("Procesando imagen con IA...");
 					panelProgreso.setVisible(false);
@@ -504,7 +505,6 @@ public class ConversorView extends FormView {
 					archivoCombo.refrescar();
 					mostrarDialogoTotalNegativo(neg);
 				});
-				try { archivoService.actualizarEstado(archivoAConvertir, "PROCESADO_ERROR", neg.getMessage()); } catch (Exception ignored) {}
 
 			} catch (Exception ex) {
 				procesando.set(false);
