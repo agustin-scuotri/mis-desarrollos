@@ -37,7 +37,6 @@ public class ArchivoCombo extends HorizontalLayout {
 
     private final ComboBox<Archivo> combo = new ComboBox<>();
     private final Button btnBuscar = new Button(VaadinIcon.SEARCH.create());
-    private final Span badge = new Span();
     private final Div wrapperLupa = new Div();
     private final ArchivoService archivoService;
     private DataProvider<Archivo, String> dataProvider;
@@ -87,30 +86,11 @@ public class ArchivoCombo extends HorizontalLayout {
                 e -> btnBuscar.getStyle().set("color", "#002060"));
         btnBuscar.addClickListener(e -> abrirDialogoBusqueda());
 
-        // ── Badge contador sobre la lupa ──────────────────────────────────────
-        badge.getStyle()
-                .set("position", "absolute")
-                .set("top", "-7px")
-                .set("right", "-7px")
-                .set("background", "#ef4444")
-                .set("color", "white")
-                .set("border-radius", "9999px")
-                .set("font-size", "10px")
-                .set("font-weight", "700")
-                .set("min-width", "18px")
-                .set("height", "18px")
-                .set("display", "flex")
-                .set("align-items", "center")
-                .set("justify-content", "center")
-                .set("pointer-events", "none")
-                .set("line-height", "1")
-                .set("padding", "0 3px");
-
         wrapperLupa.getStyle()
                 .set("position", "relative")
                 .set("display", "inline-block")
                 .set("align-self", "flex-end");
-        wrapperLupa.add(btnBuscar, badge);
+        wrapperLupa.add(btnBuscar);
 
         actualizarBadge();
 
@@ -146,8 +126,6 @@ public class ArchivoCombo extends HorizontalLayout {
     // ── Helpers privados ──────────────────────────────────────────────────────
     private void actualizarBadge() {
         int count = archivoService.listarNoConvertidos().size();
-        badge.setVisible(count > 0);
-        badge.setText(String.valueOf(count));
         btnBuscar.setEnabled(count > 0);
         combo.setEnabled(count > 0);
         btnBuscar.getElement().setAttribute("title",
