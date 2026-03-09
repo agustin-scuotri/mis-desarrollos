@@ -44,6 +44,9 @@ public class Archivo {
     @Column(name = "mensaje_error", length = 2000)
     private String mensajeError;
 
+    @Column(name = "hash_contenido", length = 64)
+    private String hashContenido;
+
     // ── Relación con DocumentoConvertido (un archivo puede tener múltiples facturas) ──
     @OneToMany(mappedBy = "archivo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DocumentoConvertido> documentosConvertidos = new ArrayList<>();
@@ -74,6 +77,8 @@ public class Archivo {
     public void setEstadoConversion(String estadoConversion) { this.estadoConversion = estadoConversion; }
     public String getMensajeError() { return mensajeError; }
     public void setMensajeError(String mensajeError) { this.mensajeError = mensajeError; }
+    public String getHashContenido() { return hashContenido; }
+    public void setHashContenido(String hashContenido) { this.hashContenido = hashContenido; }
     public List<DocumentoConvertido> getDocumentosConvertidos() { return documentosConvertidos; }
     public void setDocumentosConvertidos(List<DocumentoConvertido> documentosConvertidos) { this.documentosConvertidos = documentosConvertidos; }
 }

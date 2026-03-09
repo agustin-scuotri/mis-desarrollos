@@ -28,6 +28,7 @@ import com.desarrollos.entities.DescuentoRecargo;
 import com.desarrollos.entities.Tasa;
 import com.desarrollos.entities.Vencimiento;
 import com.desarrollos.repositories.DocumentoConvertidoRepository;
+import java.security.MessageDigest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,6 +50,11 @@ public class DocumentoConvertidoService {
     @Transactional
     public ResultadoConversion convertir(Archivo archivo) throws Exception {
         Archivo archivoCompleto = archivoService.buscarPorIdConContenido(archivo.getId());
+
+        String hash = calcularHash(archivoCompleto.getContenido());
+        archivoService.buscarPorHashProcesado(hash).ifPresent(original -> {
+            throw new ArchivoDuplicadoException(original.getCodigo(), original.getNombre());
+        });
 
         String mimeType = detectarMimeType(archivoCompleto.getNombreOriginal());
         String jsonTexto = claudeVisionService.extraerDatos(archivoCompleto.getContenido(), mimeType);
@@ -108,6 +114,7 @@ public class DocumentoConvertidoService {
         if (!exitosos.isEmpty()) {
             archivoCompleto.setEstadoConversion("PROCESADO");
             archivoCompleto.setMensajeError(null);
+            archivoCompleto.setHashContenido(hash);
         } else {
             archivoCompleto.setEstadoConversion("PROCESADO_ERROR");
             String msg = errores.stream().map(ErrorFactura::getDetalle).collect(Collectors.joining("; "));
@@ -428,6 +435,14 @@ public class DocumentoConvertidoService {
 
     private boolean estaVacio(String valor) {
         return valor == null || valor.isEmpty() || valor.equals("null");
+    }
+
+    private String calcularHash(byte[] contenido) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] bytes = digest.digest(contenido);
+        StringBuilder hex = new StringBuilder();
+        for (byte b : bytes) hex.append(String.format("%02x", b));
+        return hex.toString();
     }
 
     private String detectarMimeType(String nombreArchivo) {

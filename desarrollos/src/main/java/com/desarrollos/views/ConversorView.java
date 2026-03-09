@@ -9,6 +9,7 @@ import com.desarrollos.base.FormView;
 import com.desarrollos.combos.ArchivoCombo;
 import com.desarrollos.entities.Archivo;
 import com.desarrollos.services.ApiSaturadaException;
+import com.desarrollos.services.ArchivoDuplicadoException;
 import com.desarrollos.services.ErrorFactura;
 import com.desarrollos.services.FacturaDuplicadaException;
 import com.desarrollos.services.ResultadoConversion;
@@ -480,6 +481,19 @@ public class ConversorView extends FormView {
 							.addThemeVariants(NotificationVariant.LUMO_WARNING);
 				});
 
+			} catch (ArchivoDuplicadoException ex) {
+				procesando.set(false);
+				rotador.interrupt();
+				final ArchivoDuplicadoException dup = ex;
+				try { archivoService.actualizarEstado(archivoAConvertir, "PENDIENTE"); } catch (Exception ignored) {}
+				ui.access(() -> {
+					mensajeProcesando.setText("Procesando imagen con IA...");
+					panelProgreso.setVisible(false);
+					btnConvertir.setEnabled(true);
+					archivoCombo.refrescar();
+					mostrarDialogoArchivoDuplicado(dup);
+				});
+
 			} catch (FacturaDuplicadaException ex) {
 				procesando.set(false);
 				rotador.interrupt();
@@ -833,6 +847,53 @@ public class ConversorView extends FormView {
 			actual = actual.getCause();
 		}
 		return false;
+	}
+
+	// ── Diálogo: archivo duplicado (mismo contenido ya procesado) ──────────────
+	private void mostrarDialogoArchivoDuplicado(ArchivoDuplicadoException ex) {
+		Dialog dialog = new Dialog();
+		dialog.setModal(true);
+		dialog.setWidth("500px");
+
+		Icon icono = VaadinIcon.WARNING.create();
+		icono.setSize("48px");
+		icono.setColor("#d97706");
+
+		H3 titulo = new H3("Archivo ya procesado");
+		titulo.getStyle().set("color", "#d97706").set("margin", "8px 0 0 0").set("font-weight", "700");
+
+		Paragraph mensaje = new Paragraph(
+				"El contenido de este archivo es idéntico a uno procesado anteriormente.\n"
+				+ "El archivo volvió a estado Pendiente.");
+		mensaje.getStyle()
+				.set("text-align", "center").set("color", "#475569")
+				.set("font-size", "0.875rem").set("white-space", "pre-line").set("margin", "0");
+
+		VerticalLayout detalle = new VerticalLayout();
+		detalle.setPadding(false);
+		detalle.setSpacing(false);
+		detalle.getStyle()
+				.set("background-color", "#fffbeb").set("border", "1px solid #fde68a")
+				.set("border-radius", "8px").set("padding", "12px").set("gap", "6px")
+				.set("width", "100%").set("margin-top", "8px");
+		Span tituloDetalle = new Span("Archivo original:");
+		tituloDetalle.getStyle().set("font-weight", "600").set("color", "#92400e").set("font-size", "0.8rem");
+		detalle.add(tituloDetalle);
+		detalle.add(new Span("Código: " + ex.getCodigoOriginal()));
+		detalle.add(new Span("Nombre: " + ex.getNombreOriginal()));
+
+		VerticalLayout contenido = new VerticalLayout(icono, titulo, mensaje, detalle);
+		contenido.setAlignItems(FlexComponent.Alignment.CENTER);
+		contenido.setPadding(true);
+		contenido.setSpacing(true);
+
+		Button btnAceptar = new Button("Aceptar", e -> dialog.close());
+		btnAceptar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+		btnAceptar.getStyle().set("background-color", "#d97706").set("color", "white");
+
+		dialog.add(contenido);
+		dialog.getFooter().add(btnAceptar);
+		dialog.open();
 	}
 
 	// ── Diálogo de error de conexión (el archivo queda en PENDIENTE) ───────────

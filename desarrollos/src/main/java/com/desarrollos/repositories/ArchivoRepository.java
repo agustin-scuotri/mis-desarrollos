@@ -20,6 +20,8 @@ public interface ArchivoRepository extends JpaRepository<Archivo, Long> {
     List<Archivo> findByConvertidoFalse();
     List<Archivo> findByEstadoConversion(String estadoConversion);
 
+    Optional<Archivo> findFirstByHashContenidoAndEstadoConversion(String hashContenido, String estadoConversion);
+
     @Query(value = "SELECT codigo FROM archivos ORDER BY CAST(codigo AS INTEGER) DESC LIMIT 1", nativeQuery = true)
     String findUltimoCodigo();
 

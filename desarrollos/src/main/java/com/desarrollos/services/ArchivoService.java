@@ -63,6 +63,10 @@ public class ArchivoService {
         return repository.save(entidad);
     }
 
+    public java.util.Optional<Archivo> buscarPorHashProcesado(String hash) {
+        return repository.findFirstByHashContenidoAndEstadoConversion(hash, "PROCESADO");
+    }
+
     @Cacheable("archivos-pendientes")
     public List<Archivo> listarNoConvertidos() {
         return repository.findByEstadoConversion("PENDIENTE");
