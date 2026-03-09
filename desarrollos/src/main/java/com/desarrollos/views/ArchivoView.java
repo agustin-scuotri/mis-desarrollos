@@ -24,6 +24,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.events.FileRejectedEvent;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.Binder;
@@ -268,6 +269,12 @@ public class ArchivoView extends FormView implements HasUrlParameter<String> {
 		estadoVacio.setAlignItems(Alignment.CENTER);
 
 		upload.setAcceptedFileTypes("image/*", "application/pdf");
+		upload.setMaxFileSize(20 * 1024 * 1024); // 20 MB
+		upload.addFileRejectedListener(event -> {
+			long limiteMB = 20;
+			errorArchivo.setText("El archivo supera el límite de " + limiteMB + " MB permitido.");
+			errorArchivo.setVisible(true);
+		});
 		upload.getStyle().set("position", "absolute").set("inset", "0").set("z-index", "10");
 		
 		upload.getElement().executeJs("const style = document.createElement('style');" 
