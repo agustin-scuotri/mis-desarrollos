@@ -293,6 +293,30 @@ public class DocumentoConvertidoService {
                 comprobante != null ? comprobante : "");
     }
 
+    public List<DocumentoConvertido> listarPaginadoConFecha(int page, int size,
+            String codigo, String nombre, String cuit, String centroEmision, String comprobante,
+            LocalDateTime desde, LocalDateTime hasta) {
+        Pageable pageable = PageRequest.of(page, Math.max(size, 1));
+        return repository.findFiltradoConFecha(
+                codigo != null ? codigo : "",
+                nombre != null ? nombre.toLowerCase() : "",
+                cuit != null ? cuit : "",
+                centroEmision != null ? centroEmision.toLowerCase() : "",
+                comprobante != null ? comprobante : "",
+                desde, hasta, pageable);
+    }
+
+    public long contarFiltradoConFecha(String codigo, String nombre, String cuit,
+            String centroEmision, String comprobante, LocalDateTime desde, LocalDateTime hasta) {
+        return repository.countFiltradoConFecha(
+                codigo != null ? codigo : "",
+                nombre != null ? nombre.toLowerCase() : "",
+                cuit != null ? cuit : "",
+                centroEmision != null ? centroEmision.toLowerCase() : "",
+                comprobante != null ? comprobante : "",
+                desde, hasta);
+    }
+
     // ── Datos para gráfico de actividad ──────────────────────────────────────
     public long[] conversionesPorDia() {
         LocalDate hoy = LocalDate.now();

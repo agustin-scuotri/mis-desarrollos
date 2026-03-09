@@ -18,6 +18,9 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.stream.Collectors;
 import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.router.Route;
 
@@ -33,6 +36,7 @@ public class InicioView extends VerticalLayout {
 
     private Div barCanvas;
     private Button btnActivo;
+    private String periodoActivo = "7d";
 
     public InicioView(ArchivoService archivoService, DocumentoConvertidoService documentoConvertidoService) {
         this.archivoService = archivoService;
@@ -126,6 +130,29 @@ public class InicioView extends VerticalLayout {
         barCanvas.getStyle().set("width", "100%").set("max-height", "220px");
         cargarBarChart("7d");
 
+        barCanvas.getElement()
+                .addEventListener("bar-click", e -> {
+                    int idx = e.getEventData().get("event.detail.index").asInt();
+                    LocalDate desde;
+                    LocalDate hasta;
+                    if ("anio".equals(periodoActivo)) {
+                        YearMonth ym = YearMonth.now().minusMonths(11 - idx);
+                        desde = ym.atDay(1);
+                        hasta  = ym.atEndOfMonth();
+                    } else if ("mes".equals(periodoActivo)) {
+                        desde = hasta = LocalDate.now().minusDays(29 - idx);
+                    } else {
+                        desde = hasta = LocalDate.now().minusDays(6 - idx);
+                    }
+                    final String desdeStr = desde.toString();
+                    final String hastaStr = hasta.toString();
+                    getUI().ifPresent(ui -> ui.navigate("lista-jsons",
+                            new QueryParameters(Map.of(
+                                    "fechaDesde", List.of(desdeStr),
+                                    "fechaHasta", List.of(hastaStr)))));
+                })
+                .addEventData("event.detail.index");
+
         Button btn7d   = crearBotonPeriodo("7 días");
         Button btnMes  = crearBotonPeriodo("Mes");
         Button btnAnio = crearBotonPeriodo("Año");
@@ -149,6 +176,7 @@ public class InicioView extends VerticalLayout {
     private void cargarBarChart(String periodo) {
         long[]   datos;
         String[] etiquetas;
+        this.periodoActivo = periodo;
         switch (periodo) {
             case "mes":
                 datos     = documentoConvertidoService.conversionesPorMes();
@@ -332,6 +360,14 @@ public class InicioView extends VerticalLayout {
                "  datasets: [{ data: " + data + ", backgroundColor: " + colors + "," +
                "    borderColor: isDark ? '#1e293b' : 'white', borderWidth: 2 }]" +
                "}, options: { responsive: true, maintainAspectRatio: true," +
+               "  onClick: (evt, elements) => {" +
+               "    if (elements.length > 0) {" +
+               "      me.dispatchEvent(new CustomEvent('bar-click', { bubbles: true, detail: { index: elements[0].index } }));" +
+               "    }" +
+               "  }," +
+               "  onHover: (evt, elements) => {" +
+               "    evt.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';" +
+               "  }," +
                "  onClick: (evt, elements) => {" +
                "    if (elements.length > 0) {" +
                "      me.dispatchEvent(new CustomEvent('donut-click', { bubbles: true, detail: { index: elements[0].index } }));" +
