@@ -190,11 +190,35 @@ public class AbmArchivosView extends CrudView<Archivo> implements BeforeEnterObs
                     contenido.setSpacing(true);
 
                     Button btnCerrar = new Button("Cerrar", ev -> dialog.close());
-                    btnCerrar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-                    btnCerrar.getStyle().set("background-color", "#dc2626").set("color", "white");
+                    btnCerrar.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+                    Button btnReintentar = new Button("Reintentar", ev -> {
+                        ConfirmDialog confirm = new ConfirmDialog();
+                        confirm.setHeader("¿Reintentar conversión?");
+                        confirm.setText("El archivo \"" + archivo.getNombre() + "\" volverá a estado Pendiente y podrás intentar convertirlo nuevamente.");
+                        confirm.setCancelable(true);
+                        confirm.setCancelText("Cancelar");
+                        confirm.setConfirmText("Sí, reintentar");
+                        confirm.setConfirmButtonTheme("primary");
+                        confirm.addConfirmListener(confirmEvent -> {
+                            try {
+                                service.actualizarEstado(archivo, "PENDIENTE", null);
+                                actualizarLista();
+                                dialog.close();
+                                Notification.show("Archivo marcado como Pendiente. Ya podés intentar convertirlo.")
+                                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                            } catch (Exception ex) {
+                                Notification.show("Error al actualizar el estado: " + ex.getMessage())
+                                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                            }
+                        });
+                        confirm.open();
+                    });
+                    btnReintentar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+                    btnReintentar.setIcon(VaadinIcon.REFRESH.create());
 
                     dialog.add(contenido);
-                    dialog.getFooter().add(btnCerrar);
+                    dialog.getFooter().add(btnCerrar, btnReintentar);
                     dialog.open();
                 });
 
