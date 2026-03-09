@@ -49,41 +49,6 @@ public interface DocumentoConvertidoRepository extends JpaRepository<DocumentoCo
     @Query("SELECT d.fechaConversion FROM DocumentoConvertido d WHERE d.fechaConversion >= :desde")
     List<LocalDateTime> findFechasDesde(@Param("desde") LocalDateTime desde);
 
-    // ── Paginación con filtros + rango de fechas ──────────────────────────────
-    @Query("SELECT d FROM DocumentoConvertido d LEFT JOIN d.archivo a WHERE " +
-           "(a IS NULL OR a.estadoConversion != 'PROCESADO_ERROR') AND " +
-           "(:codigo = '' OR (a IS NOT NULL AND a.codigo LIKE CONCAT('%', :codigo, '%'))) AND " +
-           "(:nombre = '' OR (a IS NOT NULL AND LOWER(a.nombre) LIKE CONCAT('%', :nombre, '%'))) AND " +
-           "(:cuit = '' OR d.cuit LIKE CONCAT('%', :cuit, '%')) AND " +
-           "(:centroEmision = '' OR LOWER(d.centroEmision) LIKE CONCAT('%', :centroEmision, '%')) AND " +
-           "(:comprobante = '' OR d.numeroComprobante LIKE CONCAT('%', :comprobante, '%')) AND " +
-           "d.fechaConversion >= :desde AND d.fechaConversion <= :hasta " +
-           "ORDER BY a.id ASC")
-    List<DocumentoConvertido> findFiltradoConFecha(@Param("codigo") String codigo,
-                                                   @Param("nombre") String nombre,
-                                                   @Param("cuit") String cuit,
-                                                   @Param("centroEmision") String centroEmision,
-                                                   @Param("comprobante") String comprobante,
-                                                   @Param("desde") LocalDateTime desde,
-                                                   @Param("hasta") LocalDateTime hasta,
-                                                   Pageable pageable);
-
-    @Query("SELECT COUNT(d) FROM DocumentoConvertido d LEFT JOIN d.archivo a WHERE " +
-           "(a IS NULL OR a.estadoConversion != 'PROCESADO_ERROR') AND " +
-           "(:codigo = '' OR (a IS NOT NULL AND a.codigo LIKE CONCAT('%', :codigo, '%'))) AND " +
-           "(:nombre = '' OR (a IS NOT NULL AND LOWER(a.nombre) LIKE CONCAT('%', :nombre, '%'))) AND " +
-           "(:cuit = '' OR d.cuit LIKE CONCAT('%', :cuit, '%')) AND " +
-           "(:centroEmision = '' OR LOWER(d.centroEmision) LIKE CONCAT('%', :centroEmision, '%')) AND " +
-           "(:comprobante = '' OR d.numeroComprobante LIKE CONCAT('%', :comprobante, '%')) AND " +
-           "d.fechaConversion >= :desde AND d.fechaConversion <= :hasta")
-    long countFiltradoConFecha(@Param("codigo") String codigo,
-                               @Param("nombre") String nombre,
-                               @Param("cuit") String cuit,
-                               @Param("centroEmision") String centroEmision,
-                               @Param("comprobante") String comprobante,
-                               @Param("desde") LocalDateTime desde,
-                               @Param("hasta") LocalDateTime hasta);
-
     // ── Verificación de factura duplicada (clave única de negocio) ────────────
     @Query("SELECT COUNT(d) FROM DocumentoConvertido d WHERE " +
            "d.cuit = :cuit AND d.codigoArca = :codigoArca AND " +

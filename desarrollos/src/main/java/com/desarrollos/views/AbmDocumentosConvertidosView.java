@@ -32,60 +32,40 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
 
 @PageTitle("Lista de JSONs")
 @Route(value = "lista-jsons", layout = MainLayout.class)
-public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> implements BeforeEnterObserver {
+public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> {
 
     private final DocumentoConvertidoService service;
     private CallbackDataProvider<DocumentoConvertido, Void> gridProvider;
-
-    private LocalDateTime filtroDesde;
-    private LocalDateTime filtroHasta;
-    private String filtroFechaLabel;
-    private final Div bannerFiltro = new Div();
 
     public AbmDocumentosConvertidosView(DocumentoConvertidoService service) {
         super(DocumentoConvertido.class);
         this.service = service;
         setTitulo("Lista de JSONs");
-        configurarBanner();
         inicializarDataProvider();
     }
 
     private void inicializarDataProvider() {
         gridProvider = DataProvider.fromCallbacks(
             (Query<DocumentoConvertido, Void> query) -> {
-                String codigo      = filtrosActivos.getOrDefault("Código", "");
-                String nombre      = filtrosActivos.getOrDefault("Nombre", "");
-                String cuit        = filtrosActivos.getOrDefault("Cuit del emisor", "");
-                String comprobante = filtrosActivos.getOrDefault("Nro. comprobante", "");
+                String codigo        = filtrosActivos.getOrDefault("Código", "");
+                String nombre        = filtrosActivos.getOrDefault("Nombre", "");
+                String cuit          = filtrosActivos.getOrDefault("Cuit del emisor", "");
+                String comprobante   = filtrosActivos.getOrDefault("Nro. comprobante", "");
                 int pageSize = Math.max(query.getLimit(), 1);
                 int pageNum  = query.getOffset() / pageSize;
-                if (filtroDesde != null) {
-                    return service.listarPaginadoConFecha(pageNum, pageSize, codigo, nombre, cuit, "", comprobante, filtroDesde, filtroHasta).stream();
-                }
                 return service.listarPaginado(pageNum, pageSize, codigo, nombre, cuit, "", comprobante).stream();
             },
             (Query<DocumentoConvertido, Void> query) -> {
-                String codigo      = filtrosActivos.getOrDefault("Código", "");
-                String nombre      = filtrosActivos.getOrDefault("Nombre", "");
-                String cuit        = filtrosActivos.getOrDefault("Cuit del emisor", "");
-                String comprobante = filtrosActivos.getOrDefault("Nro. comprobante", "");
-                if (filtroDesde != null) {
-                    return (int) service.contarFiltradoConFecha(codigo, nombre, cuit, "", comprobante, filtroDesde, filtroHasta);
-                }
+                String codigo        = filtrosActivos.getOrDefault("Código", "");
+                String nombre        = filtrosActivos.getOrDefault("Nombre", "");
+                String cuit          = filtrosActivos.getOrDefault("Cuit del emisor", "");
+                String comprobante   = filtrosActivos.getOrDefault("Nro. comprobante", "");
                 return (int) service.contarFiltrado(codigo, nombre, cuit, "", comprobante);
             }
         );
@@ -435,61 +415,6 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         if (estaVacio(doc.getTotal()))              notas.append("• No se encontró el total del comprobante.\n");
         if (doc.getVencimientos().isEmpty())        notas.append("• No se encontraron vencimientos.\n");
         return notas.toString();
-    }
-
-    private void configurarBanner() {
-        bannerFiltro.getStyle()
-                .set("background-color", "#eff6ff")
-                .set("border", "1px solid #bfdbfe")
-                .set("border-radius", "8px")
-                .set("padding", "8px 14px")
-                .set("display", "flex")
-                .set("align-items", "center")
-                .set("gap", "10px")
-                .set("margin-bottom", "8px")
-                .set("font-size", "0.85rem")
-                .set("color", "#1e40af");
-        bannerFiltro.setVisible(false);
-        addComponentAtIndex(1, bannerFiltro);
-    }
-
-    @Override
-    public void beforeEnter(BeforeEnterEvent event) {
-        Map<String, List<String>> params = event.getLocation().getQueryParameters().getParameters();
-        String desdeStr = params.getOrDefault("fechaDesde", List.of("")).get(0);
-        String hastaStr = params.getOrDefault("fechaHasta", List.of("")).get(0);
-        if (!desdeStr.isEmpty()) {
-            LocalDate desde = LocalDate.parse(desdeStr);
-            LocalDate hasta = LocalDate.parse(hastaStr.isEmpty() ? desdeStr : hastaStr);
-            filtroDesde = desde.atStartOfDay();
-            filtroHasta = hasta.plusDays(1).atStartOfDay().minusSeconds(1);
-            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-            filtroFechaLabel = desde.equals(hasta)
-                    ? desde.format(fmt)
-                    : desde.format(fmt) + " — " + hasta.format(fmt);
-            mostrarBannerFecha();
-            if (gridProvider != null) gridProvider.refreshAll();
-        }
-    }
-
-    private void mostrarBannerFecha() {
-        bannerFiltro.removeAll();
-        com.vaadin.flow.component.html.Span texto = new com.vaadin.flow.component.html.Span(
-                "📅  Mostrando conversiones del " + filtroFechaLabel);
-        Button btnCerrar = new Button("✕", e -> limpiarFiltroFecha());
-        btnCerrar.addThemeVariants(com.vaadin.flow.component.button.ButtonVariant.LUMO_TERTIARY,
-                com.vaadin.flow.component.button.ButtonVariant.LUMO_SMALL);
-        btnCerrar.getStyle().set("color", "#1e40af").set("font-size", "0.8rem");
-        bannerFiltro.add(texto, btnCerrar);
-        bannerFiltro.setVisible(true);
-    }
-
-    private void limpiarFiltroFecha() {
-        filtroDesde = null;
-        filtroHasta = null;
-        filtroFechaLabel = null;
-        bannerFiltro.setVisible(false);
-        if (gridProvider != null) gridProvider.refreshAll();
     }
 
 
