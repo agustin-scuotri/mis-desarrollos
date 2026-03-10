@@ -1,9 +1,12 @@
 package com.desarrollos.views;
 
 import java.io.ByteArrayInputStream;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import com.desarrollos.base.FormView;
 import com.desarrollos.combos.ArchivoCombo;
@@ -201,7 +204,7 @@ public class ConversorView extends FormView {
 			crearCampoInfo("CUIT del Emisor",  estaVacio(doc.getCuit())              ? "—" : doc.getCuit()),
 			crearCampoInfo("N° Comprobante",    estaVacio(doc.getNumeroComprobante()) ? "—" : doc.getNumeroComprobante()),
 			crearCampoInfo("Centro de Emisión", estaVacio(doc.getCentroEmision())     ? "—" : doc.getCentroEmision()),
-			crearCampoInfo("Total",             estaVacio(doc.getTotal())             ? "—" : doc.getTotal())
+			crearCampoInfo("Total",             doc.getTotal() == null               ? "—" : formatImporte(doc.getTotal()))
 		);
 
 		// Resultado JSON (colapsable)
@@ -237,10 +240,10 @@ public class ConversorView extends FormView {
 		Grid<ProductoConcepto> gridProductos = new Grid<>(ProductoConcepto.class, false);
 		gridProductos.addColumn(ProductoConcepto::getSku).setHeader("SKU").setWidth("130px").setFlexGrow(0);
 		gridProductos.addColumn(ProductoConcepto::getDescripcion).setHeader("Descripción").setFlexGrow(1);
-		gridProductos.addColumn(ProductoConcepto::getCantidad).setHeader("Cant.").setWidth("70px").setFlexGrow(0);
-		gridProductos.addColumn(ProductoConcepto::getPrecioUnitario).setHeader("P. Unit.").setWidth("95px").setFlexGrow(0);
-		gridProductos.addColumn(ProductoConcepto::getDescuento).setHeader("Desc.").setWidth("80px").setFlexGrow(0);
-		gridProductos.addColumn(ProductoConcepto::getSubTotal).setHeader("Subtotal").setWidth("95px").setFlexGrow(0);
+		gridProductos.addColumn(p -> formatImporte(p.getCantidad())).setHeader("Cant.").setWidth("70px").setFlexGrow(0);
+		gridProductos.addColumn(p -> formatImporte(p.getPrecioUnitario())).setHeader("P. Unit.").setWidth("95px").setFlexGrow(0);
+		gridProductos.addColumn(p -> formatImporte(p.getDescuento())).setHeader("Desc.").setWidth("80px").setFlexGrow(0);
+		gridProductos.addColumn(p -> formatImporte(p.getSubTotal())).setHeader("Subtotal").setWidth("95px").setFlexGrow(0);
 		gridProductos.addColumn(ProductoConcepto::getAlicuotaIva).setHeader("IVA").setWidth("75px").setFlexGrow(0);
 		gridProductos.addColumn(ProductoConcepto::getOrdenCompra).setHeader("OC").setWidth("90px").setFlexGrow(0);
 		gridProductos.addColumn(ProductoConcepto::getRemito).setHeader("Remito").setWidth("130px").setFlexGrow(0);
@@ -256,8 +259,8 @@ public class ConversorView extends FormView {
 		tituloNetos.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
 		Grid<NetoGravado> gridNetosGravados = new Grid<>(NetoGravado.class, false);
 		gridNetosGravados.addColumn(NetoGravado::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
-		gridNetosGravados.addColumn(NetoGravado::getImporteNetoGravado).setHeader("Importe Neto Gravado").setFlexGrow(1);
-		gridNetosGravados.addColumn(NetoGravado::getIva).setHeader("IVA").setWidth("130px").setFlexGrow(0);
+		gridNetosGravados.addColumn(n -> formatImporte(n.getImporteNetoGravado())).setHeader("Importe Neto Gravado").setFlexGrow(1);
+		gridNetosGravados.addColumn(n -> formatImporte(n.getIva())).setHeader("IVA").setWidth("130px").setFlexGrow(0);
 		gridNetosGravados.setAllRowsVisible(true);
 		gridNetosGravados.getStyle().set("margin-top", "4px");
 		boolean hayNetos = !doc.getNetosGravados().isEmpty();
@@ -271,7 +274,7 @@ public class ConversorView extends FormView {
 		Grid<PercepcionIIBB> gridPercepcionesIIBB = new Grid<>(PercepcionIIBB.class, false);
 		gridPercepcionesIIBB.addColumn(PercepcionIIBB::getProvincia).setHeader("Provincia").setFlexGrow(1);
 		gridPercepcionesIIBB.addColumn(PercepcionIIBB::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
-		gridPercepcionesIIBB.addColumn(PercepcionIIBB::getImporte).setHeader("Importe").setWidth("130px").setFlexGrow(0);
+		gridPercepcionesIIBB.addColumn(p -> formatImporte(p.getImporte())).setHeader("Importe").setWidth("130px").setFlexGrow(0);
 		gridPercepcionesIIBB.setAllRowsVisible(true);
 		gridPercepcionesIIBB.getStyle().set("margin-top", "4px");
 		boolean hayIIBB = !doc.getPercepcionesIIBB().isEmpty();
@@ -284,7 +287,7 @@ public class ConversorView extends FormView {
 		tituloPercepcionesIVA.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
 		Grid<PercepcionIVA> gridPercepcionesIVA = new Grid<>(PercepcionIVA.class, false);
 		gridPercepcionesIVA.addColumn(PercepcionIVA::getAlicuota).setHeader("Alícuota").setWidth("150px").setFlexGrow(0);
-		gridPercepcionesIVA.addColumn(PercepcionIVA::getImporte).setHeader("Importe").setFlexGrow(1);
+		gridPercepcionesIVA.addColumn(p -> formatImporte(p.getImporte())).setHeader("Importe").setFlexGrow(1);
 		gridPercepcionesIVA.setAllRowsVisible(true);
 		gridPercepcionesIVA.getStyle().set("margin-top", "4px");
 		boolean hayIVA = !doc.getPercepcionesIVA().isEmpty();
@@ -297,7 +300,7 @@ public class ConversorView extends FormView {
 		tituloVencimientos.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
 		Grid<Vencimiento> gridVencimientos = new Grid<>(Vencimiento.class, false);
 		gridVencimientos.addColumn(Vencimiento::getFecha).setHeader("Fecha").setWidth("150px").setFlexGrow(0);
-		gridVencimientos.addColumn(Vencimiento::getImporte).setHeader("Importe").setFlexGrow(1);
+		gridVencimientos.addColumn(v -> formatImporte(v.getImporte())).setHeader("Importe").setFlexGrow(1);
 		gridVencimientos.setAllRowsVisible(true);
 		gridVencimientos.getStyle().set("margin-top", "4px");
 		boolean hayVencimientos = !doc.getVencimientos().isEmpty();
@@ -326,11 +329,11 @@ public class ConversorView extends FormView {
 		if (estaVacio(doc.getLetra()))                notas.append("• Letra del comprobante\n");
 		if (estaVacio(doc.getCae()))                  notas.append("• CAE\n");
 		if (estaVacio(doc.getFechaVencimientoCae()))  notas.append("• Fecha venc. CAE\n");
-		if (estaVacio(doc.getCotizacion()))           notas.append("• Cotización\n");
+		if (doc.getCotizacion() == null)              notas.append("• Cotización\n");
 		if (estaVacio(doc.getOrdenCompra()))          notas.append("• Orden de compra\n");
 		if (doc.getProductosConceptos().isEmpty())    notas.append("• Productos/Conceptos\n");
 		if (doc.getNetosGravados().isEmpty())         notas.append("• Netos gravados e IVA\n");
-		if (estaVacio(doc.getSubTotalNoGravado()))    notas.append("• Importe neto no gravado\n");
+		if (doc.getSubTotalNoGravado() == null)       notas.append("• Importe neto no gravado\n");
 		if (doc.getPercepcionesIIBB().isEmpty())      notas.append("• Percepciones IIBB\n");
 		if (doc.getPercepcionesIVA().isEmpty())       notas.append("• Percepciones IVA\n");
 		if (doc.getVencimientos().isEmpty())          notas.append("• Vencimientos\n");
@@ -576,7 +579,7 @@ public class ConversorView extends FormView {
 		if (estaVacio(doc.getNumeroComprobante())) faltantes.add("N° Comprobante");
 		if (estaVacio(doc.getFechaEmision()))      faltantes.add("Fecha de Emisión");
 		if (estaVacio(doc.getMoneda()))            faltantes.add("Moneda");
-		if (estaVacio(doc.getTotal()))             faltantes.add("Total");
+		if (doc.getTotal() == null)               faltantes.add("Total");
 		return faltantes;
 	}
 
@@ -838,6 +841,11 @@ public class ConversorView extends FormView {
 
 	private boolean estaVacio(String valor) {
 		return valor == null || valor.isEmpty() || valor.equals("null");
+	}
+
+	private static String formatImporte(BigDecimal valor) {
+		if (valor == null) return "";
+		return NumberFormat.getNumberInstance(new Locale("es", "AR")).format(valor);
 	}
 
 	@Override

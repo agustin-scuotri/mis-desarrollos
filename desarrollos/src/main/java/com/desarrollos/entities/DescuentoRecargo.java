@@ -1,6 +1,7 @@
 package com.desarrollos.entities;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "descuentos_recargos")
@@ -16,7 +17,7 @@ public class DescuentoRecargo {
 
     private String descripcion;
     private String alicuota;
-    private String importe;
+    private BigDecimal importe;
 
     // Getters y Setters
     public Long getId() { return id; }
@@ -27,6 +28,6 @@ public class DescuentoRecargo {
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
     public String getAlicuota() { return alicuota; }
     public void setAlicuota(String alicuota) { this.alicuota = alicuota; }
-    public String getImporte() { return importe; }
-    public void setImporte(String importe) { this.importe = importe; }
+    public BigDecimal getImporte() { return importe; }
+    public void setImporte(BigDecimal importe) { this.importe = importe; }
 }

@@ -1,5 +1,6 @@
 package com.desarrollos.services;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -147,11 +148,11 @@ public class DocumentoConvertidoService {
         doc.setCae(json.path("cae").asText(null));
         doc.setFechaVencimientoCae(json.path("fechaVencimientoCae").asText(null));
         doc.setMoneda(json.path("moneda").asText(null));
-        doc.setCotizacion(json.path("cotizacion").asText(null));
+        doc.setCotizacion(parsearImporte(json, "cotizacion"));
         doc.setOrdenCompra(json.path("ordenCompra").asText(null));
-        doc.setSubTotalNoGravado(json.path("subTotalNoGravado").asText(null));
-        doc.setImpuestoInterno(json.path("impuestoInterno").asText(null));
-        doc.setTotal(json.path("total").asText(null));
+        doc.setSubTotalNoGravado(parsearImporte(json, "subTotalNoGravado"));
+        doc.setImpuestoInterno(parsearImporte(json, "impuestoInterno"));
+        doc.setTotal(parsearImporte(json, "total"));
         // Limitar a 20 000 chars si el JSON es muy grande
         // Guardar el JSON formateado (indentado) para que se vea legible en el visor
         String jsonFormateado;
@@ -169,11 +170,11 @@ public class DocumentoConvertidoService {
                 producto.setDocumento(doc);
                 producto.setSku(itemNode.path("sku").asText(null));
                 producto.setDescripcion(itemNode.path("descripcion").asText(null));
-                producto.setCantidad(itemNode.path("cantidad").asText(null));
-                producto.setPrecioUnitario(itemNode.path("precioUnitario").asText(null));
-                producto.setDescuento(itemNode.path("descuento").asText(null));
-                producto.setSubTotal(itemNode.path("subTotal").asText(null));
-                producto.setAlicuotaIva(itemNode.path("alicuotaIva").asText(null));
+                producto.setCantidad(parsearImporte(itemNode, "cantidad"));
+                producto.setPrecioUnitario(parsearImporte(itemNode, "precioUnitario"));
+                producto.setDescuento(parsearImporte(itemNode, "descuento"));
+                producto.setSubTotal(parsearImporte(itemNode, "subTotal"));
+                producto.setAlicuotaIva(normalizarAlicuota(itemNode.path("alicuotaIva").asText(null)));
                 producto.setOrdenCompra(itemNode.path("ordenCompra").asText(null));
                 producto.setRemito(itemNode.path("remito").asText(null));
                 doc.getProductosConceptos().add(producto);
@@ -185,9 +186,9 @@ public class DocumentoConvertidoService {
             for (JsonNode netoNode : netosNode) {
                 NetoGravado neto = new NetoGravado();
                 neto.setDocumento(doc);
-                neto.setAlicuota(netoNode.path("alicuota").asText(null));
-                neto.setImporteNetoGravado(netoNode.path("importeNetoGravado").asText(null));
-                neto.setIva(netoNode.path("iva").asText(null));
+                neto.setAlicuota(normalizarAlicuota(netoNode.path("alicuota").asText(null)));
+                neto.setImporteNetoGravado(parsearImporte(netoNode, "importeNetoGravado"));
+                neto.setIva(parsearImporte(netoNode, "iva"));
                 doc.getNetosGravados().add(neto);
             }
         }
@@ -203,8 +204,8 @@ public class DocumentoConvertidoService {
                     provinciaPerc = doc.getProvincia();
                 }
                 perc.setProvincia(provinciaPerc);
-                perc.setAlicuota(percNode.path("alicuota").asText(null));
-                perc.setImporte(percNode.path("importe").asText(null));
+                perc.setAlicuota(normalizarAlicuota(percNode.path("alicuota").asText(null)));
+                perc.setImporte(parsearImporte(percNode, "importe"));
                 doc.getPercepcionesIIBB().add(perc);
             }
         }
@@ -214,8 +215,8 @@ public class DocumentoConvertidoService {
             for (JsonNode percNode : percepcionesIVANode) {
                 PercepcionIVA perc = new PercepcionIVA();
                 perc.setDocumento(doc);
-                perc.setAlicuota(percNode.path("alicuota").asText(null));
-                perc.setImporte(percNode.path("importe").asText(null));
+                perc.setAlicuota(normalizarAlicuota(percNode.path("alicuota").asText(null)));
+                perc.setImporte(parsearImporte(percNode, "importe"));
                 doc.getPercepcionesIVA().add(perc);
             }
         }
@@ -226,7 +227,7 @@ public class DocumentoConvertidoService {
                 Vencimiento venc = new Vencimiento();
                 venc.setDocumento(doc);
                 venc.setFecha(vencNode.path("fecha").asText(null));
-                venc.setImporte(vencNode.path("importe").asText(null));
+                venc.setImporte(parsearImporte(vencNode, "importe"));
                 doc.getVencimientos().add(venc);
             }
         }
@@ -237,7 +238,7 @@ public class DocumentoConvertidoService {
                 Tasa tasa = new Tasa();
                 tasa.setDocumento(doc);
                 tasa.setDescripcion(tasaNode.path("descripcion").asText(null));
-                tasa.setImporte(tasaNode.path("importe").asText(null));
+                tasa.setImporte(parsearImporte(tasaNode, "importe"));
                 doc.getTasas().add(tasa);
             }
         }
@@ -248,8 +249,8 @@ public class DocumentoConvertidoService {
                 DescuentoRecargo dr = new DescuentoRecargo();
                 dr.setDocumento(doc);
                 dr.setDescripcion(drNode.path("descripcion").asText(null));
-                dr.setAlicuota(drNode.path("alicuota").asText(null));
-                dr.setImporte(drNode.path("importe").asText(null));
+                dr.setAlicuota(normalizarAlicuota(drNode.path("alicuota").asText(null)));
+                dr.setImporte(parsearImporte(drNode, "importe"));
                 doc.getDescuentosRecargos().add(dr);
             }
         }
@@ -266,7 +267,7 @@ public class DocumentoConvertidoService {
         if (estaVacio(doc.getNumeroComprobante())) faltantes.add("N° Comprobante");
         if (estaVacio(doc.getFechaEmision()))      faltantes.add("Fecha de Emisión");
         if (estaVacio(doc.getMoneda()))            faltantes.add("Moneda");
-        if (estaVacio(doc.getTotal()))             faltantes.add("Total");
+        if (doc.getTotal() == null)               faltantes.add("Total");
         return faltantes;
     }
 
@@ -409,27 +410,8 @@ public class DocumentoConvertidoService {
 
     /** Lanza TotalNegativoException si el total de la factura es un número negativo. */
     private void validarTotalNoNegativo(DocumentoConvertido doc) {
-        if (!estaVacio(doc.getTotal())) {
-            // Quitar símbolos de moneda y espacios, luego intentar parsear
-            String limpio = doc.getTotal().replaceAll("[$\\s]", "").trim();
-            // Si empieza con '-' ya es negativo sin necesidad de parsear
-            if (limpio.startsWith("-")) {
-                throw new TotalNegativoException(doc.getTotal());
-            }
-            try {
-                // Normalizar formato: puntos de miles y coma decimal (ej: 1.234,56)
-                if (limpio.matches(".*\\d\\.\\d{3}.*")) {
-                    limpio = limpio.replace(".", "").replace(",", ".");
-                } else {
-                    limpio = limpio.replace(",", ".");
-                }
-                double valor = Double.parseDouble(limpio);
-                if (valor < 0) {
-                    throw new TotalNegativoException(doc.getTotal());
-                }
-            } catch (NumberFormatException ignored) {
-                // No se puede parsear; otras validaciones ya lo marcarán si corresponde
-            }
+        if (doc.getTotal() != null && doc.getTotal().compareTo(BigDecimal.ZERO) < 0) {
+            throw new TotalNegativoException(doc.getTotal().toPlainString());
         }
     }
 
@@ -481,5 +463,42 @@ public class DocumentoConvertidoService {
         if (texto.startsWith("```")) texto = texto.substring(3);
         if (texto.endsWith("```")) texto = texto.substring(0, texto.length() - 3);
         return texto.trim();
+    }
+
+    /**
+     * Parsea un campo numérico del nodo JSON a BigDecimal.
+     * Acepta tanto número JSON nativo como string con formato argentino (1.200,50)
+     * o internacional (1200.50). Retorna null si el campo está ausente o vacío.
+     */
+    private BigDecimal parsearImporte(JsonNode node, String campo) {
+        JsonNode nodo = node.path(campo);
+        if (nodo.isMissingNode() || nodo.isNull()) return null;
+        if (nodo.isNumber()) return nodo.decimalValue();
+        String raw = nodo.asText(null);
+        if (estaVacio(raw)) return null;
+        // Quitar símbolo de moneda y espacios
+        String limpio = raw.replaceAll("[$ ]", "").trim();
+        if (limpio.isEmpty() || limpio.equals("-")) return null;
+        try {
+            // Detectar formato argentino: punto como separador de miles, coma como decimal
+            if (limpio.matches(".*\\d\\.\\d{3}.*") || (limpio.contains(",") && limpio.contains("."))) {
+                limpio = limpio.replace(".", "").replace(",", ".");
+            } else {
+                limpio = limpio.replace(",", ".");
+            }
+            return new BigDecimal(limpio);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Normaliza un campo de alícuota garantizando que siempre termine con "%".
+     * Retorna null si el valor está vacío.
+     */
+    private String normalizarAlicuota(String valor) {
+        if (estaVacio(valor)) return null;
+        String limpio = valor.trim();
+        return limpio.endsWith("%") ? limpio : limpio + "%";
     }
 }

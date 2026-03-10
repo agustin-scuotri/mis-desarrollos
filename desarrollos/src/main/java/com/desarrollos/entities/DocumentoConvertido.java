@@ -1,6 +1,7 @@
 package com.desarrollos.entities;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +41,7 @@ public class DocumentoConvertido {
 
     // Moneda y cotización
     private String moneda;
-    private String cotizacion;
+    private BigDecimal cotizacion;
 
     // Orden de compra (1.4)
     private String ordenCompra;
@@ -54,7 +55,7 @@ public class DocumentoConvertido {
     private List<NetoGravado> netosGravados = new ArrayList<>();
 
     // Neto no gravado (1.6)
-    private String subTotalNoGravado;
+    private BigDecimal subTotalNoGravado;
 
     // Percepciones IIBB (1.7)
     @OneToMany(mappedBy = "documento", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -73,10 +74,10 @@ public class DocumentoConvertido {
     private List<DescuentoRecargo> descuentosRecargos = new ArrayList<>();
 
     // Total (1.9)
-    private String total;
+    private BigDecimal total;
 
     // Impuesto interno / otros tributos
-    private String impuestoInterno;
+    private BigDecimal impuestoInterno;
 
     // Vencimientos
     @OneToMany(mappedBy = "documento", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -133,16 +134,16 @@ public class DocumentoConvertido {
     public void setFechaVencimientoCae(String fechaVencimientoCae) { this.fechaVencimientoCae = fechaVencimientoCae; }
     public String getMoneda() { return moneda; }
     public void setMoneda(String moneda) { this.moneda = moneda; }
-    public String getCotizacion() { return cotizacion; }
-    public void setCotizacion(String cotizacion) { this.cotizacion = cotizacion; }
+    public BigDecimal getCotizacion() { return cotizacion; }
+    public void setCotizacion(BigDecimal cotizacion) { this.cotizacion = cotizacion; }
     public String getOrdenCompra() { return ordenCompra; }
     public void setOrdenCompra(String ordenCompra) { this.ordenCompra = ordenCompra; }
     public List<ProductoConcepto> getProductosConceptos() { return productosConceptos; }
     public void setProductosConceptos(List<ProductoConcepto> productosConceptos) { this.productosConceptos = productosConceptos; }
     public List<NetoGravado> getNetosGravados() { return netosGravados; }
     public void setNetosGravados(List<NetoGravado> netosGravados) { this.netosGravados = netosGravados; }
-    public String getSubTotalNoGravado() { return subTotalNoGravado; }
-    public void setSubTotalNoGravado(String subTotalNoGravado) { this.subTotalNoGravado = subTotalNoGravado; }
+    public BigDecimal getSubTotalNoGravado() { return subTotalNoGravado; }
+    public void setSubTotalNoGravado(BigDecimal subTotalNoGravado) { this.subTotalNoGravado = subTotalNoGravado; }
     public List<PercepcionIIBB> getPercepcionesIIBB() { return percepcionesIIBB; }
     public void setPercepcionesIIBB(List<PercepcionIIBB> percepcionesIIBB) { this.percepcionesIIBB = percepcionesIIBB; }
     public List<PercepcionIVA> getPercepcionesIVA() { return percepcionesIVA; }
@@ -151,10 +152,10 @@ public class DocumentoConvertido {
     public void setTasas(List<Tasa> tasas) { this.tasas = tasas; }
     public List<DescuentoRecargo> getDescuentosRecargos() { return descuentosRecargos; }
     public void setDescuentosRecargos(List<DescuentoRecargo> descuentosRecargos) { this.descuentosRecargos = descuentosRecargos; }
-    public String getTotal() { return total; }
-    public void setTotal(String total) { this.total = total; }
-    public String getImpuestoInterno() { return impuestoInterno; }
-    public void setImpuestoInterno(String impuestoInterno) { this.impuestoInterno = impuestoInterno; }
+    public BigDecimal getTotal() { return total; }
+    public void setTotal(BigDecimal total) { this.total = total; }
+    public BigDecimal getImpuestoInterno() { return impuestoInterno; }
+    public void setImpuestoInterno(BigDecimal impuestoInterno) { this.impuestoInterno = impuestoInterno; }
     public List<Vencimiento> getVencimientos() { return vencimientos; }
     public void setVencimientos(List<Vencimiento> vencimientos) { this.vencimientos = vencimientos; }
     public String getJsonResultado() { return jsonResultado; }

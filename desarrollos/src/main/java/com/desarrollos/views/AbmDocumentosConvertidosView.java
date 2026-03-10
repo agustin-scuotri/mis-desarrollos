@@ -1,7 +1,10 @@
 package com.desarrollos.views;
 
 import java.io.ByteArrayInputStream;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 import com.desarrollos.base.CrudView;
 import com.desarrollos.entities.DocumentoConvertido;
@@ -168,7 +171,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
             crearCampoInfo("CUIT del Emisor",     estaVacio(doc.getCuit())              ? "—" : doc.getCuit()),
             crearCampoInfo("N° Comprobante",       estaVacio(doc.getNumeroComprobante()) ? "—" : doc.getNumeroComprobante()),
             crearCampoInfo("Centro de Emisión",    estaVacio(doc.getCentroEmision())     ? "—" : doc.getCentroEmision()),
-            crearCampoInfo("Total",                estaVacio(doc.getTotal())             ? "—" : doc.getTotal())
+            crearCampoInfo("Total",                doc.getTotal() == null               ? "—" : formatImporte(doc.getTotal()))
         );
         contenido.add(panelDatos);
 
@@ -209,10 +212,10 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
             Grid<ProductoConcepto> g = new Grid<>(ProductoConcepto.class, false);
             g.addColumn(ProductoConcepto::getSku).setHeader("SKU").setWidth("130px").setFlexGrow(0);
             g.addColumn(ProductoConcepto::getDescripcion).setHeader("Descripción").setFlexGrow(1);
-            g.addColumn(ProductoConcepto::getCantidad).setHeader("Cant.").setWidth("70px").setFlexGrow(0);
-            g.addColumn(ProductoConcepto::getPrecioUnitario).setHeader("P. Unit.").setWidth("95px").setFlexGrow(0);
-            g.addColumn(ProductoConcepto::getDescuento).setHeader("Desc.").setWidth("80px").setFlexGrow(0);
-            g.addColumn(ProductoConcepto::getSubTotal).setHeader("Subtotal").setWidth("95px").setFlexGrow(0);
+            g.addColumn(p -> formatImporte(p.getCantidad())).setHeader("Cant.").setWidth("70px").setFlexGrow(0);
+            g.addColumn(p -> formatImporte(p.getPrecioUnitario())).setHeader("P. Unit.").setWidth("95px").setFlexGrow(0);
+            g.addColumn(p -> formatImporte(p.getDescuento())).setHeader("Desc.").setWidth("80px").setFlexGrow(0);
+            g.addColumn(p -> formatImporte(p.getSubTotal())).setHeader("Subtotal").setWidth("95px").setFlexGrow(0);
             g.addColumn(ProductoConcepto::getAlicuotaIva).setHeader("IVA").setWidth("75px").setFlexGrow(0);
             g.addColumn(ProductoConcepto::getOrdenCompra).setHeader("OC").setWidth("90px").setFlexGrow(0);
             g.addColumn(ProductoConcepto::getRemito).setHeader("Remito").setWidth("130px").setFlexGrow(0);
@@ -228,8 +231,8 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
             t.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
             Grid<NetoGravado> g = new Grid<>(NetoGravado.class, false);
             g.addColumn(NetoGravado::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
-            g.addColumn(NetoGravado::getImporteNetoGravado).setHeader("Importe Neto Gravado").setFlexGrow(1);
-            g.addColumn(NetoGravado::getIva).setHeader("IVA").setWidth("130px").setFlexGrow(0);
+            g.addColumn(n -> formatImporte(n.getImporteNetoGravado())).setHeader("Importe Neto Gravado").setFlexGrow(1);
+            g.addColumn(n -> formatImporte(n.getIva())).setHeader("IVA").setWidth("130px").setFlexGrow(0);
             g.setItems(doc.getNetosGravados());
             g.setAllRowsVisible(true);
             g.getStyle().set("margin-top", "4px");
@@ -243,7 +246,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
             Grid<PercepcionIIBB> g = new Grid<>(PercepcionIIBB.class, false);
             g.addColumn(PercepcionIIBB::getProvincia).setHeader("Provincia").setFlexGrow(1);
             g.addColumn(PercepcionIIBB::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
-            g.addColumn(PercepcionIIBB::getImporte).setHeader("Importe").setWidth("130px").setFlexGrow(0);
+            g.addColumn(p -> formatImporte(p.getImporte())).setHeader("Importe").setWidth("130px").setFlexGrow(0);
             g.setItems(doc.getPercepcionesIIBB());
             g.setAllRowsVisible(true);
             g.getStyle().set("margin-top", "4px");
@@ -256,7 +259,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
             t.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
             Grid<PercepcionIVA> g = new Grid<>(PercepcionIVA.class, false);
             g.addColumn(PercepcionIVA::getAlicuota).setHeader("Alícuota").setWidth("150px").setFlexGrow(0);
-            g.addColumn(PercepcionIVA::getImporte).setHeader("Importe").setFlexGrow(1);
+            g.addColumn(p -> formatImporte(p.getImporte())).setHeader("Importe").setFlexGrow(1);
             g.setItems(doc.getPercepcionesIVA());
             g.setAllRowsVisible(true);
             g.getStyle().set("margin-top", "4px");
@@ -269,7 +272,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
             t.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
             Grid<Tasa> g = new Grid<>(Tasa.class, false);
             g.addColumn(Tasa::getDescripcion).setHeader("Descripción").setFlexGrow(1);
-            g.addColumn(Tasa::getImporte).setHeader("Importe").setWidth("130px").setFlexGrow(0);
+            g.addColumn(t -> formatImporte(t.getImporte())).setHeader("Importe").setWidth("130px").setFlexGrow(0);
             g.setItems(doc.getTasas());
             g.setAllRowsVisible(true);
             g.getStyle().set("margin-top", "4px");
@@ -283,7 +286,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
             Grid<DescuentoRecargo> g = new Grid<>(DescuentoRecargo.class, false);
             g.addColumn(DescuentoRecargo::getDescripcion).setHeader("Descripción").setFlexGrow(1);
             g.addColumn(DescuentoRecargo::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
-            g.addColumn(DescuentoRecargo::getImporte).setHeader("Importe").setWidth("130px").setFlexGrow(0);
+            g.addColumn(d -> formatImporte(d.getImporte())).setHeader("Importe").setWidth("130px").setFlexGrow(0);
             g.setItems(doc.getDescuentosRecargos());
             g.setAllRowsVisible(true);
             g.getStyle().set("margin-top", "4px");
@@ -296,7 +299,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
             t.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
             Grid<Vencimiento> g = new Grid<>(Vencimiento.class, false);
             g.addColumn(Vencimiento::getFecha).setHeader("Fecha").setWidth("150px").setFlexGrow(0);
-            g.addColumn(Vencimiento::getImporte).setHeader("Importe").setFlexGrow(1);
+            g.addColumn(v -> formatImporte(v.getImporte())).setHeader("Importe").setFlexGrow(1);
             g.setItems(doc.getVencimientos());
             g.setAllRowsVisible(true);
             g.getStyle().set("margin-top", "4px");
@@ -403,16 +406,16 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         if (estaVacio(doc.getCae()))                notas.append("• No se encontró el CAE.\n");
         if (estaVacio(doc.getFechaVencimientoCae()))notas.append("• No se encontró la fecha de vencimiento del CAE.\n");
         if (estaVacio(doc.getMoneda()))             notas.append("• No se encontró la moneda.\n");
-        if (estaVacio(doc.getCotizacion()))         notas.append("• No se encontró la cotización.\n");
+        if (doc.getCotizacion() == null)             notas.append("• No se encontró la cotización.\n");
         if (estaVacio(doc.getOrdenCompra()))        notas.append("• No se encontró la orden de compra.\n");
         if (doc.getProductosConceptos().isEmpty())  notas.append("• No se encontraron productos/conceptos.\n");
         if (doc.getNetosGravados().isEmpty())       notas.append("• No se encontraron netos gravados e IVA.\n");
-        if (estaVacio(doc.getSubTotalNoGravado()))  notas.append("• No se encontró el importe neto no gravado.\n");
-        if (estaVacio(doc.getImpuestoInterno()))    notas.append("• No se encontró impuesto interno / otros tributos.\n");
+        if (doc.getSubTotalNoGravado() == null)      notas.append("• No se encontró el importe neto no gravado.\n");
+        if (doc.getImpuestoInterno() == null)        notas.append("• No se encontró impuesto interno / otros tributos.\n");
         if (doc.getPercepcionesIIBB().isEmpty())    notas.append("• No se encontraron percepciones de IIBB.\n");
         if (doc.getPercepcionesIVA().isEmpty())      notas.append("• No se encontraron percepciones de IVA.\n");
         if (doc.getTasas().isEmpty())                notas.append("• No se encontraron tasas.\n");
-        if (estaVacio(doc.getTotal()))              notas.append("• No se encontró el total del comprobante.\n");
+        if (doc.getTotal() == null)                 notas.append("• No se encontró el total del comprobante.\n");
         if (doc.getVencimientos().isEmpty())        notas.append("• No se encontraron vencimientos.\n");
         return notas.toString();
     }
@@ -420,5 +423,10 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
 
     private boolean estaVacio(String valor) {
         return valor == null || valor.isEmpty() || valor.equals("null");
+    }
+
+    private static String formatImporte(BigDecimal valor) {
+        if (valor == null) return "";
+        return NumberFormat.getNumberInstance(new Locale("es", "AR")).format(valor);
     }
 }

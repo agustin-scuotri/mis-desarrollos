@@ -1,6 +1,7 @@
 package com.desarrollos.entities;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "netos_gravados")
@@ -15,8 +16,8 @@ public class NetoGravado {
     private DocumentoConvertido documento;
 
     private String alicuota;
-    private String importeNetoGravado;
-    private String iva;
+    private BigDecimal importeNetoGravado;
+    private BigDecimal iva;
 
     // Getters y Setters
     public Long getId() { return id; }
@@ -25,8 +26,8 @@ public class NetoGravado {
     public void setDocumento(DocumentoConvertido documento) { this.documento = documento; }
     public String getAlicuota() { return alicuota; }
     public void setAlicuota(String alicuota) { this.alicuota = alicuota; }
-    public String getImporteNetoGravado() { return importeNetoGravado; }
-    public void setImporteNetoGravado(String importeNetoGravado) { this.importeNetoGravado = importeNetoGravado; }
-    public String getIva() { return iva; }
-    public void setIva(String iva) { this.iva = iva; }
+    public BigDecimal getImporteNetoGravado() { return importeNetoGravado; }
+    public void setImporteNetoGravado(BigDecimal importeNetoGravado) { this.importeNetoGravado = importeNetoGravado; }
+    public BigDecimal getIva() { return iva; }
+    public void setIva(BigDecimal iva) { this.iva = iva; }
 }

@@ -1,6 +1,7 @@
 package com.desarrollos.entities;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "productos_conceptos")
@@ -19,10 +20,10 @@ public class ProductoConcepto {
     @Column(length = 1000)
     private String descripcion;
 
-    private String cantidad;
-    private String precioUnitario;
-    private String descuento;
-    private String subTotal;
+    private BigDecimal cantidad;
+    private BigDecimal precioUnitario;
+    private BigDecimal descuento;
+    private BigDecimal subTotal;
     private String alicuotaIva;
     private String ordenCompra;
     private String remito;
@@ -36,14 +37,14 @@ public class ProductoConcepto {
     public void setSku(String sku) { this.sku = sku; }
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
-    public String getCantidad() { return cantidad; }
-    public void setCantidad(String cantidad) { this.cantidad = cantidad; }
-    public String getPrecioUnitario() { return precioUnitario; }
-    public void setPrecioUnitario(String precioUnitario) { this.precioUnitario = precioUnitario; }
-    public String getDescuento() { return descuento; }
-    public void setDescuento(String descuento) { this.descuento = descuento; }
-    public String getSubTotal() { return subTotal; }
-    public void setSubTotal(String subTotal) { this.subTotal = subTotal; }
+    public BigDecimal getCantidad() { return cantidad; }
+    public void setCantidad(BigDecimal cantidad) { this.cantidad = cantidad; }
+    public BigDecimal getPrecioUnitario() { return precioUnitario; }
+    public void setPrecioUnitario(BigDecimal precioUnitario) { this.precioUnitario = precioUnitario; }
+    public BigDecimal getDescuento() { return descuento; }
+    public void setDescuento(BigDecimal descuento) { this.descuento = descuento; }
+    public BigDecimal getSubTotal() { return subTotal; }
+    public void setSubTotal(BigDecimal subTotal) { this.subTotal = subTotal; }
     public String getAlicuotaIva() { return alicuotaIva; }
     public void setAlicuotaIva(String alicuotaIva) { this.alicuotaIva = alicuotaIva; }
     public String getOrdenCompra() { return ordenCompra; }

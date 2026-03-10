@@ -1,6 +1,7 @@
 package com.desarrollos.entities;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "vencimientos")
@@ -15,7 +16,7 @@ public class Vencimiento {
     private DocumentoConvertido documento;
 
     private String fecha;
-    private String importe;
+    private BigDecimal importe;
 
     // Getters y Setters
     public Long getId() { return id; }
@@ -24,6 +25,6 @@ public class Vencimiento {
     public void setDocumento(DocumentoConvertido documento) { this.documento = documento; }
     public String getFecha() { return fecha; }
     public void setFecha(String fecha) { this.fecha = fecha; }
-    public String getImporte() { return importe; }
-    public void setImporte(String importe) { this.importe = importe; }
+    public BigDecimal getImporte() { return importe; }
+    public void setImporte(BigDecimal importe) { this.importe = importe; }
 }

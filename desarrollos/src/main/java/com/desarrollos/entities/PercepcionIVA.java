@@ -1,6 +1,7 @@
 package com.desarrollos.entities;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "percepciones_iva")
@@ -15,7 +16,7 @@ public class PercepcionIVA {
     private DocumentoConvertido documento;
 
     private String alicuota;
-    private String importe;
+    private BigDecimal importe;
 
     // Getters y Setters
     public Long getId() { return id; }
@@ -24,6 +25,6 @@ public class PercepcionIVA {
     public void setDocumento(DocumentoConvertido documento) { this.documento = documento; }
     public String getAlicuota() { return alicuota; }
     public void setAlicuota(String alicuota) { this.alicuota = alicuota; }
-    public String getImporte() { return importe; }
-    public void setImporte(String importe) { this.importe = importe; }
+    public BigDecimal getImporte() { return importe; }
+    public void setImporte(BigDecimal importe) { this.importe = importe; }
 }
