@@ -351,7 +351,7 @@ public abstract class CrudView<T> extends VerticalLayout {
         layout.add(btnV);
         com.vaadin.flow.component.Component extra = crearBotonAccionExtra(item);
         if (extra != null) layout.add(extra);
-        if (mostrarBotonEditar()) layout.add(btnE);
+        if (mostrarBotonEditar(item)) layout.add(btnE);
         layout.add(btnB);
         layout.setSpacing(false);
         layout.getStyle().set("gap", "4px");
@@ -408,7 +408,8 @@ public abstract class CrudView<T> extends VerticalLayout {
 
     // ── Hooks de visibilidad (pueden sobreescribirse) ─────────────────────────
     protected boolean mostrarBotonNuevo() { return true; }
-    protected boolean mostrarBotonEditar() { return true; }
+    protected boolean mostrarBotonEditar()        { return true; }
+    protected boolean mostrarBotonEditar(T item)  { return mostrarBotonEditar(); }
     protected String anchoColumnaAcciones() { return "130px"; }
     protected com.vaadin.flow.component.Component crearBotonAccionExtra(T item) { return null; }
 
