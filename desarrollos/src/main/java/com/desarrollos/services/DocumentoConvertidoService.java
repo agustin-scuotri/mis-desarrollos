@@ -129,7 +129,7 @@ public class DocumentoConvertidoService {
     private DocumentoConvertido mapearDesdeNodo(JsonNode json, Archivo archivo, String jsonOriginal) {
         DocumentoConvertido doc = new DocumentoConvertido();
         doc.setArchivo(archivo);
-        doc.setCuit(json.path("cuit").asText(null));
+        doc.setCuit(sanitizarCuit(json.path("cuit").asText(null)));
         doc.setRazonSocial(json.path("razonSocial").asText(null));
         doc.setSituacionIva(json.path("situacionIva").asText(null));
         doc.setDireccion(json.path("direccion").asText(null));
@@ -453,6 +453,26 @@ public class DocumentoConvertidoService {
         if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
         if (lower.endsWith(".webp")) return "image/webp";
         return "image/jpeg";
+    }
+
+    /**
+     * Sanitiza y valida el CUIT leído por la IA.
+     * Formatos válidos:
+     *   - Con guiones:   XX-XXXXXXXX-X  (2 dígitos, guión, 8 dígitos, guión, 1 dígito)
+     *   - Sin guiones:   11 dígitos consecutivos
+     * Cualquier otro carácter que no sea dígito o guión se elimina antes de validar.
+     * Si el resultado no cumple ningún formato, devuelve null.
+     */
+    private String sanitizarCuit(String raw) {
+        if (raw == null || raw.isBlank() || raw.equals("null")) return null;
+        if (raw.contains("-")) {
+            // Quitar todo lo que no sea dígito ni guión
+            String limpio = raw.replaceAll("[^0-9\\-]", "");
+            return limpio.matches("\\d{2}-\\d{8}-\\d{1}") ? limpio : null;
+        }
+        // Sin guiones: dejar solo dígitos
+        String digitos = raw.replaceAll("[^0-9]", "");
+        return digitos.length() == 11 ? digitos : null;
     }
 
     private String limpiarJson(String texto) {
