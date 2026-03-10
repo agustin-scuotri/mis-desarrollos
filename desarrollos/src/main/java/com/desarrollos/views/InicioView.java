@@ -1,14 +1,17 @@
 package com.desarrollos.views;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.desarrollos.entities.Archivo;
 import com.desarrollos.services.ArchivoService;
 import com.desarrollos.services.DocumentoConvertidoService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
@@ -127,20 +130,43 @@ public class InicioView extends VerticalLayout {
         cargarBarChart("7d");
 
 
-        Button btn7d   = crearBotonPeriodo("7 días");
-        Button btnMes  = crearBotonPeriodo("Mes");
-        Button btnAnio = crearBotonPeriodo("Año");
+        Button btn7d    = crearBotonPeriodo("7 días");
+        Button btnMes   = crearBotonPeriodo("Mes");
+        Button btnAnio  = crearBotonPeriodo("Año");
+        Button btnRango = crearBotonPeriodo("Rango");
         activarBoton(btn7d);
 
-        btn7d.addClickListener(e  -> { activarBoton(btn7d);  cargarBarChart("7d");   });
-        btnMes.addClickListener(e -> { activarBoton(btnMes); cargarBarChart("mes");  });
-        btnAnio.addClickListener(e -> { activarBoton(btnAnio); cargarBarChart("anio"); });
+        DatePicker dpDesde = new DatePicker();
+        dpDesde.setPlaceholder("Desde");
+        dpDesde.setWidth("130px");
+        DatePicker dpHasta = new DatePicker();
+        dpHasta.setPlaceholder("Hasta");
+        dpHasta.setWidth("130px");
+        Button btnAplicar = new Button("Aplicar");
+        btnAplicar.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
+        btnAplicar.getStyle().set("font-size", "0.8rem");
+        btnAplicar.addClickListener(ev -> {
+            LocalDate d = dpDesde.getValue(), h = dpHasta.getValue();
+            if (d != null && h != null && !d.isAfter(h)) cargarBarChartRango(d, h);
+        });
 
-        HorizontalLayout toggles = new HorizontalLayout(btn7d, btnMes, btnAnio);
+        HorizontalLayout rangoRow = new HorizontalLayout(dpDesde, dpHasta, btnAplicar);
+        rangoRow.setSpacing(false);
+        rangoRow.getStyle().set("gap", "8px").set("align-items", "center")
+                .set("margin-top", "10px").set("flex-wrap", "wrap");
+        rangoRow.setVisible(false);
+
+        btn7d.addClickListener(e   -> { activarBoton(btn7d);   rangoRow.setVisible(false); cargarBarChart("7d");   });
+        btnMes.addClickListener(e  -> { activarBoton(btnMes);  rangoRow.setVisible(false); cargarBarChart("mes");  });
+        btnAnio.addClickListener(e -> { activarBoton(btnAnio); rangoRow.setVisible(false); cargarBarChart("anio"); });
+        btnRango.addClickListener(e -> { activarBoton(btnRango); rangoRow.setVisible(true); });
+
+        HorizontalLayout toggles = new HorizontalLayout(btn7d, btnMes, btnAnio, btnRango);
         toggles.setSpacing(false);
         toggles.getStyle().set("gap", "6px").set("margin-bottom", "10px");
 
         Div barCard = crearCardChartConToggle("Actividad", toggles, barCanvas, "2", "250px", null);
+        barCard.addComponentAtIndex(1, rangoRow);
 
         chartsRow.add(donutCard, barCard);
         add(titulo, subtitulo, cards, chartsRow);
@@ -163,6 +189,14 @@ public class InicioView extends VerticalLayout {
                 datos     = documentoConvertidoService.conversionesPorDia();
                 etiquetas = documentoConvertidoService.etiquetasDias();
         }
+        String barData   = Arrays.stream(datos).mapToObj(String::valueOf).collect(Collectors.joining(",", "[", "]"));
+        String barLabels = "[\"" + String.join("\",\"", etiquetas) + "\"]";
+        barCanvas.getElement().executeJs(loaderScript(barScript(barLabels, barData)));
+    }
+
+    private void cargarBarChartRango(LocalDate desde, LocalDate hasta) {
+        long[]   datos     = documentoConvertidoService.conversionesPorRango(desde, hasta);
+        String[] etiquetas = documentoConvertidoService.etiquetasRango(desde, hasta);
         String barData   = Arrays.stream(datos).mapToObj(String::valueOf).collect(Collectors.joining(",", "[", "]"));
         String barLabels = "[\"" + String.join("\",\"", etiquetas) + "\"]";
         barCanvas.getElement().executeJs(loaderScript(barScript(barLabels, barData)));

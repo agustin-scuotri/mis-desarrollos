@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -368,6 +369,25 @@ public class DocumentoConvertidoService {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMM yy", new Locale("es", "AR"));
         String[] labels = new String[12];
         for (int i = 0; i < 12; i++) labels[i] = YearMonth.now().minusMonths(11 - i).format(fmt);
+        return labels;
+    }
+
+    public long[] conversionesPorRango(LocalDate desde, LocalDate hasta) {
+        LocalDateTime desdeTime = desde.atStartOfDay();
+        Map<LocalDate, Long> mapa = repository.findFechasDesde(desdeTime).stream()
+                .filter(f -> f != null && !f.toLocalDate().isAfter(hasta))
+                .collect(Collectors.groupingBy(LocalDateTime::toLocalDate, Collectors.counting()));
+        int dias = (int) ChronoUnit.DAYS.between(desde, hasta) + 1;
+        long[] datos = new long[dias];
+        for (int i = 0; i < dias; i++) datos[i] = mapa.getOrDefault(desde.plusDays(i), 0L);
+        return datos;
+    }
+
+    public String[] etiquetasRango(LocalDate desde, LocalDate hasta) {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM");
+        int dias = (int) ChronoUnit.DAYS.between(desde, hasta) + 1;
+        String[] labels = new String[dias];
+        for (int i = 0; i < dias; i++) labels[i] = desde.plusDays(i).format(fmt);
         return labels;
     }
 
