@@ -130,7 +130,8 @@ public class DocumentoConvertidoService {
     private DocumentoConvertido mapearDesdeNodo(JsonNode json, Archivo archivo, String jsonOriginal) {
         DocumentoConvertido doc = new DocumentoConvertido();
         doc.setArchivo(archivo);
-        doc.setCuit(sanitizarCuit(json.path("cuit").asText(null)));
+        String cuitSanitizado = sanitizarCuit(json.path("cuit").asText(null));
+        doc.setCuit(cuitSanitizado);
         doc.setRazonSocial(json.path("razonSocial").asText(null));
         doc.setSituacionIva(json.path("situacionIva").asText(null));
         doc.setDireccion(json.path("direccion").asText(null));
@@ -155,6 +156,9 @@ public class DocumentoConvertidoService {
         doc.setTotal(parsearImporte(json, "total"));
         // Limitar a 20 000 chars si el JSON es muy grande
         // Guardar el JSON formateado (indentado) para que se vea legible en el visor
+        if (json.isObject() && cuitSanitizado != null) {
+            ((com.fasterxml.jackson.databind.node.ObjectNode) json).put("cuit", cuitSanitizado);
+        }
         String jsonFormateado;
         try {
             jsonFormateado = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
