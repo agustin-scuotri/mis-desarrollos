@@ -146,9 +146,9 @@ public class DocumentoConvertidoService {
         doc.setLetra(json.path("letra").asText(null));
         doc.setCentroEmision(json.path("centroEmision").asText(null));
         doc.setNumeroComprobante(json.path("numeroComprobante").asText(null));
-        doc.setFechaEmision(json.path("fechaEmision").asText(null));
+        doc.setFechaEmision(parsearFecha(json.path("fechaEmision").asText(null)));
         doc.setCae(json.path("cae").asText(null));
-        doc.setFechaVencimientoCae(json.path("fechaVencimientoCae").asText(null));
+        doc.setFechaVencimientoCae(parsearFecha(json.path("fechaVencimientoCae").asText(null)));
         doc.setMoneda(json.path("moneda").asText(null));
         doc.setCotizacion(parsearImporte(json, "cotizacion"));
         doc.setOrdenCompra(json.path("ordenCompra").asText(null));
@@ -161,6 +161,8 @@ public class DocumentoConvertidoService {
             com.fasterxml.jackson.databind.node.ObjectNode root = (com.fasterxml.jackson.databind.node.ObjectNode) json;
             if (cuitSanitizado != null) root.put("cuit", cuitSanitizado);
             formatearImportesEnJson(root);
+            formatearFechaEnJson(root, "fechaEmision",        doc.getFechaEmision());
+            formatearFechaEnJson(root, "fechaVencimientoCae", doc.getFechaVencimientoCae());
         }
         String jsonFormateado;
         try {
@@ -272,7 +274,7 @@ public class DocumentoConvertidoService {
         if (estaVacio(doc.getCodigoArca()))        faltantes.add("Código ARCA");
         if (estaVacio(doc.getCentroEmision()))     faltantes.add("Centro de Emisión");
         if (estaVacio(doc.getNumeroComprobante())) faltantes.add("N° Comprobante");
-        if (estaVacio(doc.getFechaEmision()))      faltantes.add("Fecha de Emisión");
+        if (doc.getFechaEmision() == null)         faltantes.add("Fecha de Emisión");
         if (estaVacio(doc.getMoneda()))            faltantes.add("Moneda");
         if (doc.getTotal() == null)               faltantes.add("Total");
         return faltantes;
@@ -484,6 +486,31 @@ public class DocumentoConvertidoService {
         if (!n.isMissingNode() && !n.isNull() && n.isNumber()) {
             node.put(campo, NF_AR.format(n.decimalValue()));
         }
+    }
+
+    private static final DateTimeFormatter FMT_AR   = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final List<DateTimeFormatter> FORMATOS_FECHA = List.of(
+        DateTimeFormatter.ofPattern("dd/MM/yyyy"),
+        DateTimeFormatter.ofPattern("d/M/yyyy"),
+        DateTimeFormatter.ofPattern("dd/MM/yy"),
+        DateTimeFormatter.ofPattern("d/M/yy"),
+        DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+        DateTimeFormatter.ofPattern("dd-MM-yyyy"),
+        DateTimeFormatter.ofPattern("d-M-yyyy")
+    );
+
+    private LocalDate parsearFecha(String raw) {
+        if (raw == null || raw.isBlank() || raw.equals("null")) return null;
+        String s = raw.trim();
+        for (DateTimeFormatter fmt : FORMATOS_FECHA) {
+            try { return LocalDate.parse(s, fmt); } catch (Exception ignored) {}
+        }
+        return null;
+    }
+
+    private void formatearFechaEnJson(com.fasterxml.jackson.databind.node.ObjectNode node,
+                                      String campo, LocalDate fecha) {
+        if (fecha != null) node.put(campo, fecha.format(FMT_AR));
     }
 
     private String sanitizarCuit(String raw) {

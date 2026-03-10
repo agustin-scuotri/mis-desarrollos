@@ -4,6 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 import com.desarrollos.base.CrudView;
@@ -402,9 +404,9 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         if (estaVacio(doc.getLetra()))              notas.append("• No se encontró la letra del comprobante.\n");
         if (estaVacio(doc.getCentroEmision()))      notas.append("• No se encontró el centro de emisión.\n");
         if (estaVacio(doc.getNumeroComprobante()))  notas.append("• No se encontró el número de comprobante.\n");
-        if (estaVacio(doc.getFechaEmision()))       notas.append("• No se encontró la fecha de emisión.\n");
-        if (estaVacio(doc.getCae()))                notas.append("• No se encontró el CAE.\n");
-        if (estaVacio(doc.getFechaVencimientoCae()))notas.append("• No se encontró la fecha de vencimiento del CAE.\n");
+        if (doc.getFechaEmision() == null)           notas.append("• No se encontró la fecha de emisión.\n");
+        if (estaVacio(doc.getCae()))                 notas.append("• No se encontró el CAE.\n");
+        if (doc.getFechaVencimientoCae() == null)    notas.append("• No se encontró la fecha de vencimiento del CAE.\n");
         if (estaVacio(doc.getMoneda()))             notas.append("• No se encontró la moneda.\n");
         if (doc.getCotizacion() == null)             notas.append("• No se encontró la cotización.\n");
         if (estaVacio(doc.getOrdenCompra()))        notas.append("• No se encontró la orden de compra.\n");
@@ -423,6 +425,12 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
 
     private boolean estaVacio(String valor) {
         return valor == null || valor.isEmpty() || valor.equals("null");
+    }
+
+    private static final DateTimeFormatter FMT_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    private static String formatFecha(LocalDate fecha) {
+        return fecha == null ? "—" : fecha.format(FMT_FECHA);
     }
 
     private static String formatImporte(BigDecimal valor) {

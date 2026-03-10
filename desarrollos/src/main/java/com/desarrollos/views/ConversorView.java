@@ -328,7 +328,7 @@ public class ConversorView extends FormView {
 		if (estaVacio(doc.getMail()))                 notas.append("• Mail\n");
 		if (estaVacio(doc.getLetra()))                notas.append("• Letra del comprobante\n");
 		if (estaVacio(doc.getCae()))                  notas.append("• CAE\n");
-		if (estaVacio(doc.getFechaVencimientoCae()))  notas.append("• Fecha venc. CAE\n");
+		if (doc.getFechaVencimientoCae() == null)     notas.append("• Fecha venc. CAE\n");
 		if (doc.getCotizacion() == null)              notas.append("• Cotización\n");
 		if (estaVacio(doc.getOrdenCompra()))          notas.append("• Orden de compra\n");
 		if (doc.getProductosConceptos().isEmpty())    notas.append("• Productos/Conceptos\n");
@@ -577,7 +577,7 @@ public class ConversorView extends FormView {
 		if (estaVacio(doc.getCodigoArca()))        faltantes.add("Código ARCA");
 		if (estaVacio(doc.getCentroEmision()))     faltantes.add("Centro de Emisión (Punto de Venta)");
 		if (estaVacio(doc.getNumeroComprobante())) faltantes.add("N° Comprobante");
-		if (estaVacio(doc.getFechaEmision()))      faltantes.add("Fecha de Emisión");
+		if (doc.getFechaEmision() == null)         faltantes.add("Fecha de Emisión");
 		if (estaVacio(doc.getMoneda()))            faltantes.add("Moneda");
 		if (doc.getTotal() == null)               faltantes.add("Total");
 		return faltantes;

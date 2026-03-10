@@ -2,6 +2,7 @@ package com.desarrollos.entities;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,9 +36,9 @@ public class DocumentoConvertido {
     private String letra;
     private String centroEmision;
     private String numeroComprobante;
-    private String fechaEmision;
+    private LocalDate fechaEmision;
     private String cae;
-    private String fechaVencimientoCae;
+    private LocalDate fechaVencimientoCae;
 
     // Moneda y cotización
     private String moneda;
@@ -126,12 +127,12 @@ public class DocumentoConvertido {
     public void setCentroEmision(String centroEmision) { this.centroEmision = centroEmision; }
     public String getNumeroComprobante() { return numeroComprobante; }
     public void setNumeroComprobante(String numeroComprobante) { this.numeroComprobante = numeroComprobante; }
-    public String getFechaEmision() { return fechaEmision; }
-    public void setFechaEmision(String fechaEmision) { this.fechaEmision = fechaEmision; }
+    public LocalDate getFechaEmision() { return fechaEmision; }
+    public void setFechaEmision(LocalDate fechaEmision) { this.fechaEmision = fechaEmision; }
     public String getCae() { return cae; }
     public void setCae(String cae) { this.cae = cae; }
-    public String getFechaVencimientoCae() { return fechaVencimientoCae; }
-    public void setFechaVencimientoCae(String fechaVencimientoCae) { this.fechaVencimientoCae = fechaVencimientoCae; }
+    public LocalDate getFechaVencimientoCae() { return fechaVencimientoCae; }
+    public void setFechaVencimientoCae(LocalDate fechaVencimientoCae) { this.fechaVencimientoCae = fechaVencimientoCae; }
     public String getMoneda() { return moneda; }
     public void setMoneda(String moneda) { this.moneda = moneda; }
     public BigDecimal getCotizacion() { return cotizacion; }
