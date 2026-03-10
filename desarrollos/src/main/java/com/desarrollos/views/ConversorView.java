@@ -132,6 +132,27 @@ public class ConversorView extends FormView {
 		botones.setSpacing(true);
 		botones.setPadding(false);
 
+		// ── Nota: calidad del archivo ─────────────────────────────────────────
+		Icon iconoInfo = VaadinIcon.INFO_CIRCLE_O.create();
+		iconoInfo.setSize("16px");
+		iconoInfo.getStyle().set("flex-shrink", "0").set("margin-top", "2px").set("color", "#1d4ed8");
+		Span textoNota = new Span(
+				"La calidad del archivo es clave para una conversión correcta. " +
+				"Escaneá o fotografiá el documento con buena iluminación, sin bordes cortados ni texto borroso. " +
+				"Si algún dato queda vacío o incorrecto (como el CUIT), probablemente el archivo " +
+				"no era legible en esa zona — revisá y corregí manualmente desde el ABM.");
+		textoNota.getStyle().set("font-size", "0.82rem").set("line-height", "1.4").set("color", "#1e3a5f");
+		HorizontalLayout notaCalidad = new HorizontalLayout(iconoInfo, textoNota);
+		notaCalidad.setAlignItems(FlexComponent.Alignment.START);
+		notaCalidad.setSpacing(false);
+		notaCalidad.getStyle()
+				.set("gap", "8px")
+				.set("background", "#eff6ff")
+				.set("border", "1px solid #bfdbfe")
+				.set("border-radius", "6px")
+				.set("padding", "10px 14px")
+				.set("margin-top", "12px");
+
 		// ── Panel progreso ────────────────────────────────────────────────────
 		progressBar.setIndeterminate(true);
 		progressBar.getStyle().set("width", "400px")
@@ -153,7 +174,7 @@ public class ConversorView extends FormView {
 		panelResultado.setVisible(false);
 		panelResultado.getStyle().set("margin-top", "20px");
 
-		contenidoPrincipal.add(archivoCombo, mensajeErrorArchivo, botones, panelProgreso, panelResultado);
+		contenidoPrincipal.add(archivoCombo, mensajeErrorArchivo, botones, notaCalidad, panelProgreso, panelResultado);
 		barraBotones.setVisible(false);
 	}
 
