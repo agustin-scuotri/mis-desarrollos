@@ -1,6 +1,7 @@
 package com.desarrollos.services;
 
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -156,8 +157,10 @@ public class DocumentoConvertidoService {
         doc.setTotal(parsearImporte(json, "total"));
         // Limitar a 20 000 chars si el JSON es muy grande
         // Guardar el JSON formateado (indentado) para que se vea legible en el visor
-        if (json.isObject() && cuitSanitizado != null) {
-            ((com.fasterxml.jackson.databind.node.ObjectNode) json).put("cuit", cuitSanitizado);
+        if (json.isObject()) {
+            com.fasterxml.jackson.databind.node.ObjectNode root = (com.fasterxml.jackson.databind.node.ObjectNode) json;
+            if (cuitSanitizado != null) root.put("cuit", cuitSanitizado);
+            formatearImportesEnJson(root);
         }
         String jsonFormateado;
         try {
@@ -449,6 +452,40 @@ public class DocumentoConvertidoService {
      * Cualquier otro carácter que no sea dígito o guión se elimina antes de validar.
      * Si el resultado no cumple ningún formato, devuelve null.
      */
+    private static final NumberFormat NF_AR = NumberFormat.getNumberInstance(new Locale("es", "AR"));
+
+    private void formatearImportesEnJson(com.fasterxml.jackson.databind.node.ObjectNode root) {
+        for (String campo : new String[]{"cotizacion", "subTotalNoGravado", "impuestoInterno", "total"}) {
+            formatNodoNumerico(root, campo);
+        }
+        for (String arr : new String[]{"productosConceptos"}) {
+            formatArrayImportes(root, arr, new String[]{"cantidad", "precioUnitario", "descuento", "subTotal"});
+        }
+        formatArrayImportes(root, "netosGravados", new String[]{"importeNetoGravado", "iva"});
+        for (String arr : new String[]{"percepcionesIIBB", "percepcionesIVA", "tasas", "descuentosRecargos", "vencimientos"}) {
+            formatArrayImportes(root, arr, new String[]{"importe"});
+        }
+    }
+
+    private void formatArrayImportes(com.fasterxml.jackson.databind.node.ObjectNode root, String arrayField, String[] campos) {
+        com.fasterxml.jackson.databind.JsonNode arr = root.path(arrayField);
+        if (arr.isArray()) {
+            for (com.fasterxml.jackson.databind.JsonNode item : arr) {
+                if (item.isObject()) {
+                    com.fasterxml.jackson.databind.node.ObjectNode obj = (com.fasterxml.jackson.databind.node.ObjectNode) item;
+                    for (String campo : campos) formatNodoNumerico(obj, campo);
+                }
+            }
+        }
+    }
+
+    private void formatNodoNumerico(com.fasterxml.jackson.databind.node.ObjectNode node, String campo) {
+        com.fasterxml.jackson.databind.JsonNode n = node.path(campo);
+        if (!n.isMissingNode() && !n.isNull() && n.isNumber()) {
+            node.put(campo, NF_AR.format(n.decimalValue()));
+        }
+    }
+
     private String sanitizarCuit(String raw) {
         if (raw == null || raw.isBlank() || raw.equals("null")) return null;
         String digitos = raw.replaceAll("[^0-9]", "");
