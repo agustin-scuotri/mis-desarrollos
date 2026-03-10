@@ -12,7 +12,10 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.RouterLink;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class MainLayout extends AppLayout {
 
@@ -171,6 +174,8 @@ public class MainLayout extends AppLayout {
 		buscadorMenu.setPrefixComponent(VaadinIcon.SEARCH.create());
 		buscadorMenu.setWidth("90%");
 		buscadorMenu.getStyle().set("margin", "15px auto").set("display", "block");
+		buscadorMenu.setValueChangeMode(ValueChangeMode.EAGER);
+		buscadorMenu.setClearButtonVisible(true);
 
 		VerticalLayout opcionesContainer = new VerticalLayout();
 		opcionesContainer.setPadding(false);
@@ -180,6 +185,17 @@ public class MainLayout extends AppLayout {
 		RouterLink linkArchivos  = crearItemMenu(getTranslation("app.archivos"),   VaadinIcon.FILE_PROCESS, AbmArchivosView.class);
 		RouterLink linkConversor = crearItemMenu(getTranslation("app.conversor"),  VaadinIcon.EXCHANGE,     ConversorView.class);
 		RouterLink linkDocumentos= crearItemMenu("Lista de JSONs",                 VaadinIcon.FILE_TABLE,   AbmDocumentosConvertidosView.class);
+
+		Map<RouterLink, String> itemsMenu = new LinkedHashMap<>();
+		itemsMenu.put(linkInicio,     getTranslation("app.inicio").toLowerCase());
+		itemsMenu.put(linkArchivos,   getTranslation("app.archivos").toLowerCase());
+		itemsMenu.put(linkConversor,  getTranslation("app.conversor").toLowerCase());
+		itemsMenu.put(linkDocumentos, "lista de jsons");
+
+		buscadorMenu.addValueChangeListener(e -> {
+			String filtro = e.getValue().trim().toLowerCase();
+			itemsMenu.forEach((link, label) -> link.setVisible(filtro.isEmpty() || label.contains(filtro)));
+		});
 
 		opcionesContainer.add(linkInicio, linkArchivos, linkConversor, linkDocumentos);
 
