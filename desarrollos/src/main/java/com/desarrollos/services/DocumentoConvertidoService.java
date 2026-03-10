@@ -447,14 +447,9 @@ public class DocumentoConvertidoService {
      */
     private String sanitizarCuit(String raw) {
         if (raw == null || raw.isBlank() || raw.equals("null")) return null;
-        if (raw.contains("-")) {
-            // Quitar todo lo que no sea dígito ni guión
-            String limpio = raw.replaceAll("[^0-9\\-]", "");
-            return limpio.matches("\\d{2}-\\d{8}-\\d{1}") ? limpio : null;
-        }
-        // Sin guiones: dejar solo dígitos
         String digitos = raw.replaceAll("[^0-9]", "");
-        return digitos.length() == 11 ? digitos : null;
+        if (digitos.length() != 11) return null;
+        return digitos.substring(0, 2) + "-" + digitos.substring(2, 10) + "-" + digitos.charAt(10);
     }
 
     private String limpiarJson(String texto) {
