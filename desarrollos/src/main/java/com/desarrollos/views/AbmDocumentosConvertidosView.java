@@ -272,7 +272,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
             t.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
             Grid<Tasa> g = new Grid<>(Tasa.class, false);
             g.addColumn(Tasa::getDescripcion).setHeader("Descripción").setFlexGrow(1);
-            g.addColumn(t -> formatImporte(t.getImporte())).setHeader("Importe").setWidth("130px").setFlexGrow(0);
+            g.addColumn(tasa -> formatImporte(tasa.getImporte())).setHeader("Importe").setWidth("130px").setFlexGrow(0);
             g.setItems(doc.getTasas());
             g.setAllRowsVisible(true);
             g.getStyle().set("margin-top", "4px");
