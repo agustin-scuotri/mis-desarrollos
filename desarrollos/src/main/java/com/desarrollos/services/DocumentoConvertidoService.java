@@ -138,7 +138,7 @@ public class DocumentoConvertidoService {
         doc.setSituacionIva(json.path("situacionIva").asText(null));
         doc.setDireccion(json.path("direccion").asText(null));
         doc.setCiudad(json.path("ciudad").asText(null));
-        doc.setCodigoPostal(json.path("codigoPostal").asText(null));
+        doc.setCodigoPostal(sanitizarCodigoPostal(json.path("codigoPostal").asText(null)));
         doc.setProvincia(json.path("provincia").asText(null));
         doc.setPais(json.path("pais").asText(null));
         doc.setTelefono(json.path("telefono").asText(null));
@@ -534,6 +534,12 @@ public class DocumentoConvertidoService {
     private void formatearFechaEnJson(com.fasterxml.jackson.databind.node.ObjectNode node,
                                       String campo, LocalDate fecha) {
         if (fecha != null) node.put(campo, fecha.format(FMT_AR));
+    }
+
+    private String sanitizarCodigoPostal(String raw) {
+        if (raw == null || raw.isBlank() || raw.equals("null")) return null;
+        String soloDigitos = raw.replaceAll("[^0-9]", "");
+        return soloDigitos.isEmpty() ? null : soloDigitos;
     }
 
     private String sanitizarCuit(String raw) {
