@@ -152,7 +152,8 @@ public class DocumentoConvertidoService {
         doc.setFechaVencimientoCae(parsearFecha(json.path("fechaVencimientoCae").asText(null)));
         doc.setMoneda(json.path("moneda").asText(null));
         doc.setCotizacion(parsearImporte(json, "cotizacion"));
-        doc.setOrdenCompra(json.path("ordenCompra").asText(null));
+        String ocSanitizada = sanitizarOrdenCompra(json.path("ordenCompra").asText(null));
+        doc.setOrdenCompra(ocSanitizada);
         doc.setSubTotalNoGravado(parsearImporte(json, "subTotalNoGravado"));
         doc.setImpuestoInterno(parsearImporte(json, "impuestoInterno"));
         doc.setTotal(parsearImporte(json, "total"));
@@ -164,6 +165,8 @@ public class DocumentoConvertidoService {
             String cpSanitizado = doc.getCodigoPostal();
             if (cpSanitizado != null) root.put("codigoPostal", cpSanitizado);
             else root.putNull("codigoPostal");
+            if (ocSanitizada != null) root.put("ordenCompra", ocSanitizada);
+            else root.putNull("ordenCompra");
             formatearImportesEnJson(root);
             formatearFechaEnJson(root, "fechaEmision",        doc.getFechaEmision());
             formatearFechaEnJson(root, "fechaVencimientoCae", doc.getFechaVencimientoCae());
@@ -188,7 +191,7 @@ public class DocumentoConvertidoService {
                 producto.setDescuento(parsearImporte(itemNode, "descuento"));
                 producto.setSubTotal(parsearImporte(itemNode, "subTotal"));
                 producto.setAlicuotaIva(normalizarAlicuota(itemNode.path("alicuotaIva").asText(null)));
-                producto.setOrdenCompra(itemNode.path("ordenCompra").asText(null));
+                producto.setOrdenCompra(sanitizarOrdenCompra(itemNode.path("ordenCompra").asText(null)));
                 producto.setRemito(itemNode.path("remito").asText(null));
                 producto.setNumeroDespacho(itemNode.path("numeroDespacho").asText(null));
                 producto.setFechaDespacho(itemNode.path("fechaDespacho").asText(null));
@@ -537,6 +540,12 @@ public class DocumentoConvertidoService {
     private void formatearFechaEnJson(com.fasterxml.jackson.databind.node.ObjectNode node,
                                       String campo, LocalDate fecha) {
         if (fecha != null) node.put(campo, fecha.format(FMT_AR));
+    }
+
+    private String sanitizarOrdenCompra(String raw) {
+        if (raw == null || raw.isBlank() || raw.equals("null")) return null;
+        String limpio = raw.replaceAll("\\.", "").trim();
+        return limpio.isEmpty() ? null : limpio;
     }
 
     private String sanitizarCodigoPostal(String raw) {
