@@ -221,6 +221,9 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
             g.addColumn(ProductoConcepto::getAlicuotaIva).setHeader("IVA").setWidth("75px").setFlexGrow(0);
             g.addColumn(ProductoConcepto::getOrdenCompra).setHeader("OC").setWidth("90px").setFlexGrow(0);
             g.addColumn(ProductoConcepto::getRemito).setHeader("Remito").setWidth("130px").setFlexGrow(0);
+            g.addColumn(ProductoConcepto::getNumeroDespacho).setHeader("Nro. Despacho").setWidth("170px").setFlexGrow(0);
+            g.addColumn(ProductoConcepto::getFechaDespacho).setHeader("Fecha Despacho").setWidth("130px").setFlexGrow(0);
+            g.addColumn(ProductoConcepto::getRegistroOficializacion).setHeader("Reg. Ofic.").setWidth("100px").setFlexGrow(0);
             g.setItems(doc.getProductosConceptos());
             g.setAllRowsVisible(true);
             g.getStyle().set("margin-top", "4px");

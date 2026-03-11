@@ -187,6 +187,9 @@ public class DocumentoConvertidoService {
                 producto.setAlicuotaIva(normalizarAlicuota(itemNode.path("alicuotaIva").asText(null)));
                 producto.setOrdenCompra(itemNode.path("ordenCompra").asText(null));
                 producto.setRemito(itemNode.path("remito").asText(null));
+                producto.setNumeroDespacho(itemNode.path("numeroDespacho").asText(null));
+                producto.setFechaDespacho(itemNode.path("fechaDespacho").asText(null));
+                producto.setRegistroOficializacion(itemNode.path("registroOficializacion").asText(null));
                 doc.getProductosConceptos().add(producto);
             }
         }

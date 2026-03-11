@@ -27,6 +27,9 @@ public class ProductoConcepto {
     private String alicuotaIva;
     private String ordenCompra;
     private String remito;
+    private String numeroDespacho;
+    private String fechaDespacho;
+    private String registroOficializacion;
 
     // Getters y Setters
     public Long getId() { return id; }
@@ -51,4 +54,10 @@ public class ProductoConcepto {
     public void setOrdenCompra(String ordenCompra) { this.ordenCompra = ordenCompra; }
     public String getRemito() { return remito; }
     public void setRemito(String remito) { this.remito = remito; }
+    public String getNumeroDespacho() { return numeroDespacho; }
+    public void setNumeroDespacho(String numeroDespacho) { this.numeroDespacho = numeroDespacho; }
+    public String getFechaDespacho() { return fechaDespacho; }
+    public void setFechaDespacho(String fechaDespacho) { this.fechaDespacho = fechaDespacho; }
+    public String getRegistroOficializacion() { return registroOficializacion; }
+    public void setRegistroOficializacion(String registroOficializacion) { this.registroOficializacion = registroOficializacion; }
 }
