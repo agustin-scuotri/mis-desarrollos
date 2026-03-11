@@ -161,6 +161,9 @@ public class DocumentoConvertidoService {
         if (json.isObject()) {
             com.fasterxml.jackson.databind.node.ObjectNode root = (com.fasterxml.jackson.databind.node.ObjectNode) json;
             if (cuitSanitizado != null) root.put("cuit", cuitSanitizado);
+            String cpSanitizado = doc.getCodigoPostal();
+            if (cpSanitizado != null) root.put("codigoPostal", cpSanitizado);
+            else root.putNull("codigoPostal");
             formatearImportesEnJson(root);
             formatearFechaEnJson(root, "fechaEmision",        doc.getFechaEmision());
             formatearFechaEnJson(root, "fechaVencimientoCae", doc.getFechaVencimientoCae());
