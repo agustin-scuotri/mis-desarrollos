@@ -241,37 +241,24 @@ public abstract class CrudView<T> extends VerticalLayout {
                     "  this.value = this.value.replace(/[^0-9]/g, '');" +
                     "});");
             filtro.getElement().setAttribute("inputmode", "numeric");
+            filtro.addValueChangeListener(e -> ejecutarFiltro(cabecera, e.getValue()));
         } else if (cabecera.toLowerCase().contains("cuit")) {
             filtro.setMaxLength(13);
             filtro.getElement().setAttribute("inputmode", "numeric");
-            filtro.getElement().executeJs(
-                    "this.inputElement.addEventListener('keydown', function(e) {" +
-                    "  var pos = this.selectionStart;" +
-                    "  if (e.key === 'Backspace' && pos > 0 && this.value[pos - 1] === '-' && this.selectionStart === this.selectionEnd) {" +
-                    "    e.preventDefault();" +
-                    "    this.value = this.value.substring(0, pos - 1) + this.value.substring(pos);" +
-                    "    var digits = this.value.replace(/[^0-9]/g, '').substring(0, 11);" +
-                    "    var result = '';" +
-                    "    if (digits.length > 0) result = digits.substring(0, Math.min(2, digits.length));" +
-                    "    if (digits.length > 2) result += '-' + digits.substring(2, Math.min(10, digits.length));" +
-                    "    if (digits.length > 10) result += '-' + digits.substring(10, 11);" +
-                    "    this.value = result;" +
-                    "    var newPos = pos - 2;" +
-                    "    this.setSelectionRange(newPos, newPos);" +
-                    "    this.dispatchEvent(new Event('input', {bubbles: true}));" +
-                    "  }" +
-                    "});" +
-                    "this.inputElement.addEventListener('input', function() {" +
-                    "  var digits = this.value.replace(/[^0-9]/g, '').substring(0, 11);" +
-                    "  var result = '';" +
-                    "  if (digits.length > 0) result = digits.substring(0, Math.min(2, digits.length));" +
-                    "  if (digits.length > 2) result += '-' + digits.substring(2, Math.min(10, digits.length));" +
-                    "  if (digits.length > 10) result += '-' + digits.substring(10, 11);" +
-                    "  this.value = result;" +
-                    "});");
+            filtro.addValueChangeListener(e -> {
+                String raw = e.getValue() != null ? e.getValue() : "";
+                String digits = raw.replaceAll("[^0-9]", "");
+                if (digits.length() > 11) digits = digits.substring(0, 11);
+                String formatted = formatearCuit(digits);
+                if (!formatted.equals(raw)) {
+                    filtro.setValue(formatted);
+                } else {
+                    ejecutarFiltro(cabecera, formatted);
+                }
+            });
+        } else {
+            filtro.addValueChangeListener(e -> ejecutarFiltro(cabecera, e.getValue()));
         }
-
-        filtro.addValueChangeListener(e -> ejecutarFiltro(cabecera, e.getValue()));
 
         VerticalLayout layoutCabecera = new VerticalLayout(crearTituloCabecera(cabecera), filtro);
         layoutCabecera.setAlignItems(Alignment.CENTER);
@@ -440,6 +427,15 @@ public abstract class CrudView<T> extends VerticalLayout {
     protected boolean mostrarBotonEditar(T item)  { return mostrarBotonEditar(); }
     protected String anchoColumnaAcciones() { return "130px"; }
     protected com.vaadin.flow.component.Component crearBotonAccionExtra(T item) { return null; }
+
+    // ── Formato CUIT XX-XXXXXXXX-X ────────────────────────────────────────────
+    private static String formatearCuit(String soloDigitos) {
+        if (soloDigitos.isEmpty()) return "";
+        if (soloDigitos.length() <= 2) return soloDigitos;
+        if (soloDigitos.length() <= 10)
+            return soloDigitos.substring(0, 2) + "-" + soloDigitos.substring(2);
+        return soloDigitos.substring(0, 2) + "-" + soloDigitos.substring(2, 10) + "-" + soloDigitos.substring(10, 11);
+    }
 
     // ── Métodos abstractos ────────────────────────────────────────────────────
     protected abstract void configurarColumnasEspecificas();
