@@ -241,6 +241,34 @@ public abstract class CrudView<T> extends VerticalLayout {
                     "  this.value = this.value.replace(/[^0-9]/g, '');" +
                     "});");
             filtro.getElement().setAttribute("inputmode", "numeric");
+        } else if (cabecera.toLowerCase().contains("cuit")) {
+            filtro.setMaxLength(13);
+            filtro.getElement().setAttribute("inputmode", "numeric");
+            filtro.getElement().executeJs(
+                    "this.inputElement.addEventListener('keydown', function(e) {" +
+                    "  var pos = this.selectionStart;" +
+                    "  if (e.key === 'Backspace' && pos > 0 && this.value[pos - 1] === '-' && this.selectionStart === this.selectionEnd) {" +
+                    "    e.preventDefault();" +
+                    "    this.value = this.value.substring(0, pos - 1) + this.value.substring(pos);" +
+                    "    var digits = this.value.replace(/[^0-9]/g, '').substring(0, 11);" +
+                    "    var result = '';" +
+                    "    if (digits.length > 0) result = digits.substring(0, Math.min(2, digits.length));" +
+                    "    if (digits.length > 2) result += '-' + digits.substring(2, Math.min(10, digits.length));" +
+                    "    if (digits.length > 10) result += '-' + digits.substring(10, 11);" +
+                    "    this.value = result;" +
+                    "    var newPos = pos - 2;" +
+                    "    this.setSelectionRange(newPos, newPos);" +
+                    "    this.dispatchEvent(new Event('input', {bubbles: true}));" +
+                    "  }" +
+                    "});" +
+                    "this.inputElement.addEventListener('input', function() {" +
+                    "  var digits = this.value.replace(/[^0-9]/g, '').substring(0, 11);" +
+                    "  var result = '';" +
+                    "  if (digits.length > 0) result = digits.substring(0, Math.min(2, digits.length));" +
+                    "  if (digits.length > 2) result += '-' + digits.substring(2, Math.min(10, digits.length));" +
+                    "  if (digits.length > 10) result += '-' + digits.substring(10, 11);" +
+                    "  this.value = result;" +
+                    "});");
         }
 
         filtro.addValueChangeListener(e -> ejecutarFiltro(cabecera, e.getValue()));
