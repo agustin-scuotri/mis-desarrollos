@@ -144,45 +144,161 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
 
         Dialog dialog = new Dialog();
         dialog.setWidth("1200px");
-        dialog.setHeight("88vh");
+        dialog.setHeight("92vh");
         dialog.setResizable(true);
         dialog.setHeaderTitle("Factura · " + nombreDoc + nroComp);
 
-        // ── Contenedor principal scrolleable ──────────────────────────────────
         VerticalLayout contenido = new VerticalLayout();
         contenido.setPadding(false);
-        contenido.setSpacing(true);
+        contenido.setSpacing(false);
         contenido.setWidthFull();
-        contenido.getStyle().set("overflow-y", "auto").set("padding-right", "4px");
+        contenido.getStyle().set("overflow-y", "auto").set("padding-right", "4px").set("gap", "0");
 
-        // ── Datos clave de la factura ─────────────────────────────────────────
-        HorizontalLayout panelDatos = new HorizontalLayout();
-        panelDatos.setWidthFull();
-        panelDatos.setSpacing(false);
-        panelDatos.getStyle()
-                .set("background-color", "#f0f9ff")
-                .set("border", "1px solid #bae6fd")
-                .set("border-radius", "10px")
-                .set("padding", "14px 18px")
-                .set("display", "flex")
-                .set("flex-direction", "row")
-                .set("align-items", "flex-start")
-                .set("gap", "40px");
+        // ── EMISOR ────────────────────────────────────────────────────────────
+        contenido.add(crearSeccion("Datos del Emisor", "#0369a1"));
+        contenido.add(crearPanelCampos(
+            crearCampo("Razón Social",   txt(doc.getRazonSocial())),
+            crearCampo("CUIT",           txt(doc.getCuit())),
+            crearCampo("Situación IVA",  txt(doc.getSituacionIva())),
+            crearCampo("Dirección",      txt(doc.getDireccion())),
+            crearCampo("Ciudad",         txt(doc.getCiudad())),
+            crearCampo("Cód. Postal",    txt(doc.getCodigoPostal())),
+            crearCampo("Provincia",      txt(doc.getProvincia())),
+            crearCampo("País",           txt(doc.getPais())),
+            crearCampo("Teléfono",       txt(doc.getTelefono())),
+            crearCampo("Mail",           txt(doc.getMail()))
+        ));
 
-        panelDatos.add(
-            crearCampoInfo("CUIT del Emisor",     estaVacio(doc.getCuit())              ? "—" : doc.getCuit()),
-            crearCampoInfo("N° Comprobante",       estaVacio(doc.getNumeroComprobante()) ? "—" : doc.getNumeroComprobante()),
-            crearCampoInfo("Centro de Emisión",    estaVacio(doc.getCentroEmision())     ? "—" : doc.getCentroEmision()),
-            crearCampoInfo("Total",                doc.getTotal() == null               ? "—" : formatImporte(doc.getTotal()))
-        );
-        contenido.add(panelDatos);
+        // ── COMPROBANTE ───────────────────────────────────────────────────────
+        contenido.add(crearSeccion("Datos del Comprobante", "#065f46"));
+        contenido.add(crearPanelCampos(
+            crearCampo("Cód. ARCA",         txt(doc.getCodigoArca())),
+            crearCampo("Letra",             txt(doc.getLetra())),
+            crearCampo("Centro de Emisión", txt(doc.getCentroEmision())),
+            crearCampo("N° Comprobante",    txt(doc.getNumeroComprobante())),
+            crearCampo("Fecha Emisión",     formatFecha(doc.getFechaEmision())),
+            crearCampo("CAE",               txt(doc.getCae())),
+            crearCampo("Venc. CAE",         formatFecha(doc.getFechaVencimientoCae())),
+            crearCampo("Moneda",            txt(doc.getMoneda())),
+            crearCampo("Cotización",        doc.getCotizacion() == null ? "—" : formatImporte(doc.getCotizacion())),
+            crearCampo("Orden de Compra",   txt(doc.getOrdenCompra()))
+        ));
 
-        // ── JSON viewer (colapsado por defecto) ───────────────────────────────
-        H3 tituloJson = new H3("Resultado JSON");
-        tituloJson.getStyle()
-                .set("color", "#1e293b").set("margin", "0").set("font-weight", "700")
-                .set("font-size", "1rem").set("letter-spacing", "-0.2px");
+        // ── PRODUCTOS / CONCEPTOS ─────────────────────────────────────────────
+        if (!doc.getProductosConceptos().isEmpty()) {
+            contenido.add(crearSeccion("Productos / Conceptos", "#92400e"));
+            Grid<ProductoConcepto> g = new Grid<>(ProductoConcepto.class, false);
+            g.addColumn(ProductoConcepto::getSku).setHeader("SKU").setWidth("130px").setFlexGrow(0);
+            g.addColumn(ProductoConcepto::getDescripcion).setHeader("Descripción").setFlexGrow(1);
+            g.addColumn(p -> formatImporte(p.getCantidad())).setHeader("Cant.").setWidth("70px").setFlexGrow(0);
+            g.addColumn(p -> formatImporte(p.getPrecioUnitario())).setHeader("P. Unit.").setWidth("95px").setFlexGrow(0);
+            g.addColumn(p -> formatImporte(p.getDescuento())).setHeader("Desc.").setWidth("80px").setFlexGrow(0);
+            g.addColumn(p -> formatImporte(p.getSubTotal())).setHeader("Subtotal").setWidth("95px").setFlexGrow(0);
+            g.addColumn(ProductoConcepto::getAlicuotaIva).setHeader("IVA").setWidth("75px").setFlexGrow(0);
+            g.addColumn(ProductoConcepto::getOrdenCompra).setHeader("OC").setWidth("90px").setFlexGrow(0);
+            g.addColumn(ProductoConcepto::getRemito).setHeader("Remito").setWidth("130px").setFlexGrow(0);
+            g.addColumn(ProductoConcepto::getNumeroDespacho).setHeader("Nro. Despacho").setWidth("170px").setFlexGrow(0);
+            g.addColumn(ProductoConcepto::getFechaDespacho).setHeader("Fecha Despacho").setWidth("130px").setFlexGrow(0);
+            g.addColumn(ProductoConcepto::getRegistroOficializacion).setHeader("Reg. Ofic.").setWidth("100px").setFlexGrow(0);
+            g.setItems(doc.getProductosConceptos());
+            g.setAllRowsVisible(true);
+            g.getStyle().set("margin-top", "4px");
+            contenido.add(g);
+        }
 
+        // ── NETOS GRAVADOS E IVA ──────────────────────────────────────────────
+        if (!doc.getNetosGravados().isEmpty()) {
+            contenido.add(crearSeccion("Netos Gravados e IVA", "#5b21b6"));
+            Grid<NetoGravado> g = new Grid<>(NetoGravado.class, false);
+            g.addColumn(NetoGravado::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
+            g.addColumn(n -> formatImporte(n.getImporteNetoGravado())).setHeader("Importe Neto Gravado").setFlexGrow(1);
+            g.addColumn(n -> formatImporte(n.getIva())).setHeader("IVA").setWidth("130px").setFlexGrow(0);
+            g.setItems(doc.getNetosGravados());
+            g.setAllRowsVisible(true);
+            g.getStyle().set("margin-top", "4px");
+            contenido.add(g);
+        }
+
+        // ── PERCEPCIONES IIBB ─────────────────────────────────────────────────
+        if (!doc.getPercepcionesIIBB().isEmpty()) {
+            contenido.add(crearSeccion("Percepciones IIBB", "#9f1239"));
+            Grid<PercepcionIIBB> g = new Grid<>(PercepcionIIBB.class, false);
+            g.addColumn(PercepcionIIBB::getProvincia).setHeader("Provincia").setFlexGrow(1);
+            g.addColumn(PercepcionIIBB::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
+            g.addColumn(p -> formatImporte(p.getImporte())).setHeader("Importe").setWidth("130px").setFlexGrow(0);
+            g.setItems(doc.getPercepcionesIIBB());
+            g.setAllRowsVisible(true);
+            g.getStyle().set("margin-top", "4px");
+            contenido.add(g);
+        }
+
+        // ── PERCEPCIONES IVA ──────────────────────────────────────────────────
+        if (!doc.getPercepcionesIVA().isEmpty()) {
+            contenido.add(crearSeccion("Percepciones IVA", "#9f1239"));
+            Grid<PercepcionIVA> g = new Grid<>(PercepcionIVA.class, false);
+            g.addColumn(PercepcionIVA::getAlicuota).setHeader("Alícuota").setWidth("150px").setFlexGrow(0);
+            g.addColumn(p -> formatImporte(p.getImporte())).setHeader("Importe").setFlexGrow(1);
+            g.setItems(doc.getPercepcionesIVA());
+            g.setAllRowsVisible(true);
+            g.getStyle().set("margin-top", "4px");
+            contenido.add(g);
+        }
+
+        // ── TASAS ─────────────────────────────────────────────────────────────
+        if (!doc.getTasas().isEmpty()) {
+            contenido.add(crearSeccion("Tasas", "#065f46"));
+            Grid<Tasa> g = new Grid<>(Tasa.class, false);
+            g.addColumn(Tasa::getDescripcion).setHeader("Descripción").setFlexGrow(1);
+            g.addColumn(tasa -> formatImporte(tasa.getImporte())).setHeader("Importe").setWidth("130px").setFlexGrow(0);
+            g.setItems(doc.getTasas());
+            g.setAllRowsVisible(true);
+            g.getStyle().set("margin-top", "4px");
+            contenido.add(g);
+        }
+
+        // ── DESCUENTOS / RECARGOS ─────────────────────────────────────────────
+        if (!doc.getDescuentosRecargos().isEmpty()) {
+            contenido.add(crearSeccion("Descuentos / Recargos", "#b45309"));
+            Grid<DescuentoRecargo> g = new Grid<>(DescuentoRecargo.class, false);
+            g.addColumn(DescuentoRecargo::getDescripcion).setHeader("Descripción").setFlexGrow(1);
+            g.addColumn(DescuentoRecargo::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
+            g.addColumn(d -> formatImporte(d.getImporte())).setHeader("Importe").setWidth("130px").setFlexGrow(0);
+            g.setItems(doc.getDescuentosRecargos());
+            g.setAllRowsVisible(true);
+            g.getStyle().set("margin-top", "4px");
+            contenido.add(g);
+        }
+
+        // ── VENCIMIENTOS ──────────────────────────────────────────────────────
+        if (!doc.getVencimientos().isEmpty()) {
+            contenido.add(crearSeccion("Vencimientos", "#0369a1"));
+            Grid<Vencimiento> g = new Grid<>(Vencimiento.class, false);
+            g.addColumn(Vencimiento::getFecha).setHeader("Fecha").setWidth("150px").setFlexGrow(0);
+            g.addColumn(v -> formatImporte(v.getImporte())).setHeader("Importe").setFlexGrow(1);
+            g.setItems(doc.getVencimientos());
+            g.setAllRowsVisible(true);
+            g.getStyle().set("margin-top", "4px");
+            contenido.add(g);
+        }
+
+        // ── TOTALES ───────────────────────────────────────────────────────────
+        contenido.add(crearSeccion("Totales", "#1e293b"));
+        VerticalLayout panelTotales = new VerticalLayout();
+        panelTotales.setSpacing(false);
+        panelTotales.setPadding(true);
+        panelTotales.setWidth("360px");
+        panelTotales.getStyle()
+                .set("background", "#f8fafc").set("border-radius", "10px")
+                .set("border", "1px solid #e2e8f0").set("margin-left", "auto").set("gap", "6px");
+        if (doc.getSubTotalNoGravado() != null)
+            panelTotales.add(crearFilaTotal("Neto No Gravado", formatImporte(doc.getSubTotalNoGravado()), false));
+        if (doc.getImpuestoInterno() != null)
+            panelTotales.add(crearFilaTotal("Impuesto Interno / Otros Tributos", formatImporte(doc.getImpuestoInterno()), false));
+        panelTotales.add(crearFilaTotal("TOTAL", doc.getTotal() == null ? "—" : formatImporte(doc.getTotal()), true));
+        contenido.add(panelTotales);
+
+        // ── JSON viewer (colapsado) ───────────────────────────────────────────
+        contenido.add(crearSeccion("Resultado JSON", "#334155"));
         String json = doc.getJsonResultado() != null ? doc.getJsonResultado() : "";
         Pre jsonPre = new Pre(json);
         jsonPre.getStyle()
@@ -204,112 +320,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
 
         btnVerMas.addClickListener(e -> { jsonPre.setVisible(true);  btnVerMas.setVisible(false); btnVerMenos.setVisible(true);  });
         btnVerMenos.addClickListener(e -> { jsonPre.setVisible(false); btnVerMas.setVisible(true);  btnVerMenos.setVisible(false); });
-
-        contenido.add(tituloJson, btnVerMas, jsonPre, btnVerMenos);
-
-        // ── Productos / Conceptos ─────────────────────────────────────────────
-        if (!doc.getProductosConceptos().isEmpty()) {
-            H4 t = new H4("Productos / Conceptos");
-            t.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
-            Grid<ProductoConcepto> g = new Grid<>(ProductoConcepto.class, false);
-            g.addColumn(ProductoConcepto::getSku).setHeader("SKU").setWidth("130px").setFlexGrow(0);
-            g.addColumn(ProductoConcepto::getDescripcion).setHeader("Descripción").setFlexGrow(1);
-            g.addColumn(p -> formatImporte(p.getCantidad())).setHeader("Cant.").setWidth("70px").setFlexGrow(0);
-            g.addColumn(p -> formatImporte(p.getPrecioUnitario())).setHeader("P. Unit.").setWidth("95px").setFlexGrow(0);
-            g.addColumn(p -> formatImporte(p.getDescuento())).setHeader("Desc.").setWidth("80px").setFlexGrow(0);
-            g.addColumn(p -> formatImporte(p.getSubTotal())).setHeader("Subtotal").setWidth("95px").setFlexGrow(0);
-            g.addColumn(ProductoConcepto::getAlicuotaIva).setHeader("IVA").setWidth("75px").setFlexGrow(0);
-            g.addColumn(ProductoConcepto::getOrdenCompra).setHeader("OC").setWidth("90px").setFlexGrow(0);
-            g.addColumn(ProductoConcepto::getRemito).setHeader("Remito").setWidth("130px").setFlexGrow(0);
-            g.addColumn(ProductoConcepto::getNumeroDespacho).setHeader("Nro. Despacho").setWidth("170px").setFlexGrow(0);
-            g.addColumn(ProductoConcepto::getFechaDespacho).setHeader("Fecha Despacho").setWidth("130px").setFlexGrow(0);
-            g.addColumn(ProductoConcepto::getRegistroOficializacion).setHeader("Reg. Ofic.").setWidth("100px").setFlexGrow(0);
-            g.setItems(doc.getProductosConceptos());
-            g.setAllRowsVisible(true);
-            g.getStyle().set("margin-top", "4px");
-            contenido.add(t, g);
-        }
-
-        // ── Netos Gravados e IVA ──────────────────────────────────────────────
-        if (!doc.getNetosGravados().isEmpty()) {
-            H4 t = new H4("Netos Gravados e IVA");
-            t.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
-            Grid<NetoGravado> g = new Grid<>(NetoGravado.class, false);
-            g.addColumn(NetoGravado::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
-            g.addColumn(n -> formatImporte(n.getImporteNetoGravado())).setHeader("Importe Neto Gravado").setFlexGrow(1);
-            g.addColumn(n -> formatImporte(n.getIva())).setHeader("IVA").setWidth("130px").setFlexGrow(0);
-            g.setItems(doc.getNetosGravados());
-            g.setAllRowsVisible(true);
-            g.getStyle().set("margin-top", "4px");
-            contenido.add(t, g);
-        }
-
-        // ── Percepciones IIBB ─────────────────────────────────────────────────
-        if (!doc.getPercepcionesIIBB().isEmpty()) {
-            H4 t = new H4("Percepciones IIBB");
-            t.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
-            Grid<PercepcionIIBB> g = new Grid<>(PercepcionIIBB.class, false);
-            g.addColumn(PercepcionIIBB::getProvincia).setHeader("Provincia").setFlexGrow(1);
-            g.addColumn(PercepcionIIBB::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
-            g.addColumn(p -> formatImporte(p.getImporte())).setHeader("Importe").setWidth("130px").setFlexGrow(0);
-            g.setItems(doc.getPercepcionesIIBB());
-            g.setAllRowsVisible(true);
-            g.getStyle().set("margin-top", "4px");
-            contenido.add(t, g);
-        }
-
-        // ── Percepciones IVA ──────────────────────────────────────────────────
-        if (!doc.getPercepcionesIVA().isEmpty()) {
-            H4 t = new H4("Percepciones IVA");
-            t.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
-            Grid<PercepcionIVA> g = new Grid<>(PercepcionIVA.class, false);
-            g.addColumn(PercepcionIVA::getAlicuota).setHeader("Alícuota").setWidth("150px").setFlexGrow(0);
-            g.addColumn(p -> formatImporte(p.getImporte())).setHeader("Importe").setFlexGrow(1);
-            g.setItems(doc.getPercepcionesIVA());
-            g.setAllRowsVisible(true);
-            g.getStyle().set("margin-top", "4px");
-            contenido.add(t, g);
-        }
-
-        // ── Tasas ─────────────────────────────────────────────────────────────
-        if (!doc.getTasas().isEmpty()) {
-            H4 t = new H4("Tasas");
-            t.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
-            Grid<Tasa> g = new Grid<>(Tasa.class, false);
-            g.addColumn(Tasa::getDescripcion).setHeader("Descripción").setFlexGrow(1);
-            g.addColumn(tasa -> formatImporte(tasa.getImporte())).setHeader("Importe").setWidth("130px").setFlexGrow(0);
-            g.setItems(doc.getTasas());
-            g.setAllRowsVisible(true);
-            g.getStyle().set("margin-top", "4px");
-            contenido.add(t, g);
-        }
-
-        // ── Descuentos y Recargos ─────────────────────────────────────────────
-        if (!doc.getDescuentosRecargos().isEmpty()) {
-            H4 t = new H4("Descuentos / Recargos");
-            t.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
-            Grid<DescuentoRecargo> g = new Grid<>(DescuentoRecargo.class, false);
-            g.addColumn(DescuentoRecargo::getDescripcion).setHeader("Descripción").setFlexGrow(1);
-            g.addColumn(DescuentoRecargo::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
-            g.addColumn(d -> formatImporte(d.getImporte())).setHeader("Importe").setWidth("130px").setFlexGrow(0);
-            g.setItems(doc.getDescuentosRecargos());
-            g.setAllRowsVisible(true);
-            g.getStyle().set("margin-top", "4px");
-            contenido.add(t, g);
-        }
-
-        // ── Vencimientos ──────────────────────────────────────────────────────
-        if (!doc.getVencimientos().isEmpty()) {
-            H4 t = new H4("Vencimientos");
-            t.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
-            Grid<Vencimiento> g = new Grid<>(Vencimiento.class, false);
-            g.addColumn(Vencimiento::getFecha).setHeader("Fecha").setWidth("150px").setFlexGrow(0);
-            g.addColumn(v -> formatImporte(v.getImporte())).setHeader("Importe").setFlexGrow(1);
-            g.setItems(doc.getVencimientos());
-            g.setAllRowsVisible(true);
-            g.getStyle().set("margin-top", "4px");
-            contenido.add(t, g);
-        }
+        contenido.add(btnVerMas, jsonPre, btnVerMenos);
 
         // ── Notas de campos faltantes ─────────────────────────────────────────
         String notasTexto = generarNotas(doc);
@@ -372,23 +383,71 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         dialog.open();
     }
 
-    /** Crea un bloque etiqueta + valor para el panel de datos clave. */
-    private VerticalLayout crearCampoInfo(String etiqueta, String valor) {
+    private String txt(String valor) {
+        return estaVacio(valor) ? "—" : valor;
+    }
+
+    private com.vaadin.flow.component.html.Span crearSeccion(String titulo, String color) {
+        com.vaadin.flow.component.html.Span s = new com.vaadin.flow.component.html.Span(titulo);
+        s.getStyle()
+                .set("display", "block").set("font-size", "0.72rem").set("font-weight", "700")
+                .set("text-transform", "uppercase").set("letter-spacing", "0.08em")
+                .set("color", color).set("border-left", "3px solid " + color)
+                .set("padding-left", "8px").set("margin", "16px 0 4px 0");
+        return s;
+    }
+
+    private VerticalLayout crearCampo(String etiqueta, String valor) {
         com.vaadin.flow.component.html.Span lbl = new com.vaadin.flow.component.html.Span(etiqueta);
         lbl.getStyle()
-                .set("font-size", "0.72rem").set("font-weight", "600")
-                .set("color", "#0369a1").set("text-transform", "uppercase")
+                .set("font-size", "0.68rem").set("font-weight", "600")
+                .set("color", "#94a3b8").set("text-transform", "uppercase")
                 .set("letter-spacing", "0.05em");
         com.vaadin.flow.component.html.Span val = new com.vaadin.flow.component.html.Span(valor);
         val.getStyle()
-                .set("font-size", "1rem").set("font-weight", "700")
-                .set("color", "#0c4a6e");
+                .set("font-size", "0.875rem").set("font-weight", "500")
+                .set("color", "#1e293b");
         VerticalLayout campo = new VerticalLayout(lbl, val);
         campo.setPadding(false);
         campo.setSpacing(false);
-        campo.setWidth("auto");   // evita que VerticalLayout ocupe 100% del ancho
-        campo.getStyle().set("gap", "2px").set("flex-shrink", "0");
+        campo.setWidth("auto");
+        campo.getStyle().set("gap", "1px").set("flex-shrink", "0").set("min-width", "110px");
         return campo;
+    }
+
+    private HorizontalLayout crearPanelCampos(VerticalLayout... campos) {
+        HorizontalLayout panel = new HorizontalLayout();
+        panel.setWidthFull();
+        panel.setSpacing(false);
+        panel.getStyle()
+                .set("flex-wrap", "wrap").set("gap", "12px 24px")
+                .set("padding", "12px 16px").set("background", "#f8fafc")
+                .set("border-radius", "8px");
+        for (VerticalLayout c : campos) panel.add(c);
+        return panel;
+    }
+
+    private HorizontalLayout crearFilaTotal(String label, String valor, boolean destacado) {
+        com.vaadin.flow.component.html.Span lbl = new com.vaadin.flow.component.html.Span(label);
+        lbl.getStyle()
+                .set("font-size", destacado ? "1rem" : "0.875rem")
+                .set("font-weight", destacado ? "700" : "500")
+                .set("color", destacado ? "#0c4a6e" : "#475569");
+        com.vaadin.flow.component.html.Span val = new com.vaadin.flow.component.html.Span(valor);
+        val.getStyle()
+                .set("font-size", destacado ? "1.1rem" : "0.875rem")
+                .set("font-weight", "700")
+                .set("color", destacado ? "#002060" : "#1e293b");
+        HorizontalLayout row = new HorizontalLayout(lbl, val);
+        row.setWidthFull();
+        row.setSpacing(false);
+        row.getStyle().set("justify-content", "space-between").set("align-items", "center");
+        if (destacado) {
+            row.getStyle()
+                    .set("border-top", "2px solid #cbd5e1")
+                    .set("padding-top", "8px").set("margin-top", "4px");
+        }
+        return row;
     }
 
     private String generarNotas(DocumentoConvertido doc) {
