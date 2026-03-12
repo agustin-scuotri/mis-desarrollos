@@ -8,6 +8,8 @@ import java.util.Map;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.combobox.ComboBoxVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
@@ -73,18 +75,46 @@ public abstract class CrudView<T> extends VerticalLayout {
         btnNuevo.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
         btnNuevo.addClickListener(e -> accionNuevo());
 
+        // ── Combo filas por página ─────────────────────────────────────────────
+        ComboBox<Integer> comboFilas = new ComboBox<>();
+        comboFilas.setItems(10, 25, 50, 100);
+        comboFilas.setValue(25);
+        comboFilas.setWidth("85px");
+        comboFilas.addThemeVariants(ComboBoxVariant.LUMO_SMALL);
+        comboFilas.getStyle().set("margin-right", "4px");
+        comboFilas.addValueChangeListener(e -> {
+            if (e.getValue() != null) {
+                grid.setPageSize(e.getValue());
+            }
+        });
+
+        Span labelFilas = new Span("Filas:");
+        labelFilas.getStyle()
+                .set("font-size", "0.8rem")
+                .set("color", "#64748b")
+                .set("white-space", "nowrap");
+
+        HorizontalLayout layoutFilas = new HorizontalLayout(labelFilas, comboFilas);
+        layoutFilas.setAlignItems(Alignment.CENTER);
+        layoutFilas.setSpacing(false);
+        layoutFilas.getStyle().set("gap", "6px");
+
         // ── Barra herramientas ────────────────────────────────────────────────
         if (mostrarBotonNuevo()) {
-            barraHerramientas = new HorizontalLayout(layoutTitulo, btnNuevo);
+            barraHerramientas = new HorizontalLayout(layoutTitulo, new HorizontalLayout(layoutFilas, btnNuevo));
         } else {
-            barraHerramientas = new HorizontalLayout(layoutTitulo);
+            barraHerramientas = new HorizontalLayout(layoutTitulo, layoutFilas);
         }
         barraHerramientas.setWidthFull();
         barraHerramientas.setJustifyContentMode(JustifyContentMode.BETWEEN);
         barraHerramientas.setAlignItems(Alignment.CENTER);
+        ((HorizontalLayout) barraHerramientas.getComponentAt(1)).setAlignItems(Alignment.CENTER);
+        ((HorizontalLayout) barraHerramientas.getComponentAt(1)).setSpacing(false);
+        ((HorizontalLayout) barraHerramientas.getComponentAt(1)).getStyle().set("gap", "10px");
 
         // ── Grilla ────────────────────────────────────────────────────────────
         grid = new Grid<>(claseEntidad);
+        grid.setPageSize(25);
         grid.setSizeFull();
         grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES, GridVariant.LUMO_COLUMN_BORDERS);
         grid.getStyle()
