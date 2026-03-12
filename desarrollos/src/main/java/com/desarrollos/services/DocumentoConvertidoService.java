@@ -400,6 +400,75 @@ public class DocumentoConvertidoService {
         return labels;
     }
 
+    // ── Top proveedores por cantidad de facturas ──────────────────────────────
+    public String[] topProveedoresLabels(int top) {
+        List<Object[]> rows = repository.findTopProveedores(PageRequest.of(0, top));
+        return rows.stream().map(r -> {
+            String razon = (String) r[1];
+            String cuit  = (String) r[0];
+            String label = (razon != null && !razon.isBlank()) ? razon : cuit;
+            return label.length() > 30 ? label.substring(0, 28) + "…" : label;
+        }).toArray(String[]::new);
+    }
+
+    public long[] topProveedoresCantidades(int top) {
+        List<Object[]> rows = repository.findTopProveedores(PageRequest.of(0, top));
+        long[] counts = new long[rows.size()];
+        for (int i = 0; i < rows.size(); i++) counts[i] = (Long) rows.get(i)[2];
+        return counts;
+    }
+
+    // ── Montos facturados por período ─────────────────────────────────────────
+    public double[] montosPorDia() {
+        LocalDate hoy = LocalDate.now();
+        Map<LocalDate, BigDecimal> mapa = getTotalesMapa(hoy.minusDays(6).atStartOfDay(), null);
+        double[] datos = new double[7];
+        for (int i = 0; i < 7; i++)
+            datos[i] = mapa.getOrDefault(hoy.minusDays(6 - i), BigDecimal.ZERO).doubleValue();
+        return datos;
+    }
+
+    public double[] montosPorMes() {
+        LocalDate hoy = LocalDate.now();
+        Map<LocalDate, BigDecimal> mapa = getTotalesMapa(hoy.minusDays(29).atStartOfDay(), null);
+        double[] datos = new double[30];
+        for (int i = 0; i < 30; i++)
+            datos[i] = mapa.getOrDefault(hoy.minusDays(29 - i), BigDecimal.ZERO).doubleValue();
+        return datos;
+    }
+
+    public double[] montosPorAnio() {
+        LocalDate hoy = LocalDate.now();
+        LocalDateTime desde = hoy.minusMonths(11).withDayOfMonth(1).atStartOfDay();
+        Map<YearMonth, BigDecimal> mapa = repository.findTotalesDesde(desde).stream()
+                .filter(r -> r[0] != null && r[1] != null)
+                .collect(Collectors.groupingBy(
+                        r -> YearMonth.from((LocalDateTime) r[0]),
+                        Collectors.reducing(BigDecimal.ZERO, r -> (BigDecimal) r[1], BigDecimal::add)));
+        double[] datos = new double[12];
+        for (int i = 0; i < 12; i++)
+            datos[i] = mapa.getOrDefault(YearMonth.now().minusMonths(11 - i), BigDecimal.ZERO).doubleValue();
+        return datos;
+    }
+
+    public double[] montosPorRango(LocalDate desde, LocalDate hasta) {
+        Map<LocalDate, BigDecimal> mapa = getTotalesMapa(desde.atStartOfDay(), hasta);
+        int dias = (int) ChronoUnit.DAYS.between(desde, hasta) + 1;
+        double[] datos = new double[dias];
+        for (int i = 0; i < dias; i++)
+            datos[i] = mapa.getOrDefault(desde.plusDays(i), BigDecimal.ZERO).doubleValue();
+        return datos;
+    }
+
+    private Map<LocalDate, BigDecimal> getTotalesMapa(LocalDateTime desde, LocalDate hastaFecha) {
+        return repository.findTotalesDesde(desde).stream()
+                .filter(r -> r[0] != null && r[1] != null)
+                .filter(r -> hastaFecha == null || !((LocalDateTime) r[0]).toLocalDate().isAfter(hastaFecha))
+                .collect(Collectors.groupingBy(
+                        r -> ((LocalDateTime) r[0]).toLocalDate(),
+                        Collectors.reducing(BigDecimal.ZERO, r -> (BigDecimal) r[1], BigDecimal::add)));
+    }
+
     @Transactional
     public DocumentoConvertido buscarCompleto(Long id) {
         DocumentoConvertido doc = repository.findById(id)

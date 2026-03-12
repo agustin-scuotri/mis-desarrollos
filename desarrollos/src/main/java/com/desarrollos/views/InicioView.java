@@ -35,7 +35,9 @@ public class InicioView extends VerticalLayout {
     private long procesados, pendientes, errores;
 
     private Div barCanvas;
+    private Div barMontosCanvas;
     private Button btnActivo;
+    private Button btnMontoActivo;
 
     public InicioView(ArchivoService archivoService, DocumentoConvertidoService documentoConvertidoService) {
         this.archivoService = archivoService;
@@ -77,6 +79,9 @@ public class InicioView extends VerticalLayout {
         VerticalLayout cardPendientes = crearCard("Pendientes",        String.valueOf(pendientes), VaadinIcon.CLOCK,        "#d97706", "#fffbeb");
         VerticalLayout cardErrores    = crearCard("Errores",           String.valueOf(errores),    VaadinIcon.WARNING,      "#dc2626", "#fef2f2");
         VerticalLayout cardConvert    = crearCard("Docs. Convertidos", String.valueOf(documentos), VaadinIcon.FILE_TABLE,   "#7c3aed", "#f5f3ff");
+        String tasaError = (procesados + errores) > 0
+                ? String.format("%.1f%%", (errores * 100.0) / (procesados + errores)) : "—";
+        VerticalLayout cardTasaError  = crearCard("Tasa de Error",     tasaError,                  VaadinIcon.CHART_LINE,   "#9333ea", "#faf5ff");
 
         hacerClickeable(cardArchivos,   () -> getUI().ifPresent(ui -> ui.navigate("ABMarchivos")));
         hacerClickeable(cardProcesados, () -> getUI().ifPresent(ui -> ui.navigate("ABMarchivos",
@@ -88,7 +93,7 @@ public class InicioView extends VerticalLayout {
         hacerClickeable(cardConvert,    () -> getUI().ifPresent(ui -> ui.navigate("lista-jsons")));
 
         HorizontalLayout cards = new HorizontalLayout(
-                cardArchivos, cardProcesados, cardPendientes, cardErrores, cardConvert);
+                cardArchivos, cardProcesados, cardPendientes, cardErrores, cardConvert, cardTasaError);
         cards.setWidthFull();
         cards.setSpacing(true);
         cards.getStyle().set("flex-wrap", "wrap");
@@ -169,7 +174,74 @@ public class InicioView extends VerticalLayout {
         barCard.addComponentAtIndex(1, rangoRow);
 
         chartsRow.add(donutCard, barCard);
-        add(titulo, subtitulo, cards, chartsRow);
+
+        // ── Segunda fila: Top Proveedores + Montos Facturados ─────────────────
+        Div chartsRow2 = new Div();
+        chartsRow2.setWidthFull();
+        chartsRow2.getStyle()
+                .set("display", "flex")
+                .set("gap", "16px")
+                .set("margin-top", "16px")
+                .set("flex-wrap", "wrap");
+
+        // Chart 3 — Top Proveedores (barra horizontal)
+        String[] provLabels = documentoConvertidoService.topProveedoresLabels(8);
+        long[]   provCants  = documentoConvertidoService.topProveedoresCantidades(8);
+        String provLabelsJson = provLabels.length == 0 ? "[]"
+                : "[\"" + String.join("\",\"", provLabels) + "\"]";
+        String provDataJson = Arrays.stream(provCants).mapToObj(String::valueOf)
+                .collect(Collectors.joining(",", "[", "]"));
+        int provHeight = Math.max(120, provLabels.length * 40 + 40);
+        Div provCanvas = new Div();
+        provCanvas.getStyle().set("width", "100%").set("height", provHeight + "px");
+        provCanvas.getElement().executeJs(loaderScript(proveedoresScript(provLabelsJson, provDataJson)));
+        Div provCard = crearCardChart("Top Proveedores por Facturas", provCanvas, "1", "280px", null);
+
+        // Chart 4 — Montos Facturados (línea con toggle de período)
+        barMontosCanvas = new Div();
+        barMontosCanvas.getStyle().set("width", "100%").set("max-height", "220px");
+        cargarMontoChart("7d");
+
+        Button btnM7d    = crearBotonPeriodo("7 días");
+        Button btnMMes   = crearBotonPeriodo("Mes");
+        Button btnMAnio  = crearBotonPeriodo("Año");
+        Button btnMRango = crearBotonPeriodo("Rango");
+        activarBotonMonto(btnM7d);
+
+        DatePicker dpMDesde = new DatePicker();
+        dpMDesde.setPlaceholder("Desde");
+        dpMDesde.setWidth("130px");
+        DatePicker dpMHasta = new DatePicker();
+        dpMHasta.setPlaceholder("Hasta");
+        dpMHasta.setWidth("130px");
+        Button btnMAplicar = new Button("Aplicar");
+        btnMAplicar.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
+        btnMAplicar.getStyle().set("font-size", "0.8rem");
+        btnMAplicar.addClickListener(ev -> {
+            LocalDate d = dpMDesde.getValue(), h = dpMHasta.getValue();
+            if (d != null && h != null && !d.isAfter(h)) cargarMontoChartRango(d, h);
+        });
+
+        HorizontalLayout rangoMRow = new HorizontalLayout(dpMDesde, dpMHasta, btnMAplicar);
+        rangoMRow.setSpacing(false);
+        rangoMRow.getStyle().set("gap", "8px").set("align-items", "center")
+                .set("margin-top", "10px").set("flex-wrap", "wrap");
+        rangoMRow.setVisible(false);
+
+        btnM7d.addClickListener(e    -> { activarBotonMonto(btnM7d);    rangoMRow.setVisible(false); cargarMontoChart("7d");   });
+        btnMMes.addClickListener(e   -> { activarBotonMonto(btnMMes);   rangoMRow.setVisible(false); cargarMontoChart("mes");  });
+        btnMAnio.addClickListener(e  -> { activarBotonMonto(btnMAnio);  rangoMRow.setVisible(false); cargarMontoChart("anio"); });
+        btnMRango.addClickListener(e -> { activarBotonMonto(btnMRango); rangoMRow.setVisible(true);  });
+
+        HorizontalLayout mToggles = new HorizontalLayout(btnM7d, btnMMes, btnMAnio, btnMRango);
+        mToggles.setSpacing(false);
+        mToggles.getStyle().set("gap", "6px").set("margin-bottom", "10px");
+
+        Div montosCard = crearCardChartConToggle("Montos Facturados ($)", mToggles, barMontosCanvas, "2", "280px", null);
+        montosCard.addComponentAtIndex(1, rangoMRow);
+
+        chartsRow2.add(provCard, montosCard);
+        add(titulo, subtitulo, cards, chartsRow, chartsRow2);
     }
 
     // ── Carga/recarga el gráfico de barras según período ──────────────────────
@@ -347,6 +419,52 @@ public class InicioView extends VerticalLayout {
         return card;
     }
 
+    // ── Carga/recarga el gráfico de montos según período ─────────────────────
+    private void cargarMontoChart(String periodo) {
+        double[] datos;
+        String[] etiquetas;
+        switch (periodo) {
+            case "mes":
+                datos     = documentoConvertidoService.montosPorMes();
+                etiquetas = documentoConvertidoService.etiquetasMes();
+                break;
+            case "anio":
+                datos     = documentoConvertidoService.montosPorAnio();
+                etiquetas = documentoConvertidoService.etiquetasAnio();
+                break;
+            default:
+                datos     = documentoConvertidoService.montosPorDia();
+                etiquetas = documentoConvertidoService.etiquetasDias();
+        }
+        String montosData   = Arrays.stream(datos).mapToObj(String::valueOf).collect(Collectors.joining(",", "[", "]"));
+        String montosLabels = "[\"" + String.join("\",\"", etiquetas) + "\"]";
+        barMontosCanvas.getElement().executeJs(loaderScript(montosScript(montosLabels, montosData)));
+    }
+
+    private void cargarMontoChartRango(LocalDate desde, LocalDate hasta) {
+        double[]   datos     = documentoConvertidoService.montosPorRango(desde, hasta);
+        String[]   etiquetas = documentoConvertidoService.etiquetasRango(desde, hasta);
+        String montosData   = Arrays.stream(datos).mapToObj(String::valueOf).collect(Collectors.joining(",", "[", "]"));
+        String montosLabels = "[\"" + String.join("\",\"", etiquetas) + "\"]";
+        barMontosCanvas.getElement().executeJs(loaderScript(montosScript(montosLabels, montosData)));
+    }
+
+    private void activarBotonMonto(Button btn) {
+        if (btnMontoActivo != null) {
+            btnMontoActivo.getStyle()
+                    .set("background", "transparent")
+                    .set("color", "#64748b")
+                    .set("font-weight", "400")
+                    .set("border-color", "#e2e8f0");
+        }
+        btnMontoActivo = btn;
+        btn.getStyle()
+                .set("background", "#002060")
+                .set("color", "white")
+                .set("font-weight", "600")
+                .set("border-color", "#002060");
+    }
+
     // ── Envuelve el script con el loader de Chart.js ──────────────────────────
     private String loaderScript(String chartJs) {
         return "const me = this;" +
@@ -379,6 +497,73 @@ public class InicioView extends VerticalLayout {
                "    color: isDark ? '#94a3b8' : '#475569'," +
                "    font: { size: 12, family: 'Inter, sans-serif' }, boxWidth: 12, padding: 10" +
                "  }}}}" +
+               "});";
+    }
+
+    // ── Script Chart.js: Línea de montos (reutiliza canvas, destruye chart previo)
+    private String montosScript(String labels, String data) {
+        return "const isDark = document.documentElement.getAttribute('theme') === 'dark';" +
+               "const lineColor = isDark ? '#60a5fa' : '#2563eb';" +
+               "const fillColor = isDark ? 'rgba(96,165,250,0.10)' : 'rgba(37,99,235,0.07)';" +
+               "const tickClr   = isDark ? '#94a3b8' : '#64748b';" +
+               "const gridClr   = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)';" +
+               "if (me._montosChart) { me._montosChart.destroy(); }" +
+               "const cvs = me._montosCvs || (() => {" +
+               "  const c = document.createElement('canvas'); c.style.maxHeight='200px';" +
+               "  me.appendChild(c); me._montosCvs = c; return c;" +
+               "})();" +
+               "me._montosChart = new Chart(cvs, { type: 'line', data: {" +
+               "  labels: " + labels + "," +
+               "  datasets: [{ data: " + data + "," +
+               "    borderColor: lineColor, backgroundColor: fillColor," +
+               "    borderWidth: 2, pointRadius: 3, pointHoverRadius: 5," +
+               "    fill: true, tension: 0.4 }]" +
+               "}, options: { responsive: true, maintainAspectRatio: true," +
+               "  plugins: { legend: { display: false }," +
+               "    tooltip: { callbacks: { label: function(ctx) {" +
+               "      return '$ ' + ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:2,maximumFractionDigits:2});" +
+               "    }}}}," +
+               "  scales: {" +
+               "    x: { ticks: { color: tickClr, font: { size: 11 } }, grid: { color: gridClr } }," +
+               "    y: { beginAtZero: true, ticks: { color: tickClr, font: { size: 11 }," +
+               "      callback: function(v) { return '$' + v.toLocaleString('es-AR'); }" +
+               "    }, grid: { color: gridClr } }" +
+               "  }}" +
+               "});";
+    }
+
+    // ── Script Chart.js: Barra horizontal de top proveedores ─────────────────
+    private String proveedoresScript(String labels, String data) {
+        return "const isDark = document.documentElement.getAttribute('theme') === 'dark';" +
+               "const palette = isDark" +
+               "  ? ['rgba(96,165,250,.8)','rgba(52,211,153,.8)','rgba(251,191,36,.8)'," +
+               "     'rgba(248,113,113,.8)','rgba(167,139,250,.8)','rgba(34,211,238,.8)'," +
+               "     'rgba(249,115,22,.8)','rgba(236,72,153,.8)']" +
+               "  : ['rgba(37,99,235,.8)','rgba(5,150,105,.8)','rgba(217,119,6,.8)'," +
+               "     'rgba(220,38,38,.8)','rgba(124,58,237,.8)','rgba(14,165,233,.8)'," +
+               "     'rgba(234,88,12,.8)','rgba(219,39,119,.8)'];" +
+               "const tickClr = isDark ? '#94a3b8' : '#64748b';" +
+               "const gridClr = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)';" +
+               "const dataArr = " + data + ";" +
+               "const cvs = document.createElement('canvas');" +
+               "cvs.style.cssText = 'width:100%;height:100%;';" +
+               "me.appendChild(cvs);" +
+               "new Chart(cvs, { type: 'bar', data: {" +
+               "  labels: " + labels + "," +
+               "  datasets: [{ data: dataArr," +
+               "    backgroundColor: palette.slice(0, dataArr.length)," +
+               "    borderWidth: 0, borderRadius: 4 }]" +
+               "}, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false," +
+               "  plugins: { legend: { display: false }," +
+               "    tooltip: { callbacks: { label: function(ctx) {" +
+               "      return ctx.parsed.x + (ctx.parsed.x === 1 ? ' factura' : ' facturas');" +
+               "    }}}}," +
+               "  scales: {" +
+               "    x: { beginAtZero: true," +
+               "      ticks: { stepSize: 1, precision: 0, color: tickClr, font: { size: 11 } }," +
+               "      grid: { color: gridClr } }," +
+               "    y: { ticks: { color: tickClr, font: { size: 12 } }, grid: { display: false } }" +
+               "  }}" +
                "});";
     }
 

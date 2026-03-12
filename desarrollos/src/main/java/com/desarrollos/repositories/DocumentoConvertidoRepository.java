@@ -49,6 +49,16 @@ public interface DocumentoConvertidoRepository extends JpaRepository<DocumentoCo
     @Query("SELECT d.fechaConversion FROM DocumentoConvertido d WHERE d.fechaConversion >= :desde")
     List<LocalDateTime> findFechasDesde(@Param("desde") LocalDateTime desde);
 
+    // ── Top proveedores por cantidad de facturas ──────────────────────────────
+    @Query("SELECT d.cuit, d.razonSocial, COUNT(d) FROM DocumentoConvertido d " +
+           "WHERE d.cuit IS NOT NULL GROUP BY d.cuit, d.razonSocial ORDER BY COUNT(d) DESC")
+    List<Object[]> findTopProveedores(Pageable pageable);
+
+    // ── Pares (fechaConversion, total) para gráfico de montos ─────────────────
+    @Query("SELECT d.fechaConversion, d.total FROM DocumentoConvertido d " +
+           "WHERE d.fechaConversion >= :desde AND d.total IS NOT NULL")
+    List<Object[]> findTotalesDesde(@Param("desde") LocalDateTime desde);
+
     // ── Verificación de factura duplicada (clave única de negocio) ────────────
     @Query("SELECT COUNT(d) FROM DocumentoConvertido d WHERE " +
            "d.cuit = :cuit AND d.codigoArca = :codigoArca AND " +
