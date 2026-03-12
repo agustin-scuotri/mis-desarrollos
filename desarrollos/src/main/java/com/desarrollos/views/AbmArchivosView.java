@@ -20,10 +20,6 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.data.provider.CallbackDataProvider;
-import com.vaadin.flow.data.provider.DataProvider;
-import com.vaadin.flow.data.provider.Query;
-import com.vaadin.flow.data.provider.SortDirection;
 import org.springframework.data.domain.Sort;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -34,40 +30,13 @@ import com.vaadin.flow.router.Route;
 @Route(value = "ABMarchivos", layout = MainLayout.class)
 public class AbmArchivosView extends CrudView<Archivo> implements BeforeEnterObserver {
     private final ArchivoService service;
-    private CallbackDataProvider<Archivo, Void> gridProvider;
     private ComboBox<String> filtroEstado;
 
     public AbmArchivosView(ArchivoService service) {
         super(Archivo.class);
         this.service = service;
         setTitulo(getTranslation("app.archivos"));
-        inicializarDataProvider();
-    }
-
-    private void inicializarDataProvider() {
-        gridProvider = DataProvider.fromCallbacks(
-            (Query<Archivo, Void> query) -> {
-                String codigo   = filtrosActivos.getOrDefault(getTranslation("archivo.codigo"), "");
-                String nombre   = filtrosActivos.getOrDefault(getTranslation("archivo.nombre"), "");
-                String estadoDB = mapearEstado(filtrosActivos.getOrDefault(getTranslation("archivo.estado"), ""));
-                Sort sort = query.getSortOrders().stream()
-                        .findFirst()
-                        .map(o -> Sort.by(
-                                o.getDirection() == SortDirection.ASCENDING ? Sort.Direction.ASC : Sort.Direction.DESC,
-                                "codigoNumerico"))
-                        .orElse(Sort.by(Sort.Direction.ASC, "codigoNumerico"));
-                int pageSize = Math.max(query.getLimit(), 1);
-                int pageNum  = query.getOffset() / pageSize;
-                return service.listarPaginado(pageNum, pageSize, codigo, nombre, estadoDB, sort).stream();
-            },
-            (Query<Archivo, Void> query) -> {
-                String codigo   = filtrosActivos.getOrDefault(getTranslation("archivo.codigo"), "");
-                String nombre   = filtrosActivos.getOrDefault(getTranslation("archivo.nombre"), "");
-                String estadoDB = mapearEstado(filtrosActivos.getOrDefault(getTranslation("archivo.estado"), ""));
-                return (int) service.contarFiltrado(codigo, nombre, estadoDB);
-            }
-        );
-        grid.setItems(gridProvider);
+        actualizarLista();
     }
 
     @Override
@@ -84,7 +53,13 @@ public class AbmArchivosView extends CrudView<Archivo> implements BeforeEnterObs
 
     @Override
     protected void actualizarLista() {
-        if (gridProvider != null) gridProvider.refreshAll();
+        String codigo   = filtrosActivos.getOrDefault(getTranslation("archivo.codigo"), "");
+        String nombre   = filtrosActivos.getOrDefault(getTranslation("archivo.nombre"), "");
+        String estadoDB = mapearEstado(filtrosActivos.getOrDefault(getTranslation("archivo.estado"), ""));
+        totalRegistros = service.contarFiltrado(codigo, nombre, estadoDB);
+        grid.setItems(service.listarPaginado(paginaActual, filasPorPagina, codigo, nombre, estadoDB,
+                Sort.by(Sort.Direction.ASC, "codigoNumerico")));
+        actualizarPaginacion();
     }
 
     private String mapearEstado(String displayValue) {

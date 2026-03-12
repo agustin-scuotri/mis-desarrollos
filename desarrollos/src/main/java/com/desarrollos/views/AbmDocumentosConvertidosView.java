@@ -18,9 +18,6 @@ import com.desarrollos.entities.DescuentoRecargo;
 import com.desarrollos.entities.Tasa;
 import com.desarrollos.entities.Vencimiento;
 import com.desarrollos.services.DocumentoConvertidoService;
-import com.vaadin.flow.data.provider.CallbackDataProvider;
-import com.vaadin.flow.data.provider.DataProvider;
-import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
@@ -46,35 +43,12 @@ import com.vaadin.flow.server.StreamResource;
 public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> {
 
     private final DocumentoConvertidoService service;
-    private CallbackDataProvider<DocumentoConvertido, Void> gridProvider;
 
     public AbmDocumentosConvertidosView(DocumentoConvertidoService service) {
         super(DocumentoConvertido.class);
         this.service = service;
         setTitulo("Lista de JSONs");
-        inicializarDataProvider();
-    }
-
-    private void inicializarDataProvider() {
-        gridProvider = DataProvider.fromCallbacks(
-            (Query<DocumentoConvertido, Void> query) -> {
-                String codigo        = filtrosActivos.getOrDefault("Código", "");
-                String nombre        = filtrosActivos.getOrDefault("Nombre", "");
-                String cuit          = filtrosActivos.getOrDefault("Cuit del emisor", "");
-                String comprobante   = filtrosActivos.getOrDefault("Nro. comprobante", "");
-                int pageSize = Math.max(query.getLimit(), 1);
-                int pageNum  = query.getOffset() / pageSize;
-                return service.listarPaginado(pageNum, pageSize, codigo, nombre, cuit, "", comprobante).stream();
-            },
-            (Query<DocumentoConvertido, Void> query) -> {
-                String codigo        = filtrosActivos.getOrDefault("Código", "");
-                String nombre        = filtrosActivos.getOrDefault("Nombre", "");
-                String cuit          = filtrosActivos.getOrDefault("Cuit del emisor", "");
-                String comprobante   = filtrosActivos.getOrDefault("Nro. comprobante", "");
-                return (int) service.contarFiltrado(codigo, nombre, cuit, "", comprobante);
-            }
-        );
-        grid.setItems(gridProvider);
+        actualizarLista();
     }
 
     @Override
@@ -122,7 +96,13 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
 
     @Override
     protected void actualizarLista() {
-        if (gridProvider != null) gridProvider.refreshAll();
+        String codigo      = filtrosActivos.getOrDefault("Código", "");
+        String nombre      = filtrosActivos.getOrDefault("Nombre", "");
+        String cuit        = filtrosActivos.getOrDefault("Cuit del emisor", "");
+        String comprobante = filtrosActivos.getOrDefault("Nro. comprobante", "");
+        totalRegistros = service.contarFiltrado(codigo, nombre, cuit, "", comprobante);
+        grid.setItems(service.listarPaginado(paginaActual, filasPorPagina, codigo, nombre, cuit, "", comprobante));
+        actualizarPaginacion();
     }
 
     @Override

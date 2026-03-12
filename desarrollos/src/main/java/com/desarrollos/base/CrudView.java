@@ -33,6 +33,15 @@ public abstract class CrudView<T> extends VerticalLayout {
     protected HeaderRow filaFiltros;
     protected Map<String, String> filtrosActivos = new HashMap<>();
 
+    // ── Estado de paginación ──────────────────────────────────────────────────
+    protected int paginaActual = 0;
+    protected int filasPorPagina = 25;
+    protected long totalRegistros = 0;
+
+    private Span spanPagina;
+    private Button btnAnterior;
+    private Button btnSiguiente;
+
     public CrudView(Class<T> claseEntidad) {
         setSizeFull();
         setSpacing(true);
@@ -40,7 +49,9 @@ public abstract class CrudView<T> extends VerticalLayout {
         getStyle().set("background-color", "#f8fafc");
 
         configurarComponentes(claseEntidad);
-        add(barraHerramientas, grid);
+        HorizontalLayout barraPaginacion = crearBarraPaginacion();
+        add(barraHerramientas, grid, barraPaginacion);
+        setFlexGrow(1, grid);
     }
 
     private void configurarComponentes(Class<T> claseEntidad) {
@@ -81,10 +92,11 @@ public abstract class CrudView<T> extends VerticalLayout {
         comboFilas.setValue(25);
         comboFilas.setWidth("85px");
         comboFilas.addThemeVariants(ComboBoxVariant.LUMO_SMALL);
-        comboFilas.getStyle().set("margin-right", "4px");
         comboFilas.addValueChangeListener(e -> {
             if (e.getValue() != null) {
-                grid.setPageSize(e.getValue());
+                filasPorPagina = e.getValue();
+                paginaActual = 0;
+                actualizarLista();
             }
         });
 
@@ -100,21 +112,23 @@ public abstract class CrudView<T> extends VerticalLayout {
         layoutFilas.getStyle().set("gap", "6px");
 
         // ── Barra herramientas ────────────────────────────────────────────────
+        HorizontalLayout ladoDerecho;
         if (mostrarBotonNuevo()) {
-            barraHerramientas = new HorizontalLayout(layoutTitulo, new HorizontalLayout(layoutFilas, btnNuevo));
+            ladoDerecho = new HorizontalLayout(layoutFilas, btnNuevo);
         } else {
-            barraHerramientas = new HorizontalLayout(layoutTitulo, layoutFilas);
+            ladoDerecho = new HorizontalLayout(layoutFilas);
         }
+        ladoDerecho.setAlignItems(Alignment.CENTER);
+        ladoDerecho.setSpacing(false);
+        ladoDerecho.getStyle().set("gap", "10px");
+
+        barraHerramientas = new HorizontalLayout(layoutTitulo, ladoDerecho);
         barraHerramientas.setWidthFull();
         barraHerramientas.setJustifyContentMode(JustifyContentMode.BETWEEN);
         barraHerramientas.setAlignItems(Alignment.CENTER);
-        ((HorizontalLayout) barraHerramientas.getComponentAt(1)).setAlignItems(Alignment.CENTER);
-        ((HorizontalLayout) barraHerramientas.getComponentAt(1)).setSpacing(false);
-        ((HorizontalLayout) barraHerramientas.getComponentAt(1)).getStyle().set("gap", "10px");
 
         // ── Grilla ────────────────────────────────────────────────────────────
         grid = new Grid<>(claseEntidad);
-        grid.setPageSize(25);
         grid.setSizeFull();
         grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES, GridVariant.LUMO_COLUMN_BORDERS);
         grid.getStyle()
@@ -224,6 +238,56 @@ public abstract class CrudView<T> extends VerticalLayout {
                 .setWidth(anchoColumnaAcciones())
                 .setFlexGrow(0)
                 .setTextAlign(ColumnTextAlign.CENTER);
+    }
+
+    // ── Barra de paginación ───────────────────────────────────────────────────
+    private HorizontalLayout crearBarraPaginacion() {
+        btnAnterior = new Button(VaadinIcon.CHEVRON_LEFT.create());
+        btnAnterior.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+        btnAnterior.setEnabled(false);
+        btnAnterior.addClickListener(e -> {
+            if (paginaActual > 0) {
+                paginaActual--;
+                actualizarLista();
+            }
+        });
+
+        btnSiguiente = new Button(VaadinIcon.CHEVRON_RIGHT.create());
+        btnSiguiente.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+        btnSiguiente.setEnabled(false);
+        btnSiguiente.addClickListener(e -> {
+            int totalPaginas = (int) Math.ceil((double) totalRegistros / filasPorPagina);
+            if (paginaActual + 1 < totalPaginas) {
+                paginaActual++;
+                actualizarLista();
+            }
+        });
+
+        spanPagina = new Span("Página 1 de 1");
+        spanPagina.getStyle()
+                .set("font-size", "0.8rem")
+                .set("color", "#64748b")
+                .set("padding", "0 8px");
+
+        HorizontalLayout barra = new HorizontalLayout(btnAnterior, spanPagina, btnSiguiente);
+        barra.setAlignItems(Alignment.CENTER);
+        barra.setSpacing(false);
+        barra.setWidthFull();
+        barra.setJustifyContentMode(JustifyContentMode.CENTER);
+        barra.getStyle()
+                .set("padding", "6px 0")
+                .set("border-top", "1px solid #e2e8f0");
+        return barra;
+    }
+
+    // ── Actualizar indicador de paginación ────────────────────────────────────
+    protected void actualizarPaginacion() {
+        if (spanPagina == null) return;
+        int totalPaginas = totalRegistros == 0 ? 1 : (int) Math.ceil((double) totalRegistros / filasPorPagina);
+        spanPagina.setText("Página " + (paginaActual + 1) + " de " + totalPaginas
+                + "  ·  " + totalRegistros + " registros");
+        btnAnterior.setEnabled(paginaActual > 0);
+        btnSiguiente.setEnabled((paginaActual + 1) < totalPaginas);
     }
 
     // ── Ícono por nombre de cabecera ──────────────────────────────────────────
@@ -448,6 +512,7 @@ public abstract class CrudView<T> extends VerticalLayout {
         } else {
             filtrosActivos.put(columna, valor);
         }
+        paginaActual = 0;
         actualizarLista();
     }
 
