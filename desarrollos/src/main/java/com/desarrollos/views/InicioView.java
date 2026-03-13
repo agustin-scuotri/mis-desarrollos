@@ -344,13 +344,33 @@ public class InicioView extends VerticalLayout {
                 .set("box-sizing", "content-box")
                 .set("margin-bottom", "8px");
 
-        Span valorSpan = new Span(valor);
+        Span valorSpan = new Span("0");
         valorSpan.getStyle()
                 .set("font-size", "2rem")
                 .set("font-weight", "700")
                 .set("color", "var(--lumo-header-text-color, #1e293b)")
                 .set("line-height", "1")
                 .set("letter-spacing", "-1px");
+
+        // Animate counter from 0 to target value (only for numeric values)
+        try {
+            long target = Long.parseLong(valor);
+            valorSpan.getElement().executeJs(
+                "const target = " + target + ";" +
+                "if (target === 0) { this.textContent = '0'; return; }" +
+                "const duration = 900;" +
+                "const startTime = performance.now();" +
+                "const step = (now) => {" +
+                "  const progress = Math.min((now - startTime) / duration, 1);" +
+                "  const ease = 1 - Math.pow(1 - progress, 3);" +
+                "  this.textContent = Math.round(ease * target);" +
+                "  if (progress < 1) requestAnimationFrame(step);" +
+                "};" +
+                "requestAnimationFrame(step);"
+            );
+        } catch (NumberFormatException e) {
+            valorSpan.setText(valor);
+        }
 
         Span etiquetaSpan = new Span(etiqueta);
         etiquetaSpan.getStyle()
@@ -373,7 +393,8 @@ public class InicioView extends VerticalLayout {
                 .set("box-shadow", "0 1px 3px rgba(0,0,0,0.08)")
                 .set("padding", "20px 24px")
                 .set("flex", flex)
-                .set("min-width", minWidth);
+                .set("min-width", minWidth)
+                .set("position", "relative");
         if (maxWidth != null) card.getStyle().set("max-width", maxWidth);
 
         Span tituloSpan = new Span(titulo);
@@ -384,7 +405,9 @@ public class InicioView extends VerticalLayout {
                 .set("display", "block")
                 .set("margin-bottom", "14px");
 
-        card.add(tituloSpan, canvas);
+        Div wrapper = new Div(crearSkeleton("200px"), canvas);
+        wrapper.getStyle().set("position", "relative");
+        card.add(tituloSpan, wrapper);
         return card;
     }
 
@@ -465,15 +488,43 @@ public class InicioView extends VerticalLayout {
                 .set("border-color", "#002060");
     }
 
-    // ── Envuelve el script con el loader de Chart.js ──────────────────────────
+    // ── Envuelve el script con el loader de Chart.js (elimina skeleton al cargar)
     private String loaderScript(String chartJs) {
         return "const me = this;" +
-               "const render = () => { " + chartJs + " };" +
+               "const skeleton = me.parentElement ? me.parentElement.querySelector('.chart-skeleton') : null;" +
+               "const render = () => {" +
+               "  if (skeleton) skeleton.style.display = 'none';" +
+               "  me.style.opacity = '0'; me.style.transition = 'opacity 0.3s ease';" +
+               "  " + chartJs +
+               "  requestAnimationFrame(() => { me.style.opacity = '1'; });" +
+               "};" +
                "if (typeof Chart !== 'undefined') { render(); } else {" +
                "  const s = document.createElement('script');" +
                "  s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';" +
                "  s.onload = render;" +
                "  document.head.appendChild(s); }";
+    }
+
+    // ── Crea un skeleton shimmer para el chart ────────────────────────────────
+    private Div crearSkeleton(String height) {
+        Div skeleton = new Div();
+        skeleton.addClassName("chart-skeleton");
+        skeleton.getStyle()
+                .set("width", "100%")
+                .set("height", height)
+                .set("border-radius", "8px")
+                .set("background", "linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)")
+                .set("background-size", "200% 100%")
+                .set("animation", "shimmer 1.5s infinite");
+        skeleton.getElement().executeJs(
+            "if (!document.getElementById('shimmer-keyframes')) {" +
+            "  const s = document.createElement('style');" +
+            "  s.id = 'shimmer-keyframes';" +
+            "  s.textContent = '@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }';" +
+            "  document.head.appendChild(s);" +
+            "}"
+        );
+        return skeleton;
     }
 
     // ── Script Chart.js: Donut interactivo ────────────────────────────────────

@@ -476,6 +476,11 @@ public class ConversorView extends FormView {
 			parrafoNotas.setVisible(true);
 		}
 
+		String jsonFinal = doc.getJsonResultado() != null ? doc.getJsonResultado() : "";
+		HorizontalLayout accionesJson = new HorizontalLayout(crearBotonDescarga(doc), crearBotonCopiarJson(jsonFinal));
+		accionesJson.setSpacing(true);
+		accionesJson.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
+
 		contenido.add(panelDatos,
 				tituloResultado, btnVerMas, jsonViewer, btnVerMenos,
 				tituloProductos, gridProductos,
@@ -484,7 +489,7 @@ public class ConversorView extends FormView {
 				tituloPercepcionesIVA, gridPercepcionesIVA,
 				tituloVencimientos, gridVencimientos,
 				parrafoNotas,
-				crearBotonDescarga(doc));
+				accionesJson);
 		return contenido;
 	}
 
@@ -953,6 +958,26 @@ public class ConversorView extends FormView {
 		botonDescarga.getStyle().set("background-color", "#2563eb").set("color", "white");
 		btnDescargar.add(botonDescarga);
 		return btnDescargar;
+	}
+
+	private Button crearBotonCopiarJson(String jsonText) {
+		Button btnCopiar = new Button("Copiar JSON", VaadinIcon.COPY.create());
+		btnCopiar.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+		btnCopiar.getStyle().set("color", "#475569");
+		btnCopiar.addClickListener(e -> {
+			btnCopiar.getElement().executeJs(
+				"navigator.clipboard.writeText($0).then(() => {" +
+				"  this.setAttribute('title', 'Copiado!');" +
+				"  const orig = this.textContent;" +
+				"  this.querySelector('vaadin-button-icon') && (this.querySelector('vaadin-button-icon').style.color='#16a34a');" +
+				"  setTimeout(() => { this.setAttribute('title', 'Copiar JSON'); }, 2000);" +
+				"}).catch(() => {});",
+				jsonText
+			);
+			Notification.show("JSON copiado al portapapeles", 2000, Notification.Position.BOTTOM_CENTER)
+					.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+		});
+		return btnCopiar;
 	}
 
 	@Override

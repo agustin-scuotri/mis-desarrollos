@@ -1,11 +1,13 @@
 package com.desarrollos.views;
 
+import com.desarrollos.services.ArchivoService;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -16,10 +18,16 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.RouterLink;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class MainLayout extends AppLayout {
 
-	public MainLayout() {
+	private final ArchivoService archivoService;
+	private Span badgePendientes;
+
+	@Autowired
+	public MainLayout(ArchivoService archivoService) {
+		this.archivoService = archivoService;
 		crearCabecera();
 		crearMenuLateral();
 
@@ -84,6 +92,17 @@ public class MainLayout extends AppLayout {
 			"document.head.appendChild(style);";
 
 		getElement().executeJs(cssGlobal);
+
+		// Refresh badge on every navigation
+		addAttachListener(e -> actualizarBadgePendientes());
+	}
+
+	private void actualizarBadgePendientes() {
+		if (badgePendientes != null) {
+			long count = archivoService.contarFiltrado("", "", "PENDIENTE");
+			badgePendientes.setText(String.valueOf(count));
+			badgePendientes.setVisible(count > 0);
+		}
 	}
 
 	private void crearCabecera() {
@@ -185,6 +204,22 @@ public class MainLayout extends AppLayout {
 		RouterLink linkArchivos  = crearItemMenu(getTranslation("app.archivos"),   VaadinIcon.FILE_PROCESS, AbmArchivosView.class);
 		RouterLink linkConversor = crearItemMenu(getTranslation("app.conversor"),  VaadinIcon.EXCHANGE,     ConversorView.class);
 		RouterLink linkDocumentos= crearItemMenu("Lista de JSONs",                 VaadinIcon.FILE_TABLE,   AbmDocumentosConvertidosView.class);
+
+		// Badge de pendientes en el ítem Archivos
+		badgePendientes = new Span("0");
+		badgePendientes.getStyle()
+				.set("background-color", "#dc2626")
+				.set("color", "white")
+				.set("border-radius", "10px")
+				.set("padding", "2px 7px")
+				.set("font-size", "0.68rem")
+				.set("font-weight", "700")
+				.set("margin-left", "auto")
+				.set("min-width", "18px")
+				.set("text-align", "center")
+				.set("line-height", "1.5");
+		badgePendientes.setVisible(false);
+		linkArchivos.add(badgePendientes);
 
 		Map<RouterLink, String> itemsMenu = new LinkedHashMap<>();
 		itemsMenu.put(linkInicio,     getTranslation("app.inicio").toLowerCase());

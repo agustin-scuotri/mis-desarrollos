@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
@@ -212,8 +213,25 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         anchorDescarga.add(botonDescarga);
         anchorDescarga.getStyle().set("margin-top", "8px");
 
+        // Botón copiar JSON
+        Button btnCopiar = new Button("Copiar JSON", VaadinIcon.COPY.create());
+        btnCopiar.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+        btnCopiar.getStyle().set("color", "#475569");
+        final String jsonParaCopiar = jsonStr;
+        btnCopiar.addClickListener(e -> {
+            btnCopiar.getElement().executeJs(
+                "navigator.clipboard.writeText($0).catch(()=>{});", jsonParaCopiar);
+            Notification.show("JSON copiado", 2000, Notification.Position.BOTTOM_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        });
+
+        HorizontalLayout accionesBotones = new HorizontalLayout(anchorDescarga, btnCopiar);
+        accionesBotones.setSpacing(true);
+        accionesBotones.setAlignItems(FlexComponent.Alignment.CENTER);
+        accionesBotones.getStyle().set("margin-top", "8px");
+
         panelDetalle.add(header, emisorDetails, comprobanteDetails, financieroDetails,
-                conceptosDetails, anchorDescarga);
+                conceptosDetails, accionesBotones);
     }
 
     private void estilizarDetails(Details details, String color) {
@@ -294,6 +312,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         }, "Nombre");
         agregarColumna(DocumentoConvertido::getCuit, "Cuit del emisor");
         agregarColumna(DocumentoConvertido::getNumeroComprobante, "Nro. comprobante");
+        agregarColumnaFecha(DocumentoConvertido::getFechaConversion, "Fecha de conversión");
     }
 
     @Override
@@ -531,7 +550,17 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         Button btnCerrar = new Button("Cerrar", e -> dialog.close());
         btnCerrar.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        dialog.getFooter().add(anchorDescarga, btnCerrar);
+        Button btnCopiarJson = new Button("Copiar JSON", VaadinIcon.COPY.create());
+        btnCopiarJson.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        final String jsonACopiar = json;
+        btnCopiarJson.addClickListener(e -> {
+            btnCopiarJson.getElement().executeJs(
+                "navigator.clipboard.writeText($0).catch(()=>{});", jsonACopiar);
+            Notification.show("JSON copiado al portapapeles", 2000, Notification.Position.BOTTOM_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        });
+
+        dialog.getFooter().add(anchorDescarga, btnCopiarJson, btnCerrar);
         dialog.open();
     }
 

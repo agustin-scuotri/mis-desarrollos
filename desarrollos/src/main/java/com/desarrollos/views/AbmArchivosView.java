@@ -9,6 +9,7 @@ import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
@@ -20,6 +21,7 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.progressbar.ProgressBar;
 import org.springframework.data.domain.Sort;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -31,11 +33,52 @@ import com.vaadin.flow.router.Route;
 public class AbmArchivosView extends CrudView<Archivo> implements BeforeEnterObserver {
     private final ArchivoService service;
     private ComboBox<String> filtroEstado;
+    private Span textoProgreso;
+    private ProgressBar progressBar;
 
     public AbmArchivosView(ArchivoService service) {
         super(Archivo.class);
         this.service = service;
         setTitulo(getTranslation("app.archivos"));
+
+        // ── Barra de progreso global ──────────────────────────────────────────
+        progressBar = new ProgressBar();
+        progressBar.setMin(0);
+        progressBar.setMax(1);
+        progressBar.getStyle()
+                .set("height", "6px")
+                .set("border-radius", "3px")
+                .set("margin-bottom", "2px");
+
+        textoProgreso = new Span();
+        textoProgreso.getStyle()
+                .set("font-size", "0.78rem")
+                .set("color", "#64748b")
+                .set("font-weight", "500");
+
+        Div barraProgreso = new Div(textoProgreso, progressBar);
+        barraProgreso.getStyle()
+                .set("padding", "8px 0 4px 0")
+                .set("display", "flex")
+                .set("flex-direction", "column")
+                .set("gap", "4px");
+
+        addComponentAtIndex(1, barraProgreso);
+
+        // ── CSS pulsing dot para estado PENDIENTE ─────────────────────────────
+        getElement().executeJs(
+            "if (!document.getElementById('pulse-css')) {" +
+            "  const s = document.createElement('style');" +
+            "  s.id = 'pulse-css';" +
+            "  s.textContent = '@keyframes pendiente-pulse {" +
+            "    0%, 100% { box-shadow: 0 0 0 0 rgba(217,119,6,0.5); }" +
+            "    50% { box-shadow: 0 0 0 5px rgba(217,119,6,0); }" +
+            "  }" +
+            "  .pendiente-pulse { animation: pendiente-pulse 2s ease-in-out infinite; }';" +
+            "  document.head.appendChild(s);" +
+            "}"
+        );
+
         actualizarLista();
     }
 
@@ -60,6 +103,28 @@ public class AbmArchivosView extends CrudView<Archivo> implements BeforeEnterObs
         grid.setItems(service.listarPaginado(paginaActual, filasPorPagina, codigo, nombre, estadoDB,
                 Sort.by(Sort.Direction.ASC, "codigoNumerico")));
         actualizarPaginacion();
+        actualizarBarraProgreso();
+    }
+
+    private void actualizarBarraProgreso() {
+        if (textoProgreso == null || progressBar == null) return;
+        long total      = service.contarFiltrado("", "", "");
+        long procesados = service.contarFiltrado("", "", "PROCESADO");
+        if (total == 0) {
+            textoProgreso.setText("Sin archivos cargados");
+            progressBar.setValue(0);
+        } else {
+            double ratio = procesados / (double) total;
+            int pct = (int) Math.round(ratio * 100);
+            textoProgreso.setText(procesados + " / " + total + " procesados (" + pct + "%)");
+            progressBar.setValue(ratio);
+            // Color verde si 100%, naranja si en progreso
+            if (pct == 100) {
+                progressBar.getStyle().set("--vaadin-progress-bar-color", "#16a34a");
+            } else {
+                progressBar.getStyle().set("--vaadin-progress-bar-color", "#2563eb");
+            }
+        }
     }
 
     private String mapearEstado(String displayValue) {
@@ -126,6 +191,12 @@ public class AbmArchivosView extends CrudView<Archivo> implements BeforeEnterObs
                         .set("display", "inline-flex")
                         .set("align-items", "center")
                         .set("cursor", "pointer");
+
+                // Tooltip nativo con el mensaje de error
+                String causaTooltip = archivo.getMensajeError();
+                if (causaTooltip != null && !causaTooltip.isBlank()) {
+                    errorPill.getElement().setAttribute("title", causaTooltip);
+                }
 
                 errorPill.addClickListener(e -> {
                     Dialog dialog = new Dialog();
@@ -199,11 +270,12 @@ public class AbmArchivosView extends CrudView<Archivo> implements BeforeEnterObs
             icono.getStyle().set("color", fgColor);
             texto.getStyle().set("font-size", "0.75rem").set("font-weight", "600").set("color", fgColor);
 
-            // Badge pill
+            // Badge pill con animación pulsante
             HorizontalLayout pill = new HorizontalLayout(icono, texto);
             pill.setAlignItems(FlexComponent.Alignment.CENTER);
             pill.setSpacing(false);
             pill.setPadding(false);
+            pill.addClassName("pendiente-pulse");
             pill.getStyle()
                     .set("background-color", bgColor)
                     .set("border-radius", "20px")
