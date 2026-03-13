@@ -170,7 +170,7 @@ public class ConversorView extends FormView {
 				.set("--vaadin-progress-value-background", "#2563eb");
 
 		mensajeProcesando.getStyle()
-				.set("color", "#1e293b").set("font-size", "1rem")
+				.set("color", "var(--lumo-header-text-color, #1e293b)").set("font-size", "1rem")
 				.set("margin", "0").set("font-weight", "600");
 
 		panelProgreso.add(mensajeProcesando, progressBar);
@@ -270,7 +270,7 @@ public class ConversorView extends FormView {
 					.set("background", "#dc2626").set("color", "white")
 					.set("box-shadow", "none");
 			default          -> circulo.getStyle()
-					.set("background", "#e2e8f0").set("color", "#94a3b8")
+					.set("background", "var(--lumo-contrast-20pct, #e2e8f0)").set("color", "var(--lumo-tertiary-text-color, #94a3b8)")
 					.set("box-shadow", "none");
 		}
 	}
@@ -280,7 +280,7 @@ public class ConversorView extends FormView {
 			case "activo"    -> label.getStyle().set("color", "#2563eb").set("font-weight", "600");
 			case "completado" -> label.getStyle().set("color", "#16a34a").set("font-weight", "500");
 			case "error"     -> label.getStyle().set("color", "#dc2626").set("font-weight", "500");
-			default          -> label.getStyle().set("color", "#94a3b8").set("font-weight", "400");
+			default          -> label.getStyle().set("color", "var(--lumo-tertiary-text-color, #94a3b8)").set("font-weight", "400");
 		}
 	}
 
@@ -341,7 +341,7 @@ public class ConversorView extends FormView {
 		// Resultado JSON (colapsable)
 		H3 tituloResultado = new H3("Resultado JSON");
 		tituloResultado.getStyle()
-				.set("color", "#1e293b").set("margin", "0").set("font-weight", "700")
+				.set("color", "var(--lumo-header-text-color, #1e293b)").set("margin", "0").set("font-weight", "700")
 				.set("font-size", "1rem").set("letter-spacing", "-0.2px");
 
 		Pre jsonViewer = new Pre();
@@ -741,7 +741,7 @@ public class ConversorView extends FormView {
 		Paragraph mensaje = new Paragraph(
 				"El documento procesado no es una factura válida o le faltan campos obligatorios.");
 		mensaje.getStyle()
-				.set("text-align", "center").set("color", "#475569")
+				.set("text-align", "center").set("color", "var(--lumo-body-text-color, #475569)")
 				.set("font-size", "0.875rem").set("white-space", "pre-line").set("margin", "0");
 
 		VerticalLayout listaCampos = new VerticalLayout();
@@ -792,7 +792,7 @@ public class ConversorView extends FormView {
 				"Ya existe una factura registrada con la misma combinación de datos.\n"
 				+ "El archivo fue marcado como procesado con error y no volverá a aparecer en el selector.");
 		mensaje.getStyle()
-				.set("text-align", "center").set("color", "#475569")
+				.set("text-align", "center").set("color", "var(--lumo-body-text-color, #475569)")
 				.set("font-size", "0.875rem").set("white-space", "pre-line").set("margin", "0");
 
 		VerticalLayout detalle = new VerticalLayout();
@@ -850,7 +850,7 @@ public class ConversorView extends FormView {
 				"No se permiten facturas con subtotal negativo.\n"
 				+ "Revisá el documento e intentá nuevamente.");
 		mensaje.getStyle()
-				.set("text-align", "center").set("color", "#475569")
+				.set("text-align", "center").set("color", "var(--lumo-body-text-color, #475569)")
 				.set("font-size", "0.875rem").set("white-space", "pre-line").set("margin", "0");
 
 		VerticalLayout detalle = new VerticalLayout();
@@ -963,7 +963,7 @@ public class ConversorView extends FormView {
 	private Button crearBotonCopiarJson(String jsonText) {
 		Button btnCopiar = new Button("Copiar JSON", VaadinIcon.COPY.create());
 		btnCopiar.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
-		btnCopiar.getStyle().set("color", "#475569");
+		btnCopiar.getStyle().set("color", "var(--lumo-body-text-color, #475569)");
 		btnCopiar.addClickListener(e -> {
 			btnCopiar.getElement().executeJs(
 				"navigator.clipboard.writeText($0).then(() => {" +
@@ -1058,7 +1058,7 @@ public class ConversorView extends FormView {
 				"El contenido de este archivo es idéntico a uno procesado anteriormente.\n"
 				+ "El archivo volvió a estado Pendiente.");
 		mensaje.getStyle()
-				.set("text-align", "center").set("color", "#475569")
+				.set("text-align", "center").set("color", "var(--lumo-body-text-color, #475569)")
 				.set("font-size", "0.875rem").set("white-space", "pre-line").set("margin", "0");
 
 		VerticalLayout detalle = new VerticalLayout();
@@ -1105,7 +1105,7 @@ public class ConversorView extends FormView {
 				"Ocurrió un error de conexión al procesar el archivo.\n"
 				+ "El archivo quedó en estado Pendiente. Por favor, volvé a intentarlo.");
 		mensaje.getStyle()
-				.set("text-align", "center").set("color", "#475569")
+				.set("text-align", "center").set("color", "var(--lumo-body-text-color, #475569)")
 				.set("font-size", "0.875rem").set("white-space", "pre-line").set("margin", "0");
 
 		VerticalLayout contenido = new VerticalLayout(icono, titulo, mensaje);

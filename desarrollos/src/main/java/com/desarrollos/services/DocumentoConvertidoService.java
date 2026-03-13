@@ -298,6 +298,18 @@ public class DocumentoConvertidoService {
         return repository.findAll();
     }
 
+    // ── Para timeline ────────────────────────────────────────────────────────
+    public List<DocumentoConvertido> obtenerRecientes(int n) {
+        return repository.findTop10ByOrderByFechaConversionDesc().stream().limit(n).toList();
+    }
+
+    // ── Para comparativa mes anterior ────────────────────────────────────────
+    public long contarConvertidosEnMes(YearMonth mes) {
+        LocalDateTime desde = mes.atDay(1).atStartOfDay();
+        LocalDateTime hasta = mes.atEndOfMonth().atTime(23, 59, 59);
+        return repository.countByFechaConversionBetween(desde, hasta);
+    }
+
     // ── Paginación server-side para AbmDocumentosConvertidosView ─────────────
     public List<DocumentoConvertido> listarPaginado(int page, int size,
             String codigo, String nombre, String cuit, String centroEmision, String comprobante) {

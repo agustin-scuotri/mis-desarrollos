@@ -1,5 +1,7 @@
 package com.desarrollos.services;
 
+import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,6 +105,35 @@ public class ArchivoService {
                 codigo != null ? codigo : "",
                 nombre != null ? nombre.toLowerCase() : "",
                 estado != null ? estado : "");
+    }
+
+    // ── Para timeline ────────────────────────────────────────────────────────
+    public List<Archivo> obtenerRecientes(int n) {
+        return repository.findTop10ByOrderByFechaCreacionDesc().stream().limit(n).toList();
+    }
+
+    public List<Archivo> obtenerErroresRecientes(int n) {
+        return repository.findByEstadoConversionOrderByFechaCreacionDesc(
+                "PROCESADO_ERROR", PageRequest.of(0, n));
+    }
+
+    // ── Para comparativa mes anterior ────────────────────────────────────────
+    public long contarCreadosEnMes(YearMonth mes) {
+        LocalDateTime desde = mes.atDay(1).atStartOfDay();
+        LocalDateTime hasta = mes.atEndOfMonth().atTime(23, 59, 59);
+        return repository.countByFechaCreacionBetween(desde, hasta);
+    }
+
+    public long contarProcesadosEnMes(YearMonth mes) {
+        LocalDateTime desde = mes.atDay(1).atStartOfDay();
+        LocalDateTime hasta = mes.atEndOfMonth().atTime(23, 59, 59);
+        return repository.countByEstadoConversionAndFechaCreacionBetween("PROCESADO", desde, hasta);
+    }
+
+    public long contarErroresEnMes(YearMonth mes) {
+        LocalDateTime desde = mes.atDay(1).atStartOfDay();
+        LocalDateTime hasta = mes.atEndOfMonth().atTime(23, 59, 59);
+        return repository.countByEstadoConversionAndFechaCreacionBetween("PROCESADO_ERROR", desde, hasta);
     }
 
     @Transactional

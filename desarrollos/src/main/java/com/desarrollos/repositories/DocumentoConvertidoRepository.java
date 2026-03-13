@@ -59,6 +59,10 @@ public interface DocumentoConvertidoRepository extends JpaRepository<DocumentoCo
            "WHERE d.fechaConversion >= :desde AND d.total IS NOT NULL")
     List<Object[]> findTotalesDesde(@Param("desde") LocalDateTime desde);
 
+    // ── Para timeline y comparativa ───────────────────────────────────────────
+    List<DocumentoConvertido> findTop10ByOrderByFechaConversionDesc();
+    long countByFechaConversionBetween(LocalDateTime desde, LocalDateTime hasta);
+
     // ── Verificación de factura duplicada (clave única de negocio) ────────────
     @Query("SELECT COUNT(d) FROM DocumentoConvertido d WHERE " +
            "d.cuit = :cuit AND d.codigoArca = :codigoArca AND " +

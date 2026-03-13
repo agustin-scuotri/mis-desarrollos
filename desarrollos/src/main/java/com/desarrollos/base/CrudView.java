@@ -51,7 +51,7 @@ public abstract class CrudView<T> extends VerticalLayout {
         setSizeFull();
         setSpacing(true);
         setPadding(true);
-        getStyle().set("background-color", "#f8fafc");
+        getStyle().set("background-color", "var(--lumo-contrast-5pct, #f8fafc)");
 
         configurarComponentes(claseEntidad);
         barraPaginacion = crearBarraPaginacion();
@@ -67,12 +67,12 @@ public abstract class CrudView<T> extends VerticalLayout {
                 .set("margin", "0")
                 .set("font-size", "1.4rem")
                 .set("font-weight", "700")
-                .set("color", "#1e293b")
+                .set("color", "var(--lumo-header-text-color, #1e293b)")
                 .set("letter-spacing", "-0.3px");
 
         // ── Botón configuración ───────────────────────────────────────────────
         Icon iconoConfig = VaadinIcon.OPTIONS.create();
-        iconoConfig.getStyle().set("color", "#64748b");
+        iconoConfig.getStyle().set("color", "var(--lumo-secondary-text-color, #64748b)");
         iconoConfig.setSize("20px");
 
         btnConfiguracion = new Button(iconoConfig);
@@ -109,7 +109,7 @@ public abstract class CrudView<T> extends VerticalLayout {
         Span labelFilas = new Span("Filas:");
         labelFilas.getStyle()
                 .set("font-size", "0.8rem")
-                .set("color", "#64748b")
+                .set("color", "var(--lumo-secondary-text-color, #64748b)")
                 .set("white-space", "nowrap");
 
         HorizontalLayout layoutFilas = new HorizontalLayout(labelFilas, comboFilas);
@@ -140,7 +140,7 @@ public abstract class CrudView<T> extends VerticalLayout {
         grid.getStyle()
                 .set("border-radius", "12px")
                 .set("box-shadow", "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05)")
-                .set("background", "white");
+                .set("background", "var(--lumo-base-color, white)");
 
         // ── Estado vacío mejorado: ícono + título + subtítulo ─────────────────
         VerticalLayout layoutVacio = new VerticalLayout();
@@ -157,12 +157,12 @@ public abstract class CrudView<T> extends VerticalLayout {
         tituloVacio.getStyle()
                 .set("font-size", "1rem")
                 .set("font-weight", "600")
-                .set("color", "#64748b");
+                .set("color", "var(--lumo-secondary-text-color, #64748b)");
 
         Span subtituloVacio = new Span("Usá el botón \"Agregar\" para crear uno nuevo");
         subtituloVacio.getStyle()
                 .set("font-size", "0.8rem")
-                .set("color", "#94a3b8");
+                .set("color", "var(--lumo-tertiary-text-color, #94a3b8)");
 
         layoutVacio.add(emptyIcon, tituloVacio, subtituloVacio);
         grid.setEmptyStateComponent(layoutVacio);
@@ -231,9 +231,9 @@ public abstract class CrudView<T> extends VerticalLayout {
 
         Icon iconoAcciones = VaadinIcon.COG.create();
         iconoAcciones.setSize("13px");
-        iconoAcciones.getStyle().set("color", "#64748b").set("flex-shrink", "0");
+        iconoAcciones.getStyle().set("color", "var(--lumo-secondary-text-color, #64748b)").set("flex-shrink", "0");
         Span textoAcciones = new Span(getTranslation("archivo.acciones"));
-        textoAcciones.getStyle().set("font-weight", "600").set("color", "#334155");
+        textoAcciones.getStyle().set("font-weight", "600").set("color", "var(--lumo-header-text-color, #334155)");
         HorizontalLayout cabeceraAcciones = new HorizontalLayout(iconoAcciones, textoAcciones);
         cabeceraAcciones.setAlignItems(Alignment.CENTER);
         cabeceraAcciones.setSpacing(false);
@@ -274,7 +274,7 @@ public abstract class CrudView<T> extends VerticalLayout {
         spanPagina = new Span("Página 1 de 1");
         spanPagina.getStyle()
                 .set("font-size", "0.8rem")
-                .set("color", "#64748b")
+                .set("color", "var(--lumo-secondary-text-color, #64748b)")
                 .set("padding", "0 8px");
 
         HorizontalLayout barra = new HorizontalLayout(btnAnterior, spanPagina, btnSiguiente);
@@ -284,7 +284,7 @@ public abstract class CrudView<T> extends VerticalLayout {
         barra.setJustifyContentMode(JustifyContentMode.CENTER);
         barra.getStyle()
                 .set("padding", "6px 0")
-                .set("border-top", "1px solid #e2e8f0");
+                .set("border-top", "1px solid var(--lumo-contrast-20pct, #e2e8f0)");
         return barra;
     }
 
@@ -311,14 +311,14 @@ public abstract class CrudView<T> extends VerticalLayout {
         else                                                            vi = VaadinIcon.LINES;
         Icon icon = vi.create();
         icon.setSize("13px");
-        icon.getStyle().set("color", "#64748b").set("flex-shrink", "0");
+        icon.getStyle().set("color", "var(--lumo-secondary-text-color, #64748b)").set("flex-shrink", "0");
         return icon;
     }
 
     // ── Cabecera con ícono + texto ─────────────────────────────────────────────
     protected HorizontalLayout crearTituloCabecera(String cabecera) {
         Span texto = new Span(cabecera);
-        texto.getStyle().set("font-weight", "600").set("color", "#334155");
+        texto.getStyle().set("font-weight", "600").set("color", "var(--lumo-header-text-color, #334155)");
         HorizontalLayout hl = new HorizontalLayout(iconoParaCabecera(cabecera), texto);
         hl.setAlignItems(Alignment.CENTER);
         hl.setSpacing(false);
@@ -472,7 +472,7 @@ public abstract class CrudView<T> extends VerticalLayout {
         HorizontalLayout deleteHL = crearItemSubMenu(VaadinIcon.TRASH, "Eliminar", "#dc2626");
         if (mostrarBotonEditar(item)) {
             deleteHL.getStyle()
-                    .set("border-top", "1px solid #e2e8f0")
+                    .set("border-top", "1px solid var(--lumo-contrast-20pct, #e2e8f0)")
                     .set("padding-top", "6px")
                     .set("margin-top", "2px");
         }
@@ -488,7 +488,7 @@ public abstract class CrudView<T> extends VerticalLayout {
         icon.setSize("14px");
         icon.getStyle().set("color", color);
         Span span = new Span(texto);
-        span.getStyle().set("font-size", "0.875rem").set("color", "#1e293b");
+        span.getStyle().set("font-size", "0.875rem").set("color", "var(--lumo-header-text-color, #1e293b)");
         HorizontalLayout hl = new HorizontalLayout(icon, span);
         hl.setAlignItems(Alignment.CENTER);
         hl.setSpacing(false);

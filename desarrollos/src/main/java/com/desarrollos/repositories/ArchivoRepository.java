@@ -25,6 +25,12 @@ public interface ArchivoRepository extends JpaRepository<Archivo, Long> {
     @Query(value = "SELECT codigo FROM archivos ORDER BY CAST(codigo AS INTEGER) DESC LIMIT 1", nativeQuery = true)
     String findUltimoCodigo();
 
+    // ── Para timeline y comparativa ───────────────────────────────────────────
+    List<Archivo> findTop10ByOrderByFechaCreacionDesc();
+    List<Archivo> findByEstadoConversionOrderByFechaCreacionDesc(String estado, Pageable pageable);
+    long countByFechaCreacionBetween(java.time.LocalDateTime desde, java.time.LocalDateTime hasta);
+    long countByEstadoConversionAndFechaCreacionBetween(String estado, java.time.LocalDateTime desde, java.time.LocalDateTime hasta);
+
     // ── Paginación con filtros ────────────────────────────────────────────────
     @Query("SELECT a FROM Archivo a WHERE " +
            "(:codigo = '' OR a.codigo LIKE CONCAT('%', :codigo, '%')) AND " +

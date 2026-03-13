@@ -53,7 +53,7 @@ public class AbmArchivosView extends CrudView<Archivo> implements BeforeEnterObs
         textoProgreso = new Span();
         textoProgreso.getStyle()
                 .set("font-size", "0.78rem")
-                .set("color", "#64748b")
+                .set("color", "var(--lumo-secondary-text-color, #64748b)")
                 .set("font-weight", "500");
 
         Div barraProgreso = new Div(textoProgreso, progressBar);
@@ -213,7 +213,7 @@ public class AbmArchivosView extends CrudView<Archivo> implements BeforeEnterObs
                     String causa = archivo.getMensajeError();
                     Paragraph mensaje = new Paragraph(causa != null && !causa.isBlank() ? causa : "No hay información adicional disponible.");
                     mensaje.getStyle()
-                            .set("text-align", "center").set("color", "#475569")
+                            .set("text-align", "center").set("color", "var(--lumo-body-text-color, #475569)")
                             .set("font-size", "0.875rem").set("white-space", "pre-line").set("margin", "0");
 
                     VerticalLayout cajaDetalle = new VerticalLayout();

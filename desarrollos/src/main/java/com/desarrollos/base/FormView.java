@@ -21,7 +21,7 @@ public abstract class FormView extends VerticalLayout {
         setSizeFull();
         setPadding(true);
         setSpacing(true);
-        getStyle().set("background-color", "#f8fafc");
+        getStyle().set("background-color", "var(--lumo-contrast-5pct, #f8fafc)");
 
         configurarEstructuraBase();
     }
@@ -30,7 +30,7 @@ public abstract class FormView extends VerticalLayout {
         // 1. Título
         tituloFormulario = new H2();
         tituloFormulario.getStyle()
-            .set("color", "#1e293b")
+            .set("color", "var(--lumo-header-text-color, #1e293b)")
             .set("font-size", "1.4rem")
             .set("font-weight", "700")
             .set("letter-spacing", "-0.3px")
@@ -61,7 +61,7 @@ public abstract class FormView extends VerticalLayout {
         contenidoPrincipal.setSpacing(true);
         contenidoPrincipal.setWidthFull();
         contenidoPrincipal.getStyle()
-                .set("background", "white")
+                .set("background", "var(--lumo-base-color, white)")
                 .set("border-radius", "14px")
                 .set("box-shadow", "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05)")
                 .set("padding", "24px");

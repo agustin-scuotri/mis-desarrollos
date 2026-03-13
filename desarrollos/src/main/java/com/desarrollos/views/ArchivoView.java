@@ -87,17 +87,17 @@ public class ArchivoView extends FormView implements HasUrlParameter<String>, Be
 
 		Span sep1 = new Span(" › ");
 		Span sep2 = new Span(" › ");
-		sep1.getStyle().set("color", "#94a3b8").set("margin", "0 2px");
-		sep2.getStyle().set("color", "#94a3b8").set("margin", "0 2px");
+		sep1.getStyle().set("color", "var(--lumo-tertiary-text-color, #94a3b8)").set("margin", "0 2px");
+		sep2.getStyle().set("color", "var(--lumo-tertiary-text-color, #94a3b8)").set("margin", "0 2px");
 
-		String linkStyle = "color: #64748b; font-size: 0.8rem; text-decoration: none;";
-		linkInicio.getStyle().set("color", "#64748b").set("font-size", "0.8rem").set("text-decoration", "none");
-		linkArchivos.getStyle().set("color", "#64748b").set("font-size", "0.8rem").set("text-decoration", "none");
+		String linkStyle = "color: var(--lumo-secondary-text-color, #64748b); font-size: 0.8rem; text-decoration: none;";
+		linkInicio.getStyle().set("color", "var(--lumo-secondary-text-color, #64748b)").set("font-size", "0.8rem").set("text-decoration", "none");
+		linkArchivos.getStyle().set("color", "var(--lumo-secondary-text-color, #64748b)").set("font-size", "0.8rem").set("text-decoration", "none");
 
 		breadcrumbDerecha.getStyle()
 				.set("font-size", "0.8rem")
 				.set("font-weight", "600")
-				.set("color", "#1e293b");
+				.set("color", "var(--lumo-header-text-color, #1e293b)");
 
 		HorizontalLayout breadcrumb = new HorizontalLayout(linkInicio, sep1, linkArchivos, sep2, breadcrumbDerecha);
 		breadcrumb.setSpacing(false);
@@ -241,7 +241,7 @@ public class ArchivoView extends FormView implements HasUrlParameter<String>, Be
 
 			Span hint = new Span("Click para ampliar");
 			hint.getStyle()
-					.set("font-size", "0.75rem").set("color", "#94a3b8")
+					.set("font-size", "0.75rem").set("color", "var(--lumo-tertiary-text-color, #94a3b8)")
 					.set("margin-top", "4px").set("display", "block");
 
 			galeriaContainer.add(new H3("Vista Previa del Documento"), img, hint);

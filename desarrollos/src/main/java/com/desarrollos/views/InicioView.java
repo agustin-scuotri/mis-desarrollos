@@ -1,12 +1,19 @@
 package com.desarrollos.views;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.desarrollos.entities.Archivo;
+import com.desarrollos.entities.DocumentoConvertido;
 import com.desarrollos.services.ArchivoService;
 import com.desarrollos.services.DocumentoConvertidoService;
 import com.vaadin.flow.component.button.Button;
@@ -74,14 +81,24 @@ public class InicioView extends VerticalLayout {
         errores     = archivos.stream().filter(a -> "PROCESADO_ERROR".equals(a.getEstadoConversion())).count();
         long documentos = documentoConvertidoService.listarTodos().size();
 
-        VerticalLayout cardArchivos   = crearCard("Archivos Cargados", String.valueOf(total),      VaadinIcon.COPY_O,       "#2563eb", "#eff6ff");
-        VerticalLayout cardProcesados = crearCard("Procesados",        String.valueOf(procesados), VaadinIcon.CHECK_CIRCLE, "#16a34a", "#f0fdf4");
-        VerticalLayout cardPendientes = crearCard("Pendientes",        String.valueOf(pendientes), VaadinIcon.CLOCK,        "#d97706", "#fffbeb");
-        VerticalLayout cardErrores    = crearCard("Errores",           String.valueOf(errores),    VaadinIcon.WARNING,      "#dc2626", "#fef2f2");
-        VerticalLayout cardConvert    = crearCard("Docs. Convertidos", String.valueOf(documentos), VaadinIcon.FILE_TABLE,   "#7c3aed", "#f5f3ff");
+        // ── Comparativa mes anterior ──────────────────────────────────────────
+        YearMonth mesActual  = YearMonth.now();
+        YearMonth mesAnterior = mesActual.minusMonths(1);
+        long totalMesAnt      = archivoService.contarCreadosEnMes(mesAnterior);
+        long procesadosMesAnt = archivoService.contarProcesadosEnMes(mesAnterior);
+        long erroresMesAnt    = archivoService.contarErroresEnMes(mesAnterior);
+        long docsMesAnt       = documentoConvertidoService.contarConvertidosEnMes(mesAnterior);
+        long totalMesActual   = archivoService.contarCreadosEnMes(mesActual);
+        long docsMesActual    = documentoConvertidoService.contarConvertidosEnMes(mesActual);
+
+        VerticalLayout cardArchivos   = crearCard("Archivos Cargados", String.valueOf(total),      VaadinIcon.COPY_O,       "#2563eb", "#eff6ff", totalMesActual, totalMesAnt);
+        VerticalLayout cardProcesados = crearCard("Procesados",        String.valueOf(procesados), VaadinIcon.CHECK_CIRCLE, "#16a34a", "#f0fdf4", archivoService.contarProcesadosEnMes(mesActual), procesadosMesAnt);
+        VerticalLayout cardPendientes = crearCard("Pendientes",        String.valueOf(pendientes), VaadinIcon.CLOCK,        "#d97706", "#fffbeb", -1, -1);
+        VerticalLayout cardErrores    = crearCard("Errores",           String.valueOf(errores),    VaadinIcon.WARNING,      "#dc2626", "#fef2f2", archivoService.contarErroresEnMes(mesActual), erroresMesAnt);
+        VerticalLayout cardConvert    = crearCard("Docs. Convertidos", String.valueOf(documentos), VaadinIcon.FILE_TABLE,   "#7c3aed", "#f5f3ff", docsMesActual, docsMesAnt);
         String tasaError = (procesados + errores) > 0
                 ? String.format("%.1f%%", (errores * 100.0) / (procesados + errores)) : "—";
-        VerticalLayout cardTasaError  = crearCard("Tasa de Error",     tasaError,                  VaadinIcon.CHART_LINE,   "#9333ea", "#faf5ff");
+        VerticalLayout cardTasaError  = crearCard("Tasa de Error",     tasaError,                  VaadinIcon.CHART_LINE,   "#9333ea", "#faf5ff", -1, -1);
 
         hacerClickeable(cardArchivos,   () -> getUI().ifPresent(ui -> ui.navigate("ABMarchivos")));
         hacerClickeable(cardProcesados, () -> getUI().ifPresent(ui -> ui.navigate("ABMarchivos",
@@ -241,7 +258,11 @@ public class InicioView extends VerticalLayout {
         montosCard.addComponentAtIndex(1, rangoMRow);
 
         chartsRow2.add(provCard, montosCard);
-        add(titulo, subtitulo, cards, chartsRow, chartsRow2);
+
+        // ── Timeline de actividad reciente ────────────────────────────────────
+        Div timelineCard = crearTimeline();
+
+        add(titulo, subtitulo, cards, chartsRow, chartsRow2, timelineCard);
     }
 
     // ── Carga/recarga el gráfico de barras según período ──────────────────────
@@ -291,9 +312,9 @@ public class InicioView extends VerticalLayout {
         if (btnActivo != null) {
             btnActivo.getStyle()
                     .set("background", "transparent")
-                    .set("color", "#64748b")
+                    .set("color", "var(--lumo-secondary-text-color, #64748b)")
                     .set("font-weight", "400")
-                    .set("border-color", "#e2e8f0");
+                    .set("border-color", "var(--lumo-contrast-20pct, #e2e8f0)");
         }
         btnActivo = btn;
         btn.getStyle()
@@ -319,9 +340,9 @@ public class InicioView extends VerticalLayout {
         card.addClickListener(e -> accion.run());
     }
 
-    // ── Card métrica ──────────────────────────────────────────────────────────
+    // ── Card métrica con comparativa mes anterior ─────────────────────────────
     private VerticalLayout crearCard(String etiqueta, String valor, VaadinIcon icono,
-                                     String color, String bgIcono) {
+                                     String color, String bgIcono, long mesActual, long mesAnt) {
         VerticalLayout card = new VerticalLayout();
         card.setPadding(false);
         card.setSpacing(false);
@@ -380,8 +401,196 @@ public class InicioView extends VerticalLayout {
                 .set("margin-top", "2px");
 
         card.add(icon, valorSpan, etiquetaSpan);
+
+        // ── Delta vs mes anterior ─────────────────────────────────────────────
+        if (mesActual >= 0 && mesAnt >= 0) {
+            Span delta = crearDeltaMes(mesActual, mesAnt);
+            card.add(delta);
+        }
+
         return card;
     }
+
+    private Span crearDeltaMes(long actual, long anterior) {
+        Span delta = new Span();
+        delta.getStyle().set("font-size", "0.72rem").set("font-weight", "600").set("margin-top", "2px");
+
+        if (anterior == 0 && actual == 0) {
+            delta.setText("Sin datos este mes");
+            delta.getStyle().set("color", "var(--lumo-tertiary-text-color, #94a3b8)");
+        } else if (anterior == 0) {
+            delta.setText("↑ nuevo este mes");
+            delta.getStyle().set("color", "#16a34a");
+        } else {
+            long diff = actual - anterior;
+            double pct = Math.abs(diff * 100.0 / anterior);
+            String pctStr = pct >= 1 ? String.format("%.0f%%", pct) : "<1%";
+            if (diff > 0) {
+                delta.setText("↑ " + pctStr + " vs mes ant.");
+                delta.getStyle().set("color", "#16a34a");
+            } else if (diff < 0) {
+                delta.setText("↓ " + pctStr + " vs mes ant.");
+                delta.getStyle().set("color", "#dc2626");
+            } else {
+                delta.setText("= igual que mes ant.");
+                delta.getStyle().set("color", "var(--lumo-secondary-text-color, #64748b)");
+            }
+        }
+        return delta;
+    }
+
+    // ── Timeline de actividad reciente ─────────────────────────────────────────
+    private Div crearTimeline() {
+        Div card = new Div();
+        card.getStyle()
+                .set("background", "var(--lumo-base-color, white)")
+                .set("border-radius", "14px")
+                .set("box-shadow", "0 1px 3px rgba(0,0,0,0.08)")
+                .set("padding", "20px 24px")
+                .set("margin-top", "16px")
+                .set("width", "100%");
+
+        Span titulo = new Span("Actividad reciente");
+        titulo.getStyle()
+                .set("font-weight", "700")
+                .set("font-size", "1rem")
+                .set("color", "var(--lumo-header-text-color, #1e293b)")
+                .set("display", "block")
+                .set("margin-bottom", "16px");
+
+        List<EventoActividad> eventos = obtenerActividadReciente();
+
+        Div feed = new Div();
+        feed.getStyle().set("display", "flex").set("flex-direction", "column").set("gap", "0");
+
+        if (eventos.isEmpty()) {
+            Span vacio = new Span("No hay actividad reciente registrada.");
+            vacio.getStyle().set("color", "var(--lumo-secondary-text-color, #64748b)")
+                    .set("font-size", "0.875rem");
+            feed.add(vacio);
+        } else {
+            for (int i = 0; i < eventos.size(); i++) {
+                feed.add(crearEntradaTimeline(eventos.get(i), i == eventos.size() - 1));
+            }
+        }
+
+        card.add(titulo, feed);
+        return card;
+    }
+
+    private Div crearEntradaTimeline(EventoActividad ev, boolean esUltimo) {
+        // Punto del timeline
+        Div punto = new Div();
+        punto.getStyle()
+                .set("width", "10px").set("height", "10px")
+                .set("border-radius", "50%")
+                .set("background-color", ev.color())
+                .set("flex-shrink", "0")
+                .set("margin-top", "5px");
+
+        // Línea vertical conectora
+        Div lineaWrapper = new Div(punto);
+        lineaWrapper.getStyle()
+                .set("display", "flex").set("flex-direction", "column")
+                .set("align-items", "center").set("width", "20px").set("flex-shrink", "0");
+
+        if (!esUltimo) {
+            Div linea = new Div();
+            linea.getStyle()
+                    .set("width", "2px").set("flex-grow", "1").set("min-height", "24px")
+                    .set("background-color", "var(--lumo-contrast-20pct, #e2e8f0)")
+                    .set("margin-top", "4px");
+            lineaWrapper.add(linea);
+        }
+
+        // Texto
+        Span descripcion = new Span(ev.descripcion());
+        descripcion.getStyle()
+                .set("font-size", "0.875rem").set("font-weight", "500")
+                .set("color", "var(--lumo-header-text-color, #1e293b)");
+
+        Span tiempo = new Span(tiempoRelativo(ev.tiempo()));
+        tiempo.getStyle()
+                .set("font-size", "0.75rem")
+                .set("color", "var(--lumo-secondary-text-color, #64748b)")
+                .set("margin-left", "8px");
+
+        Div textoRow = new Div(descripcion, tiempo);
+        textoRow.getStyle().set("display", "flex").set("align-items", "baseline")
+                .set("flex-wrap", "wrap").set("gap", "0");
+
+        Div entrada = new Div(lineaWrapper, textoRow);
+        entrada.getStyle()
+                .set("display", "flex").set("gap", "12px")
+                .set("align-items", "flex-start").set("min-height", "32px");
+        return entrada;
+    }
+
+    private List<EventoActividad> obtenerActividadReciente() {
+        List<EventoActividad> eventos = new ArrayList<>();
+
+        // Conversiones exitosas
+        documentoConvertidoService.obtenerRecientes(8).forEach(doc -> {
+            if (doc.getFechaConversion() == null) return;
+            String codigo = doc.getArchivo() != null ? doc.getArchivo().getCodigo() : "?";
+            String nro = doc.getNumeroComprobante() != null && !doc.getNumeroComprobante().isBlank()
+                    ? " · Nro. " + doc.getNumeroComprobante() : "";
+            String razon = doc.getRazonSocial() != null && !doc.getRazonSocial().isBlank()
+                    ? " (" + doc.getRazonSocial() + ")" : "";
+            eventos.add(new EventoActividad(
+                    doc.getFechaConversion(),
+                    "Archivo " + codigo + nro + razon + " — convertido exitosamente",
+                    "#16a34a"
+            ));
+        });
+
+        // Errores recientes
+        archivoService.obtenerErroresRecientes(5).forEach(arch -> {
+            if (arch.getFechaCreacion() == null) return;
+            String msg = arch.getMensajeError() != null && !arch.getMensajeError().isBlank()
+                    ? ": " + arch.getMensajeError().substring(0, Math.min(60, arch.getMensajeError().length()))
+                    : "";
+            eventos.add(new EventoActividad(
+                    arch.getFechaCreacion(),
+                    "Archivo " + arch.getCodigo() + " — error en conversión" + msg,
+                    "#dc2626"
+            ));
+        });
+
+        // Archivos nuevos cargados (últimos 5)
+        archivoService.obtenerRecientes(5).forEach(arch -> {
+            if (arch.getFechaCreacion() == null) return;
+            // Solo mostrar como "nuevo" si no está ya cubierto por otro evento
+            boolean yaIncluido = eventos.stream().anyMatch(e ->
+                    e.descripcion().startsWith("Archivo " + arch.getCodigo() + " —"));
+            if (!yaIncluido) {
+                eventos.add(new EventoActividad(
+                        arch.getFechaCreacion(),
+                        "Archivo " + arch.getCodigo() + " — cargado al sistema",
+                        "#2563eb"
+                ));
+            }
+        });
+
+        return eventos.stream()
+                .sorted(Comparator.comparing(EventoActividad::tiempo).reversed())
+                .limit(12)
+                .collect(Collectors.toList());
+    }
+
+    private String tiempoRelativo(LocalDateTime tiempo) {
+        LocalDateTime ahora = LocalDateTime.now();
+        long minutos = ChronoUnit.MINUTES.between(tiempo, ahora);
+        if (minutos < 1) return "ahora mismo";
+        if (minutos < 60) return "hace " + minutos + " min";
+        long horas = ChronoUnit.HOURS.between(tiempo, ahora);
+        if (horas < 24) return "hace " + horas + " h";
+        long dias = ChronoUnit.DAYS.between(tiempo.toLocalDate(), ahora.toLocalDate());
+        if (dias < 30) return "hace " + dias + " d";
+        return tiempo.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    }
+
+    private record EventoActividad(LocalDateTime tiempo, String descripcion, String color) {}
 
     // ── Card contenedor de gráfico (simple) ───────────────────────────────────
     private Div crearCardChart(String titulo, Div canvas, String flex,
@@ -476,9 +685,9 @@ public class InicioView extends VerticalLayout {
         if (btnMontoActivo != null) {
             btnMontoActivo.getStyle()
                     .set("background", "transparent")
-                    .set("color", "#64748b")
+                    .set("color", "var(--lumo-secondary-text-color, #64748b)")
                     .set("font-weight", "400")
-                    .set("border-color", "#e2e8f0");
+                    .set("border-color", "var(--lumo-contrast-20pct, #e2e8f0)");
         }
         btnMontoActivo = btn;
         btn.getStyle()

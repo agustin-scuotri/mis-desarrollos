@@ -238,7 +238,7 @@ public class MainLayout extends AppLayout {
 		menuCompleto.setPadding(false);
 		menuCompleto.setSpacing(false);
 		menuCompleto.setHeightFull();
-		menuCompleto.getStyle().set("background-color", "#fcfcfc");
+		menuCompleto.getStyle().set("background-color", "var(--lumo-base-color, #fcfcfc)");
 
 		getElement().executeJs(
 			"this.style.setProperty('--vaadin-app-layout-drawer-width', '280px');" +
@@ -268,7 +268,7 @@ public class MainLayout extends AppLayout {
 				.set("text-decoration", "none")
 				.set("font-weight", "500")
 				.set("font-size", "0.875rem")
-				.set("color", "#475569")
+				.set("color", "var(--lumo-body-text-color, #475569)")
 				.set("transition", "all 0.15s ease")
 				.set("box-sizing", "border-box");
 

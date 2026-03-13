@@ -68,7 +68,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         panelDetalle.setSpacing(false);
         panelDetalle.getStyle()
                 .set("overflow-y", "auto")
-                .set("border-left", "1px solid #e2e8f0")
+                .set("border-left", "1px solid var(--lumo-contrast-20pct, #e2e8f0)")
                 .set("background", "var(--lumo-base-color, white)");
 
         // Retirar grid y barra de paginación del layout padre
@@ -112,11 +112,11 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         icono.getStyle().set("color", "#cbd5e1");
 
         Span titulo = new Span("Seleccioná un documento");
-        titulo.getStyle().set("font-weight", "600").set("color", "#64748b")
+        titulo.getStyle().set("font-weight", "600").set("color", "var(--lumo-secondary-text-color, #64748b)")
                 .set("font-size", "0.95rem").set("margin-top", "12px");
 
         Span subtitulo = new Span("Hacé click en una fila para ver sus detalles");
-        subtitulo.getStyle().set("color", "#94a3b8").set("font-size", "0.8rem");
+        subtitulo.getStyle().set("color", "var(--lumo-tertiary-text-color, #94a3b8)").set("font-size", "0.8rem");
 
         panelDetalle.add(icono, titulo, subtitulo);
     }
@@ -143,18 +143,18 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         String nombreDoc = doc.getArchivo() != null ? doc.getArchivo().getNombre() : "Documento";
         Span nombreSpan = new Span(nombreDoc);
         nombreSpan.getStyle().set("font-weight", "700").set("font-size", "1rem")
-                .set("color", "#1e293b").set("word-break", "break-word");
+                .set("color", "var(--lumo-header-text-color, #1e293b)").set("word-break", "break-word");
 
         String nroComp = estaVacio(doc.getNumeroComprobante()) ? "" : "Nro. " + doc.getNumeroComprobante();
         Span nroSpan = new Span(nroComp);
-        nroSpan.getStyle().set("font-size", "0.8rem").set("color", "#64748b");
+        nroSpan.getStyle().set("font-size", "0.8rem").set("color", "var(--lumo-secondary-text-color, #64748b)");
 
         Div header = new Div(nombreSpan, nroSpan);
         header.getStyle()
                 .set("display", "flex").set("flex-direction", "column").set("gap", "2px")
-                .set("padding", "12px 16px").set("background", "#f8fafc")
+                .set("padding", "12px 16px").set("background", "var(--lumo-contrast-5pct, #f8fafc)")
                 .set("border-radius", "10px").set("margin-bottom", "4px")
-                .set("border", "1px solid #e2e8f0").set("width", "100%");
+                .set("border", "1px solid var(--lumo-contrast-20pct, #e2e8f0)").set("width", "100%");
 
         // ── Accordion: Emisor (abierto por defecto) ───────────────────────────
         Details emisorDetails = new Details("Datos del Emisor",
@@ -216,7 +216,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         // Botón copiar JSON
         Button btnCopiar = new Button("Copiar JSON", VaadinIcon.COPY.create());
         btnCopiar.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
-        btnCopiar.getStyle().set("color", "#475569");
+        btnCopiar.getStyle().set("color", "var(--lumo-body-text-color, #475569)");
         final String jsonParaCopiar = jsonStr;
         btnCopiar.addClickListener(e -> {
             btnCopiar.getElement().executeJs(
@@ -249,7 +249,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         panel.setPadding(true);
         panel.setSpacing(false);
         panel.getStyle()
-                .set("gap", "8px").set("background", "#f8fafc")
+                .set("gap", "8px").set("background", "var(--lumo-contrast-5pct, #f8fafc)")
                 .set("border-radius", "6px").set("padding", "10px 12px");
         for (VerticalLayout c : campos) panel.add(c);
         return panel;
@@ -258,7 +258,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
     private com.vaadin.flow.component.Component crearMiniGridConceptos(DocumentoConvertido doc) {
         if (doc.getProductosConceptos().isEmpty()) {
             Span vacio = new Span("No hay conceptos registrados");
-            vacio.getStyle().set("color", "#94a3b8").set("font-size", "0.8rem")
+            vacio.getStyle().set("color", "var(--lumo-tertiary-text-color, #94a3b8)").set("font-size", "0.8rem")
                     .set("padding", "8px 12px").set("display", "block");
             return vacio;
         }
@@ -498,8 +498,8 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         panelTotales.setPadding(true);
         panelTotales.setWidth("360px");
         panelTotales.getStyle()
-                .set("background", "#f8fafc").set("border-radius", "10px")
-                .set("border", "1px solid #e2e8f0").set("margin-left", "auto").set("gap", "6px");
+                .set("background", "var(--lumo-contrast-5pct, #f8fafc)").set("border-radius", "10px")
+                .set("border", "1px solid var(--lumo-contrast-20pct, #e2e8f0)").set("margin-left", "auto").set("gap", "6px");
         if (doc.getSubTotalNoGravado() != null)
             panelTotales.add(crearFilaTotal("Neto No Gravado", formatImporte(doc.getSubTotalNoGravado()), false));
         if (doc.getImpuestoInterno() != null)
@@ -611,12 +611,12 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         com.vaadin.flow.component.html.Span lbl = new com.vaadin.flow.component.html.Span(etiqueta);
         lbl.getStyle()
                 .set("font-size", "0.68rem").set("font-weight", "600")
-                .set("color", "#94a3b8").set("text-transform", "uppercase")
+                .set("color", "var(--lumo-tertiary-text-color, #94a3b8)").set("text-transform", "uppercase")
                 .set("letter-spacing", "0.05em");
         com.vaadin.flow.component.html.Span val = new com.vaadin.flow.component.html.Span(valor);
         val.getStyle()
                 .set("font-size", "0.875rem").set("font-weight", "500")
-                .set("color", "#1e293b");
+                .set("color", "var(--lumo-header-text-color, #1e293b)");
         VerticalLayout campo = new VerticalLayout(lbl, val);
         campo.setPadding(false);
         campo.setSpacing(false);
@@ -631,7 +631,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         panel.setSpacing(false);
         panel.getStyle()
                 .set("flex-wrap", "wrap").set("gap", "12px 24px")
-                .set("padding", "12px 16px").set("background", "#f8fafc")
+                .set("padding", "12px 16px").set("background", "var(--lumo-contrast-5pct, #f8fafc)")
                 .set("border-radius", "8px");
         for (VerticalLayout c : campos) panel.add(c);
         return panel;
@@ -642,12 +642,12 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         lbl.getStyle()
                 .set("font-size", destacado ? "1rem" : "0.875rem")
                 .set("font-weight", destacado ? "700" : "500")
-                .set("color", destacado ? "#0c4a6e" : "#475569");
+                .set("color", destacado ? "#0c4a6e" : "var(--lumo-body-text-color, #475569)");
         com.vaadin.flow.component.html.Span val = new com.vaadin.flow.component.html.Span(valor);
         val.getStyle()
                 .set("font-size", destacado ? "1.1rem" : "0.875rem")
                 .set("font-weight", "700")
-                .set("color", destacado ? "#002060" : "#1e293b");
+                .set("color", destacado ? "#002060" : "var(--lumo-header-text-color, #1e293b)");
         HorizontalLayout row = new HorizontalLayout(lbl, val);
         row.setWidthFull();
         row.setSpacing(false);
