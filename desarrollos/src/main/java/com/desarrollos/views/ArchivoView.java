@@ -24,7 +24,6 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.component.tooltip.Tooltip;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
@@ -222,12 +221,12 @@ public class ArchivoView extends FormView implements HasUrlParameter<String> {
 		
 		codigo.setLabel(getTranslation("archivo.codigo"));
 		codigo.setWidthFull();
-		Tooltip.forComponent(codigo).withText("Código autogenerado por el sistema. No editable.");
+		codigo.setTooltipText("Código autogenerado por el sistema. No editable.");
 
 		nombre.setLabel(getTranslation("archivo.nombre"));
 		nombre.setRequired(true);
 		nombre.setWidthFull();
-		Tooltip.forComponent(nombre).withText("Nombre descriptivo del archivo o factura. Puede editarse.");
+		nombre.setTooltipText("Nombre descriptivo del archivo o factura. Puede editarse.");
 		// Forzar mensaje de error en rojo y sin negrita (sobrescribe estilo del tema)
 		nombre.getElement().executeJs(
 			"const s = document.createElement('style');" +

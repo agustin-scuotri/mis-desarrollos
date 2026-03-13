@@ -26,7 +26,6 @@ import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.menubar.MenuBarVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.tooltip.Tooltip;
 import com.vaadin.flow.function.ValueProvider;
 
 public abstract class CrudView<T> extends VerticalLayout {
@@ -83,7 +82,7 @@ public abstract class CrudView<T> extends VerticalLayout {
                 .set("margin-right", "12px")
                 .set("cursor", "pointer");
         btnConfiguracion.addClickListener(e -> abrirDialogoColumnas());
-        Tooltip.forComponent(btnConfiguracion).withText("Configurar columnas visibles");
+        btnConfiguracion.setTooltipText("Configurar columnas visibles");
 
         HorizontalLayout layoutTitulo = new HorizontalLayout(btnConfiguracion, tituloPrograma);
         layoutTitulo.setAlignItems(Alignment.CENTER);
@@ -453,7 +452,7 @@ public abstract class CrudView<T> extends VerticalLayout {
         Button btnV = new Button(vIcon);
         btnV.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         btnV.addClickListener(ev -> accionVisualizar(item));
-        Tooltip.forComponent(btnV).withText("Visualizar");
+        btnV.setTooltipText("Visualizar");
         layout.add(btnV);
 
         // Menú "⋮" con Editar (condicional) y Eliminar
