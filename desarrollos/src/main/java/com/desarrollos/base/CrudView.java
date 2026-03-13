@@ -18,7 +18,6 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -467,12 +466,15 @@ public abstract class CrudView<T> extends VerticalLayout {
         if (mostrarBotonEditar(item)) {
             sub.addItem(crearItemSubMenu(VaadinIcon.EDIT, "Editar", "#d97706"),
                     e -> accionEditar(item));
-            Hr sep = new Hr();
-            sep.getStyle().set("margin", "4px 0").set("border-color", "#e2e8f0");
-            sub.add(sep);
         }
-        sub.addItem(crearItemSubMenu(VaadinIcon.TRASH, "Eliminar", "#dc2626"),
-                e -> accionBorrar(item));
+        HorizontalLayout deleteHL = crearItemSubMenu(VaadinIcon.TRASH, "Eliminar", "#dc2626");
+        if (mostrarBotonEditar(item)) {
+            deleteHL.getStyle()
+                    .set("border-top", "1px solid #e2e8f0")
+                    .set("padding-top", "6px")
+                    .set("margin-top", "2px");
+        }
+        sub.addItem(deleteHL, e -> accionBorrar(item));
 
         layout.add(menuBar);
         layout.setWidthFull();
