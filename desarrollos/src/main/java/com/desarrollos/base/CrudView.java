@@ -210,15 +210,17 @@ public abstract class CrudView<T> extends VerticalLayout {
                 "  [frozen-to-end] {" +
                 "    z-index: 3 !important;" +
                 "    background-color: white;" +
+                "    overflow: hidden;" +
+                "    clip-path: inset(0);" +
                 "  }" +
                 "  [part~='row']:hover [frozen-to-end] {" +
-                "    background-color: rgba(0,32,96,0.04) !important;" +
+                "    background-color: #f5f6f9 !important;" +
                 "  }" +
                 "  [part~='row'][selected] [frozen-to-end] {" +
                 "    background-color: white !important;" +
                 "  }" +
                 "  [part~='row'][selected]:hover [frozen-to-end] {" +
-                "    background-color: rgba(0,32,96,0.04) !important;" +
+                "    background-color: #f5f6f9 !important;" +
                 "  }" +
                 "`;" +
                 "grid.shadowRoot.appendChild(style);");
