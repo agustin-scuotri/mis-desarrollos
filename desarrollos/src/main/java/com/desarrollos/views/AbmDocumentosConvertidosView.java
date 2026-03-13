@@ -21,19 +21,24 @@ import com.desarrollos.services.DocumentoConvertidoService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
+import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Pre;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
@@ -43,12 +48,209 @@ import com.vaadin.flow.server.StreamResource;
 public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> {
 
     private final DocumentoConvertidoService service;
+    private VerticalLayout panelDetalle;
 
     public AbmDocumentosConvertidosView(DocumentoConvertidoService service) {
         super(DocumentoConvertido.class);
         this.service = service;
         setTitulo("Lista de JSONs");
+        configurarSplitLayout();
         actualizarLista();
+    }
+
+    // ── SplitLayout: grid a la izquierda, panel de detalle a la derecha ───────
+    private void configurarSplitLayout() {
+        // Panel lateral de detalle (placeholder inicial)
+        panelDetalle = new VerticalLayout();
+        panelDetalle.setSizeFull();
+        panelDetalle.setPadding(false);
+        panelDetalle.setSpacing(false);
+        panelDetalle.getStyle()
+                .set("overflow-y", "auto")
+                .set("border-left", "1px solid #e2e8f0")
+                .set("background", "var(--lumo-base-color, white)");
+
+        // Retirar grid y barra de paginación del layout padre
+        remove(grid);
+        remove(barraPaginacion);
+
+        // Panel primario: grid + paginación apilados
+        VerticalLayout primaryPanel = new VerticalLayout(grid, barraPaginacion);
+        primaryPanel.setSizeFull();
+        primaryPanel.setPadding(false);
+        primaryPanel.setSpacing(false);
+        primaryPanel.setFlexGrow(1, grid);
+
+        // SplitLayout horizontal
+        SplitLayout splitLayout = new SplitLayout(primaryPanel, panelDetalle);
+        splitLayout.setSizeFull();
+        splitLayout.setSplitterPosition(62);
+
+        addComponentAtIndex(1, splitLayout);
+        setFlexGrow(1, splitLayout);
+
+        // Habilitar selección de fila
+        grid.setSelectionMode(Grid.SelectionMode.SINGLE);
+        grid.addSelectionListener(event ->
+                event.getFirstSelectedItem().ifPresentOrElse(
+                        this::mostrarDetalleEnPanel,
+                        this::mostrarPanelPlaceholder
+                )
+        );
+        mostrarPanelPlaceholder();
+    }
+
+    // ── Placeholder cuando no hay documento seleccionado ─────────────────────
+    private void mostrarPanelPlaceholder() {
+        panelDetalle.removeAll();
+        panelDetalle.setAlignItems(FlexComponent.Alignment.CENTER);
+        panelDetalle.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+
+        Icon icono = VaadinIcon.FILE_TEXT_O.create();
+        icono.setSize("48px");
+        icono.getStyle().set("color", "#cbd5e1");
+
+        Span titulo = new Span("Seleccioná un documento");
+        titulo.getStyle().set("font-weight", "600").set("color", "#64748b")
+                .set("font-size", "0.95rem").set("margin-top", "12px");
+
+        Span subtitulo = new Span("Hacé click en una fila para ver sus detalles");
+        subtitulo.getStyle().set("color", "#94a3b8").set("font-size", "0.8rem");
+
+        panelDetalle.add(icono, titulo, subtitulo);
+    }
+
+    // ── Detalle con accordion al seleccionar una fila ─────────────────────────
+    private void mostrarDetalleEnPanel(DocumentoConvertido item) {
+        DocumentoConvertido doc;
+        try {
+            doc = service.buscarCompleto(item.getId());
+        } catch (Exception ex) {
+            Notification.show("Error al cargar el documento: " + ex.getMessage())
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
+        panelDetalle.removeAll();
+        panelDetalle.setAlignItems(FlexComponent.Alignment.START);
+        panelDetalle.setJustifyContentMode(FlexComponent.JustifyContentMode.START);
+        panelDetalle.setPadding(true);
+        panelDetalle.setSpacing(false);
+        panelDetalle.getStyle().set("gap", "8px");
+
+        // ── Encabezado ────────────────────────────────────────────────────────
+        String nombreDoc = doc.getArchivo() != null ? doc.getArchivo().getNombre() : "Documento";
+        Span nombreSpan = new Span(nombreDoc);
+        nombreSpan.getStyle().set("font-weight", "700").set("font-size", "1rem")
+                .set("color", "#1e293b").set("word-break", "break-word");
+
+        String nroComp = estaVacio(doc.getNumeroComprobante()) ? "" : "Nro. " + doc.getNumeroComprobante();
+        Span nroSpan = new Span(nroComp);
+        nroSpan.getStyle().set("font-size", "0.8rem").set("color", "#64748b");
+
+        Div header = new Div(nombreSpan, nroSpan);
+        header.getStyle()
+                .set("display", "flex").set("flex-direction", "column").set("gap", "2px")
+                .set("padding", "12px 16px").set("background", "#f8fafc")
+                .set("border-radius", "10px").set("margin-bottom", "4px")
+                .set("border", "1px solid #e2e8f0").set("width", "100%");
+
+        // ── Accordion: Emisor (abierto por defecto) ───────────────────────────
+        Details emisorDetails = new Details("Datos del Emisor",
+                crearPanelCamposPanel(
+                    crearCampo("Razón Social",   txt(doc.getRazonSocial())),
+                    crearCampo("CUIT",           txt(doc.getCuit())),
+                    crearCampo("Situación IVA",  txt(doc.getSituacionIva())),
+                    crearCampo("Dirección",      txt(doc.getDireccion())),
+                    crearCampo("Ciudad",         txt(doc.getCiudad())),
+                    crearCampo("Provincia",      txt(doc.getProvincia()))
+                ));
+        emisorDetails.setOpened(true);
+        estilizarDetails(emisorDetails, "#0369a1");
+
+        // ── Accordion: Comprobante ────────────────────────────────────────────
+        Details comprobanteDetails = new Details("Datos del Comprobante",
+                crearPanelCamposPanel(
+                    crearCampo("Cód. ARCA",         txt(doc.getCodigoArca())),
+                    crearCampo("Letra",             txt(doc.getLetra())),
+                    crearCampo("Centro Emisión",    txt(doc.getCentroEmision())),
+                    crearCampo("N° Comprobante",    txt(doc.getNumeroComprobante())),
+                    crearCampo("Fecha Emisión",     formatFecha(doc.getFechaEmision())),
+                    crearCampo("CAE",               txt(doc.getCae())),
+                    crearCampo("Moneda",            txt(doc.getMoneda()))
+                ));
+        estilizarDetails(comprobanteDetails, "#065f46");
+
+        // ── Accordion: Financiero ─────────────────────────────────────────────
+        String totalStr = doc.getTotal() == null ? "—" : "$ " + formatImporte(doc.getTotal());
+        Details financieroDetails = new Details("Financiero",
+                crearPanelCamposPanel(
+                    crearCampo("Total",             totalStr),
+                    crearCampo("Neto No Gravado",   doc.getSubTotalNoGravado() == null ? "—" : formatImporte(doc.getSubTotalNoGravado())),
+                    crearCampo("Imp. Interno",      doc.getImpuestoInterno() == null   ? "—" : formatImporte(doc.getImpuestoInterno())),
+                    crearCampo("Cotización",        doc.getCotizacion() == null        ? "—" : formatImporte(doc.getCotizacion()))
+                ));
+        estilizarDetails(financieroDetails, "#5b21b6");
+
+        // ── Accordion: Conceptos ──────────────────────────────────────────────
+        int nConceptos = doc.getProductosConceptos().size();
+        Details conceptosDetails = new Details(
+                "Conceptos (" + (nConceptos == 0 ? "ninguno" : nConceptos + " ítem" + (nConceptos == 1 ? "" : "s")) + ")",
+                crearMiniGridConceptos(doc));
+        estilizarDetails(conceptosDetails, "#92400e");
+
+        // ── Botón descargar JSON ──────────────────────────────────────────────
+        String jsonStr = doc.getJsonResultado() != null ? doc.getJsonResultado() : "";
+        String nombreArchivo = nombreDoc.replaceAll("\\s+", "_") + ".json";
+        StreamResource resource = new StreamResource(nombreArchivo,
+                () -> new java.io.ByteArrayInputStream(jsonStr.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        Anchor anchorDescarga = new Anchor(resource, "");
+        anchorDescarga.getElement().setAttribute("download", true);
+        Button botonDescarga = new Button("Descargar JSON", VaadinIcon.DOWNLOAD.create());
+        botonDescarga.getStyle().set("background-color", "#2563eb").set("color", "white");
+        botonDescarga.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
+        anchorDescarga.add(botonDescarga);
+        anchorDescarga.getStyle().set("margin-top", "8px");
+
+        panelDetalle.add(header, emisorDetails, comprobanteDetails, financieroDetails,
+                conceptosDetails, anchorDescarga);
+    }
+
+    private void estilizarDetails(Details details, String color) {
+        details.getStyle()
+                .set("border-left", "3px solid " + color)
+                .set("border-radius", "0 8px 8px 0")
+                .set("padding-left", "4px")
+                .set("width", "100%");
+        details.getElement().getStyle()
+                .set("--details-summary-color", color);
+    }
+
+    private VerticalLayout crearPanelCamposPanel(VerticalLayout... campos) {
+        VerticalLayout panel = new VerticalLayout();
+        panel.setPadding(true);
+        panel.setSpacing(false);
+        panel.getStyle()
+                .set("gap", "8px").set("background", "#f8fafc")
+                .set("border-radius", "6px").set("padding", "10px 12px");
+        for (VerticalLayout c : campos) panel.add(c);
+        return panel;
+    }
+
+    private com.vaadin.flow.component.Component crearMiniGridConceptos(DocumentoConvertido doc) {
+        if (doc.getProductosConceptos().isEmpty()) {
+            Span vacio = new Span("No hay conceptos registrados");
+            vacio.getStyle().set("color", "#94a3b8").set("font-size", "0.8rem")
+                    .set("padding", "8px 12px").set("display", "block");
+            return vacio;
+        }
+        Grid<ProductoConcepto> mini = new Grid<>(ProductoConcepto.class, false);
+        mini.addColumn(ProductoConcepto::getDescripcion).setHeader("Descripción").setFlexGrow(1);
+        mini.addColumn(p -> formatImporte(p.getSubTotal())).setHeader("Subtotal").setWidth("90px").setFlexGrow(0);
+        mini.setItems(doc.getProductosConceptos());
+        mini.setAllRowsVisible(true);
+        mini.getStyle().set("font-size", "0.8rem").set("border-radius", "6px");
+        return mini;
     }
 
     @Override
@@ -135,38 +337,43 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         contenido.getStyle().set("overflow-y", "auto").set("padding-right", "4px").set("gap", "0");
 
         // ── EMISOR ────────────────────────────────────────────────────────────
-        contenido.add(crearSeccion("Datos del Emisor", "#0369a1"));
-        contenido.add(crearPanelCampos(
-            crearCampo("Razón Social",   txt(doc.getRazonSocial())),
-            crearCampo("CUIT",           txt(doc.getCuit())),
-            crearCampo("Situación IVA",  txt(doc.getSituacionIva())),
-            crearCampo("Dirección",      txt(doc.getDireccion())),
-            crearCampo("Ciudad",         txt(doc.getCiudad())),
-            crearCampo("Cód. Postal",    txt(doc.getCodigoPostal())),
-            crearCampo("Provincia",      txt(doc.getProvincia())),
-            crearCampo("País",           txt(doc.getPais())),
-            crearCampo("Teléfono",       txt(doc.getTelefono())),
-            crearCampo("Mail",           txt(doc.getMail()))
-        ));
+        Details emisorSection = new Details("Datos del Emisor",
+                crearPanelCampos(
+                    crearCampo("Razón Social",   txt(doc.getRazonSocial())),
+                    crearCampo("CUIT",           txt(doc.getCuit())),
+                    crearCampo("Situación IVA",  txt(doc.getSituacionIva())),
+                    crearCampo("Dirección",      txt(doc.getDireccion())),
+                    crearCampo("Ciudad",         txt(doc.getCiudad())),
+                    crearCampo("Cód. Postal",    txt(doc.getCodigoPostal())),
+                    crearCampo("Provincia",      txt(doc.getProvincia())),
+                    crearCampo("País",           txt(doc.getPais())),
+                    crearCampo("Teléfono",       txt(doc.getTelefono())),
+                    crearCampo("Mail",           txt(doc.getMail()))
+                ));
+        emisorSection.setOpened(true);
+        aplicarEstiloSeccion(emisorSection, "#0369a1");
+        contenido.add(emisorSection);
 
         // ── COMPROBANTE ───────────────────────────────────────────────────────
-        contenido.add(crearSeccion("Datos del Comprobante", "#065f46"));
-        contenido.add(crearPanelCampos(
-            crearCampo("Cód. ARCA",         txt(doc.getCodigoArca())),
-            crearCampo("Letra",             txt(doc.getLetra())),
-            crearCampo("Centro de Emisión", txt(doc.getCentroEmision())),
-            crearCampo("N° Comprobante",    txt(doc.getNumeroComprobante())),
-            crearCampo("Fecha Emisión",     formatFecha(doc.getFechaEmision())),
-            crearCampo("CAE",               txt(doc.getCae())),
-            crearCampo("Venc. CAE",         formatFecha(doc.getFechaVencimientoCae())),
-            crearCampo("Moneda",            txt(doc.getMoneda())),
-            crearCampo("Cotización",        doc.getCotizacion() == null ? "—" : formatImporte(doc.getCotizacion())),
-            crearCampo("Orden de Compra",   txt(doc.getOrdenCompra()))
-        ));
+        Details comprobanteSection = new Details("Datos del Comprobante",
+                crearPanelCampos(
+                    crearCampo("Cód. ARCA",         txt(doc.getCodigoArca())),
+                    crearCampo("Letra",             txt(doc.getLetra())),
+                    crearCampo("Centro de Emisión", txt(doc.getCentroEmision())),
+                    crearCampo("N° Comprobante",    txt(doc.getNumeroComprobante())),
+                    crearCampo("Fecha Emisión",     formatFecha(doc.getFechaEmision())),
+                    crearCampo("CAE",               txt(doc.getCae())),
+                    crearCampo("Venc. CAE",         formatFecha(doc.getFechaVencimientoCae())),
+                    crearCampo("Moneda",            txt(doc.getMoneda())),
+                    crearCampo("Cotización",        doc.getCotizacion() == null ? "—" : formatImporte(doc.getCotizacion())),
+                    crearCampo("Orden de Compra",   txt(doc.getOrdenCompra()))
+                ));
+        comprobanteSection.setOpened(true);
+        aplicarEstiloSeccion(comprobanteSection, "#065f46");
+        contenido.add(comprobanteSection);
 
         // ── PRODUCTOS / CONCEPTOS ─────────────────────────────────────────────
         if (!doc.getProductosConceptos().isEmpty()) {
-            contenido.add(crearSeccion("Productos / Conceptos", "#92400e"));
             Grid<ProductoConcepto> g = new Grid<>(ProductoConcepto.class, false);
             g.addColumn(ProductoConcepto::getSku).setHeader("SKU").setWidth("130px").setFlexGrow(0);
             g.addColumn(ProductoConcepto::getDescripcion).setHeader("Descripción").setFlexGrow(1);
@@ -183,86 +390,90 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
             g.setItems(doc.getProductosConceptos());
             g.setAllRowsVisible(true);
             g.getStyle().set("margin-top", "4px");
-            contenido.add(g);
+            Details productosSection = new Details(
+                    "Productos / Conceptos (" + doc.getProductosConceptos().size() + ")", g);
+            productosSection.setOpened(true);
+            aplicarEstiloSeccion(productosSection, "#92400e");
+            contenido.add(productosSection);
         }
 
         // ── NETOS GRAVADOS E IVA ──────────────────────────────────────────────
         if (!doc.getNetosGravados().isEmpty()) {
-            contenido.add(crearSeccion("Netos Gravados e IVA", "#5b21b6"));
             Grid<NetoGravado> g = new Grid<>(NetoGravado.class, false);
             g.addColumn(NetoGravado::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
             g.addColumn(n -> formatImporte(n.getImporteNetoGravado())).setHeader("Importe Neto Gravado").setFlexGrow(1);
             g.addColumn(n -> formatImporte(n.getIva())).setHeader("IVA").setWidth("130px").setFlexGrow(0);
             g.setItems(doc.getNetosGravados());
             g.setAllRowsVisible(true);
-            g.getStyle().set("margin-top", "4px");
-            contenido.add(g);
+            Details netosSection = new Details("Netos Gravados e IVA", g);
+            netosSection.setOpened(true);
+            aplicarEstiloSeccion(netosSection, "#5b21b6");
+            contenido.add(netosSection);
         }
 
         // ── PERCEPCIONES IIBB ─────────────────────────────────────────────────
         if (!doc.getPercepcionesIIBB().isEmpty()) {
-            contenido.add(crearSeccion("Percepciones IIBB", "#9f1239"));
             Grid<PercepcionIIBB> g = new Grid<>(PercepcionIIBB.class, false);
             g.addColumn(PercepcionIIBB::getProvincia).setHeader("Provincia").setFlexGrow(1);
             g.addColumn(PercepcionIIBB::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
             g.addColumn(p -> formatImporte(p.getImporte())).setHeader("Importe").setWidth("130px").setFlexGrow(0);
             g.setItems(doc.getPercepcionesIIBB());
             g.setAllRowsVisible(true);
-            g.getStyle().set("margin-top", "4px");
-            contenido.add(g);
+            Details iibbSection = new Details("Percepciones IIBB", g);
+            aplicarEstiloSeccion(iibbSection, "#9f1239");
+            contenido.add(iibbSection);
         }
 
         // ── PERCEPCIONES IVA ──────────────────────────────────────────────────
         if (!doc.getPercepcionesIVA().isEmpty()) {
-            contenido.add(crearSeccion("Percepciones IVA", "#9f1239"));
             Grid<PercepcionIVA> g = new Grid<>(PercepcionIVA.class, false);
             g.addColumn(PercepcionIVA::getAlicuota).setHeader("Alícuota").setWidth("150px").setFlexGrow(0);
             g.addColumn(p -> formatImporte(p.getImporte())).setHeader("Importe").setFlexGrow(1);
             g.setItems(doc.getPercepcionesIVA());
             g.setAllRowsVisible(true);
-            g.getStyle().set("margin-top", "4px");
-            contenido.add(g);
+            Details ivaSection = new Details("Percepciones IVA", g);
+            aplicarEstiloSeccion(ivaSection, "#9f1239");
+            contenido.add(ivaSection);
         }
 
         // ── TASAS ─────────────────────────────────────────────────────────────
         if (!doc.getTasas().isEmpty()) {
-            contenido.add(crearSeccion("Tasas", "#065f46"));
             Grid<Tasa> g = new Grid<>(Tasa.class, false);
             g.addColumn(Tasa::getDescripcion).setHeader("Descripción").setFlexGrow(1);
             g.addColumn(tasa -> formatImporte(tasa.getImporte())).setHeader("Importe").setWidth("130px").setFlexGrow(0);
             g.setItems(doc.getTasas());
             g.setAllRowsVisible(true);
-            g.getStyle().set("margin-top", "4px");
-            contenido.add(g);
+            Details tasasSection = new Details("Tasas", g);
+            aplicarEstiloSeccion(tasasSection, "#065f46");
+            contenido.add(tasasSection);
         }
 
         // ── DESCUENTOS / RECARGOS ─────────────────────────────────────────────
         if (!doc.getDescuentosRecargos().isEmpty()) {
-            contenido.add(crearSeccion("Descuentos / Recargos", "#b45309"));
             Grid<DescuentoRecargo> g = new Grid<>(DescuentoRecargo.class, false);
             g.addColumn(DescuentoRecargo::getDescripcion).setHeader("Descripción").setFlexGrow(1);
             g.addColumn(DescuentoRecargo::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
             g.addColumn(d -> formatImporte(d.getImporte())).setHeader("Importe").setWidth("130px").setFlexGrow(0);
             g.setItems(doc.getDescuentosRecargos());
             g.setAllRowsVisible(true);
-            g.getStyle().set("margin-top", "4px");
-            contenido.add(g);
+            Details descSection = new Details("Descuentos / Recargos", g);
+            aplicarEstiloSeccion(descSection, "#b45309");
+            contenido.add(descSection);
         }
 
         // ── VENCIMIENTOS ──────────────────────────────────────────────────────
         if (!doc.getVencimientos().isEmpty()) {
-            contenido.add(crearSeccion("Vencimientos", "#0369a1"));
             Grid<Vencimiento> g = new Grid<>(Vencimiento.class, false);
             g.addColumn(Vencimiento::getFecha).setHeader("Fecha").setWidth("150px").setFlexGrow(0);
             g.addColumn(v -> formatImporte(v.getImporte())).setHeader("Importe").setFlexGrow(1);
             g.setItems(doc.getVencimientos());
             g.setAllRowsVisible(true);
-            g.getStyle().set("margin-top", "4px");
-            contenido.add(g);
+            Details vencSection = new Details("Vencimientos", g);
+            aplicarEstiloSeccion(vencSection, "#0369a1");
+            contenido.add(vencSection);
         }
 
         // ── TOTALES ───────────────────────────────────────────────────────────
-        contenido.add(crearSeccion("Totales", "#1e293b"));
         VerticalLayout panelTotales = new VerticalLayout();
         panelTotales.setSpacing(false);
         panelTotales.setPadding(true);
@@ -275,10 +486,12 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         if (doc.getImpuestoInterno() != null)
             panelTotales.add(crearFilaTotal("Impuesto Interno / Otros Tributos", formatImporte(doc.getImpuestoInterno()), false));
         panelTotales.add(crearFilaTotal("TOTAL", doc.getTotal() == null ? "—" : formatImporte(doc.getTotal()), true));
-        contenido.add(panelTotales);
+        Details totalesSection = new Details("Totales", panelTotales);
+        totalesSection.setOpened(true);
+        aplicarEstiloSeccion(totalesSection, "#1e293b");
+        contenido.add(totalesSection);
 
-        // ── JSON viewer (colapsado) ───────────────────────────────────────────
-        contenido.add(crearSeccion("Resultado JSON", "#334155"));
+        // ── JSON viewer (colapsado como Details) ──────────────────────────────
         String json = doc.getJsonResultado() != null ? doc.getJsonResultado() : "";
         Pre jsonPre = new Pre(json);
         jsonPre.getStyle()
@@ -288,19 +501,9 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
                 .set("font-size", "13px").set("width", "100%").set("white-space", "pre-wrap")
                 .set("word-break", "break-word").set("box-shadow", "inset 0 2px 8px rgba(0,0,0,0.4)")
                 .set("line-height", "1.6").set("overflow-y", "auto").set("max-height", "340px");
-        jsonPre.setVisible(false);
-
-        Button btnVerMas   = new Button("Ver más",   VaadinIcon.CHEVRON_DOWN.create());
-        Button btnVerMenos = new Button("Ver menos", VaadinIcon.CHEVRON_UP.create());
-        btnVerMas.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        btnVerMas.getStyle().set("align-self", "flex-start");
-        btnVerMenos.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        btnVerMenos.getStyle().set("align-self", "flex-start");
-        btnVerMenos.setVisible(false);
-
-        btnVerMas.addClickListener(e -> { jsonPre.setVisible(true);  btnVerMas.setVisible(false); btnVerMenos.setVisible(true);  });
-        btnVerMenos.addClickListener(e -> { jsonPre.setVisible(false); btnVerMas.setVisible(true);  btnVerMenos.setVisible(false); });
-        contenido.add(btnVerMas, jsonPre, btnVerMenos);
+        Details jsonSection = new Details("Resultado JSON", jsonPre);
+        aplicarEstiloSeccion(jsonSection, "#334155");
+        contenido.add(jsonSection);
 
         // ── Notas de campos faltantes ─────────────────────────────────────────
         String notasTexto = generarNotas(doc);
@@ -367,14 +570,12 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         return estaVacio(valor) ? "—" : valor;
     }
 
-    private com.vaadin.flow.component.html.Span crearSeccion(String titulo, String color) {
-        com.vaadin.flow.component.html.Span s = new com.vaadin.flow.component.html.Span(titulo);
-        s.getStyle()
-                .set("display", "block").set("font-size", "0.72rem").set("font-weight", "700")
-                .set("text-transform", "uppercase").set("letter-spacing", "0.08em")
-                .set("color", color).set("border-left", "3px solid " + color)
-                .set("padding-left", "8px").set("margin", "16px 0 4px 0");
-        return s;
+    private void aplicarEstiloSeccion(Details details, String color) {
+        details.getStyle()
+                .set("border-left", "3px solid " + color)
+                .set("padding-left", "6px")
+                .set("margin-top", "8px")
+                .set("width", "100%");
     }
 
     private VerticalLayout crearCampo(String etiqueta, String valor) {

@@ -12,6 +12,7 @@ import com.vaadin.flow.component.HasEnabled;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Image;
@@ -23,6 +24,7 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.tooltip.Tooltip;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
@@ -166,11 +168,50 @@ public class ArchivoView extends FormView implements HasUrlParameter<String> {
 			StreamResource res = new StreamResource("preview", () -> new ByteArrayInputStream(datos));
 			Image img = new Image(res, "Preview");
 			img.setWidth("100%");
-			img.getStyle().set("border-radius", "8px").set("box-shadow", "0 2px 8px rgba(0,0,0,0.15)");
-			
-			galeriaContainer.add(new H3("Vista Previa del Documento"), img);
+			img.getStyle()
+					.set("border-radius", "8px")
+					.set("box-shadow", "0 2px 8px rgba(0,0,0,0.15)")
+					.set("cursor", "zoom-in")
+					.set("transition", "opacity 0.15s ease");
+			img.getElement().addEventListener("mouseenter",
+					e -> img.getStyle().set("opacity", "0.88"));
+			img.getElement().addEventListener("mouseleave",
+					e -> img.getStyle().set("opacity", "1"));
+			img.addClickListener(e -> abrirLightbox(datos));
+
+			Span hint = new Span("Click para ampliar");
+			hint.getStyle()
+					.set("font-size", "0.75rem").set("color", "#94a3b8")
+					.set("margin-top", "4px").set("display", "block");
+
+			galeriaContainer.add(new H3("Vista Previa del Documento"), img, hint);
 			galeriaContainer.setVisible(true);
 		}
+	}
+
+	private void abrirLightbox(byte[] datos) {
+		Dialog lightbox = new Dialog();
+		lightbox.setModal(true);
+		lightbox.setWidth("90vw");
+		lightbox.setHeight("90vh");
+		lightbox.getElement().setAttribute("aria-label", "Vista ampliada");
+
+		StreamResource resLB = new StreamResource("preview-full", () -> new ByteArrayInputStream(datos));
+		Image imgLB = new Image(resLB, "Vista completa");
+		imgLB.getStyle()
+				.set("max-width", "100%")
+				.set("max-height", "calc(90vh - 80px)")
+				.set("object-fit", "contain")
+				.set("display", "block")
+				.set("margin", "auto")
+				.set("border-radius", "8px");
+
+		Button btnCerrar = new Button("Cerrar", VaadinIcon.CLOSE.create(), e -> lightbox.close());
+		btnCerrar.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+		lightbox.add(imgLB);
+		lightbox.getFooter().add(btnCerrar);
+		lightbox.open();
 	}
 
 	@Override
@@ -181,10 +222,12 @@ public class ArchivoView extends FormView implements HasUrlParameter<String> {
 		
 		codigo.setLabel(getTranslation("archivo.codigo"));
 		codigo.setWidthFull();
+		Tooltip.forComponent(codigo).withText("Código autogenerado por el sistema. No editable.");
 
 		nombre.setLabel(getTranslation("archivo.nombre"));
 		nombre.setRequired(true);
 		nombre.setWidthFull();
+		Tooltip.forComponent(nombre).withText("Nombre descriptivo del archivo o factura. Puede editarse.");
 		// Forzar mensaje de error en rojo y sin negrita (sobrescribe estilo del tema)
 		nombre.getElement().executeJs(
 			"const s = document.createElement('style');" +

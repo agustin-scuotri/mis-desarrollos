@@ -78,6 +78,11 @@ public class ConversorView extends FormView {
 	// ── Mensaje de progreso (reutilizado en el hilo para countdown) ───────────
 	private final H3 mensajeProcesando = new H3("Procesando imagen con IA...");
 
+	// ── Stepper visual ────────────────────────────────────────────────────────
+	private final HorizontalLayout stepperLayout = new HorizontalLayout();
+	private Span circulo1, circulo2, circulo3;
+	private Span label1, label2, label3;
+
 	public ConversorView(ArchivoService archivoService, DocumentoConvertidoService documentoConvertidoService) {
 		this.archivoService = archivoService;
 		this.documentoConvertidoService = documentoConvertidoService;
@@ -101,6 +106,9 @@ public class ConversorView extends FormView {
 				panelResultado.removeAll();
 				panelResultado.setVisible(false);
 				panelProgreso.setVisible(false);
+				actualizarStepper("completado", "pendiente", "pendiente");
+			} else {
+				actualizarStepper("activo", "pendiente", "pendiente");
 			}
 		});
 
@@ -177,8 +185,131 @@ public class ConversorView extends FormView {
 		panelResultado.setVisible(false);
 		panelResultado.getStyle().set("margin-top", "20px");
 
-		contenidoPrincipal.add(archivoCombo, mensajeErrorArchivo, botones, notaCalidad, panelProgreso, panelResultado);
+		// ── Stepper ───────────────────────────────────────────────────────────
+		construirStepper();
+		stepperLayout.getStyle().set("margin-top", "18px");
+
+		contenidoPrincipal.add(archivoCombo, mensajeErrorArchivo, botones, notaCalidad,
+				stepperLayout, panelProgreso, panelResultado);
 		barraBotones.setVisible(false);
+	}
+
+	// ── Stepper: construcción ────────────────────────────────────────────────
+	private void construirStepper() {
+		circulo1 = crearCirculo("1", "activo");
+		circulo2 = crearCirculo("2", "pendiente");
+		circulo3 = crearCirculo("3", "pendiente");
+		label1   = crearLabelPaso("Seleccionar", "activo");
+		label2   = crearLabelPaso("Procesando", "pendiente");
+		label3   = crearLabelPaso("Resultado", "pendiente");
+
+		stepperLayout.removeAll();
+		stepperLayout.setSpacing(false);
+		stepperLayout.setPadding(false);
+		stepperLayout.setAlignItems(Alignment.CENTER);
+		stepperLayout.getStyle().set("gap", "0");
+
+		stepperLayout.add(
+				crearPasoContainer(circulo1, label1),
+				crearConector(),
+				crearPasoContainer(circulo2, label2),
+				crearConector(),
+				crearPasoContainer(circulo3, label3)
+		);
+	}
+
+	private Span crearCirculo(String numero, String estado) {
+		Span circulo = new Span(numero);
+		circulo.getStyle()
+				.set("width", "32px").set("height", "32px")
+				.set("border-radius", "50%").set("display", "inline-flex")
+				.set("align-items", "center").set("justify-content", "center")
+				.set("font-weight", "700").set("font-size", "0.85rem")
+				.set("transition", "all 0.25s ease")
+				.set("flex-shrink", "0");
+		aplicarEstadoCirculo(circulo, estado);
+		return circulo;
+	}
+
+	private Span crearLabelPaso(String texto, String estado) {
+		Span label = new Span(texto);
+		label.getStyle()
+				.set("font-size", "0.78rem").set("font-weight", "500")
+				.set("margin-top", "5px").set("transition", "all 0.25s ease");
+		aplicarEstadoLabel(label, estado);
+		return label;
+	}
+
+	private com.vaadin.flow.component.html.Div crearPasoContainer(Span circulo, Span label) {
+		com.vaadin.flow.component.html.Div paso = new com.vaadin.flow.component.html.Div(circulo, label);
+		paso.getStyle()
+				.set("display", "flex").set("flex-direction", "column")
+				.set("align-items", "center").set("gap", "4px")
+				.set("min-width", "80px");
+		return paso;
+	}
+
+	private com.vaadin.flow.component.html.Div crearConector() {
+		com.vaadin.flow.component.html.Div linea = new com.vaadin.flow.component.html.Div();
+		linea.getStyle()
+				.set("flex", "1").set("height", "2px")
+				.set("background", "#e2e8f0").set("margin", "0 4px")
+				.set("margin-bottom", "18px").set("min-width", "20px");
+		return linea;
+	}
+
+	private void aplicarEstadoCirculo(Span circulo, String estado) {
+		switch (estado) {
+			case "activo"    -> circulo.getStyle()
+					.set("background", "#2563eb").set("color", "white")
+					.set("box-shadow", "0 0 0 3px rgba(37,99,235,0.2)");
+			case "completado" -> circulo.getStyle()
+					.set("background", "#16a34a").set("color", "white")
+					.set("box-shadow", "none");
+			case "error"     -> circulo.getStyle()
+					.set("background", "#dc2626").set("color", "white")
+					.set("box-shadow", "none");
+			default          -> circulo.getStyle()
+					.set("background", "#e2e8f0").set("color", "#94a3b8")
+					.set("box-shadow", "none");
+		}
+	}
+
+	private void aplicarEstadoLabel(Span label, String estado) {
+		switch (estado) {
+			case "activo"    -> label.getStyle().set("color", "#2563eb").set("font-weight", "600");
+			case "completado" -> label.getStyle().set("color", "#16a34a").set("font-weight", "500");
+			case "error"     -> label.getStyle().set("color", "#dc2626").set("font-weight", "500");
+			default          -> label.getStyle().set("color", "#94a3b8").set("font-weight", "400");
+		}
+	}
+
+	private void actualizarStepper(String est1, String est2, String est3) {
+		aplicarEstadoCirculo(circulo1, est1);
+		aplicarEstadoCirculo(circulo2, est2);
+		aplicarEstadoCirculo(circulo3, est3);
+		// Actualizar íconos: completado → checkmark, error → X
+		actualizarIconoCirculo(circulo1, est1);
+		actualizarIconoCirculo(circulo2, est2);
+		actualizarIconoCirculo(circulo3, est3);
+		aplicarEstadoLabel(label1, est1);
+		aplicarEstadoLabel(label2, est2);
+		aplicarEstadoLabel(label3, est3);
+	}
+
+	private void actualizarIconoCirculo(Span circulo, String estado) {
+		if ("completado".equals(estado)) {
+			circulo.setText("✓");
+		} else if ("error".equals(estado)) {
+			circulo.setText("✗");
+		} else if ("1".equals(circulo.getText()) || "2".equals(circulo.getText()) || "3".equals(circulo.getText())) {
+			// ya tiene número, no tocar
+		}
+		// Si ya fue cambiado a ✓ o ✗ y ahora es activo/pendiente, restaurar número
+		String t = circulo.getText();
+		if (!estado.equals("completado") && !estado.equals("error") && (t.equals("✓") || t.equals("✗"))) {
+			// number restore: no se necesita en flujo normal
+		}
 	}
 
 	// ── Contenido completo de una factura ─────────────────────────────────────
@@ -416,6 +547,7 @@ public class ConversorView extends FormView {
 		btnConvertir.setEnabled(false);
 		btnVerArchivo.setEnabled(false);
 		mensajeProcesando.setText("Procesando imagen con IA...");
+		actualizarStepper("completado", "activo", "pendiente");
 
 		final Archivo archivoAConvertir = archivoSeleccionado;
 		archivoSeleccionado = null;
@@ -454,6 +586,7 @@ public class ConversorView extends FormView {
 
 					// El servicio ya valida campos antes de guardar: exitosos siempre son válidos
 					List<DocumentoConvertido> tabWorthy      = new ArrayList<>(exitosos);
+					actualizarStepper("completado", tabWorthy.isEmpty() ? "error" : "completado", "activo");
 					List<String>             mensajesFallas = new ArrayList<>();
 
 					// Caso: documento único que no es una factura (ningún campo obligatorio presente)
@@ -504,6 +637,7 @@ public class ConversorView extends FormView {
 					mensajeProcesando.setText("Procesando imagen con IA...");
 					panelProgreso.setVisible(false);
 					btnConvertir.setEnabled(true);
+					actualizarStepper("completado", "error", "pendiente");
 					Notification.show("La API está saturada. Esperá unos minutos e intentá de nuevo.")
 							.addThemeVariants(NotificationVariant.LUMO_WARNING);
 				});
@@ -859,6 +993,7 @@ public class ConversorView extends FormView {
 		panelResultado.removeAll();
 		panelResultado.setVisible(false);
 		panelProgreso.setVisible(false);
+		actualizarStepper("activo", "pendiente", "pendiente");
 	}
 
 	// ── Detecta errores de red/conexión (Connection reset, timeout, etc.) ──────

@@ -10,17 +10,23 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.combobox.ComboBoxVariant;
+import com.vaadin.flow.component.contextmenu.MenuItem;
+import com.vaadin.flow.component.contextmenu.SubMenu;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.menubar.MenuBar;
+import com.vaadin.flow.component.menubar.MenuBarVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.tooltip.Tooltip;
 import com.vaadin.flow.function.ValueProvider;
 
 public abstract class CrudView<T> extends VerticalLayout {
@@ -38,6 +44,7 @@ public abstract class CrudView<T> extends VerticalLayout {
     protected int filasPorPagina = 25;
     protected long totalRegistros = 0;
 
+    protected HorizontalLayout barraPaginacion;
     private Span spanPagina;
     private Button btnAnterior;
     private Button btnSiguiente;
@@ -49,7 +56,7 @@ public abstract class CrudView<T> extends VerticalLayout {
         getStyle().set("background-color", "#f8fafc");
 
         configurarComponentes(claseEntidad);
-        HorizontalLayout barraPaginacion = crearBarraPaginacion();
+        barraPaginacion = crearBarraPaginacion();
         add(barraHerramientas, grid, barraPaginacion);
         setFlexGrow(1, grid);
     }
@@ -76,6 +83,7 @@ public abstract class CrudView<T> extends VerticalLayout {
                 .set("margin-right", "12px")
                 .set("cursor", "pointer");
         btnConfiguracion.addClickListener(e -> abrirDialogoColumnas());
+        Tooltip.forComponent(btnConfiguracion).withText("Configurar columnas visibles");
 
         HorizontalLayout layoutTitulo = new HorizontalLayout(btnConfiguracion, tituloPrograma);
         layoutTitulo.setAlignItems(Alignment.CENTER);
@@ -426,48 +434,63 @@ public abstract class CrudView<T> extends VerticalLayout {
         .setAutoWidth(true);
     }
 
-    // ── Botones de acción por fila: colores semánticos ────────────────────────
+    // ── Botones de acción por fila: Ver directo + menú "⋮" para editar/eliminar ─
     private HorizontalLayout crearBotonesAccion(T item) {
-
-        // Ver → azul
-        Icon v = VaadinIcon.EYE.create();
-        v.getStyle().set("color", "#2563eb");
-        v.setSize("17px");
-        Button btnV = new Button(v);
-        btnV.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
-        btnV.getElement().setAttribute("title", "Visualizar");
-        btnV.addClickListener(ev -> accionVisualizar(item));
-
-        // Editar → ámbar
-        Icon e = VaadinIcon.EDIT.create();
-        e.getStyle().set("color", "#d97706");
-        e.setSize("17px");
-        Button btnE = new Button(e);
-        btnE.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
-        btnE.getElement().setAttribute("title", "Editar");
-        btnE.addClickListener(click -> accionEditar(item));
-
-        // Borrar → rojo
-        Icon b = VaadinIcon.TRASH.create();
-        b.getStyle().set("color", "#dc2626");
-        b.setSize("17px");
-        Button btnB = new Button(b);
-        btnB.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
-        btnB.getElement().setAttribute("title", "Eliminar");
-        btnB.addClickListener(event -> accionBorrar(item));
-
         HorizontalLayout layout = new HorizontalLayout();
-        layout.add(btnV);
+        layout.setSpacing(false);
+        layout.getStyle().set("gap", "2px");
+        layout.setAlignItems(Alignment.CENTER);
+        layout.setJustifyContentMode(JustifyContentMode.CENTER);
+
+        // Acción extra (ej.: descarga) — antes del resto
         com.vaadin.flow.component.Component extra = crearBotonAccionExtra(item);
         if (extra != null) layout.add(extra);
-        if (mostrarBotonEditar(item)) layout.add(btnE);
-        layout.add(btnB);
-        layout.setSpacing(false);
-        layout.getStyle().set("gap", "4px");
+
+        // Ver → azul, siempre visible como ícono directo
+        Icon vIcon = VaadinIcon.EYE.create();
+        vIcon.getStyle().set("color", "#2563eb");
+        vIcon.setSize("17px");
+        Button btnV = new Button(vIcon);
+        btnV.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+        btnV.addClickListener(ev -> accionVisualizar(item));
+        Tooltip.forComponent(btnV).withText("Visualizar");
+        layout.add(btnV);
+
+        // Menú "⋮" con Editar (condicional) y Eliminar
+        MenuBar menuBar = new MenuBar();
+        menuBar.addThemeVariants(MenuBarVariant.LUMO_TERTIARY, MenuBarVariant.LUMO_SMALL,
+                MenuBarVariant.LUMO_ICON);
+        Icon moreIcon = VaadinIcon.ELLIPSIS_DOTS_V.create();
+        moreIcon.setSize("16px");
+        MenuItem moreItem = menuBar.addItem(moreIcon);
+        SubMenu sub = moreItem.getSubMenu();
+
+        if (mostrarBotonEditar(item)) {
+            sub.addItem(crearItemSubMenu(VaadinIcon.EDIT, "Editar", "#d97706"),
+                    e -> accionEditar(item));
+            Hr sep = new Hr();
+            sep.getStyle().set("margin", "4px 0").set("border-color", "#e2e8f0");
+            sub.add(sep);
+        }
+        sub.addItem(crearItemSubMenu(VaadinIcon.TRASH, "Eliminar", "#dc2626"),
+                e -> accionBorrar(item));
+
+        layout.add(menuBar);
         layout.setWidthFull();
-        layout.setJustifyContentMode(JustifyContentMode.CENTER);
-        layout.setAlignItems(Alignment.CENTER);
         return layout;
+    }
+
+    private HorizontalLayout crearItemSubMenu(VaadinIcon icono, String texto, String color) {
+        Icon icon = icono.create();
+        icon.setSize("14px");
+        icon.getStyle().set("color", color);
+        Span span = new Span(texto);
+        span.getStyle().set("font-size", "0.875rem").set("color", "#1e293b");
+        HorizontalLayout hl = new HorizontalLayout(icon, span);
+        hl.setAlignItems(Alignment.CENTER);
+        hl.setSpacing(false);
+        hl.getStyle().set("gap", "8px").set("padding", "2px 4px");
+        return hl;
     }
 
     // ── Diálogo configurar columnas ───────────────────────────────────────────
