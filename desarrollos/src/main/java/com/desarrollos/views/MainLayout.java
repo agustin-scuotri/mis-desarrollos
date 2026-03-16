@@ -205,6 +205,37 @@ public class MainLayout extends AppLayout {
 				"  'html[theme~=\"dark\"] vaadin-grid::part(header-cell) { background-color: hsl(214,28%,18%) !important; color: hsla(214,96%,96%,0.70) !important; }' +" +
 				"  'html[theme~=\"dark\"] vaadin-grid::part(footer-cell) { background-color: hsl(214,28%,18%) !important; }';" +
 
+				// Inyección directa en shadowRoot de cada vaadin-grid (más confiable que ::part())
+				"var GRID_DARK_CSS = '[part~=\"header-cell\"] { background-color: hsl(214,28%,18%) !important; color: hsla(214,96%,96%,0.70) !important; } [part~=\"footer-cell\"] { background-color: hsl(214,28%,18%) !important; }';" +
+				"function aplicarTemaGrid(grid, dark) {" +
+				"  var ex = grid.shadowRoot && grid.shadowRoot.getElementById('lumo-dark-grid');" +
+				"  if (dark && !ex && grid.shadowRoot) {" +
+				"    var s = document.createElement('style');" +
+				"    s.id = 'lumo-dark-grid';" +
+				"    s.textContent = GRID_DARK_CSS;" +
+				"    grid.shadowRoot.appendChild(s);" +
+				"  } else if (!dark && ex) {" +
+				"    ex.remove();" +
+				"  }" +
+				"}" +
+				"function aplicarTemaGrids(dark) {" +
+				"  document.querySelectorAll('vaadin-grid').forEach(function(g) { aplicarTemaGrid(g, dark); });" +
+				"}" +
+				// MutationObserver para grids cargados después de la carga inicial (navegación entre vistas)
+				"var gridObserver = new MutationObserver(function(mutations) {" +
+				"  if (document.documentElement.getAttribute('theme') !== 'dark') return;" +
+				"  mutations.forEach(function(m) {" +
+				"    m.addedNodes.forEach(function(n) {" +
+				"      if (n.nodeType !== 1) return;" +
+				"      var gs = [];" +
+				"      if (n.tagName && n.tagName.toLowerCase() === 'vaadin-grid') gs.push(n);" +
+				"      if (n.querySelectorAll) n.querySelectorAll('vaadin-grid').forEach(function(g) { gs.push(g); });" +
+				"      gs.forEach(function(g) { aplicarTemaGrid(g, true); });" +
+				"    });" +
+				"  });" +
+				"});" +
+				"gridObserver.observe(document.body, { childList: true, subtree: true });" +
+
 				"function aplicarTema(dark) {" +
 				"  document.documentElement[dark ? 'setAttribute' : 'removeAttribute']('theme', 'dark');" +
 				"  document.body[dark ? 'setAttribute' : 'removeAttribute']('theme', 'dark');" +
@@ -217,6 +248,7 @@ public class MainLayout extends AppLayout {
 				"  } else if (!dark && existing) {" +
 				"    existing.remove();" +
 				"  }" +
+				"  aplicarTemaGrids(dark);" +
 				"  localStorage[dark ? 'setItem' : 'removeItem']('dark-mode', '1');" +
 				"  btn.innerHTML = dark ? sunSvg : moonSvg;" +
 				"  btn.title = dark ? 'Activar modo claro' : 'Activar modo oscuro';" +
