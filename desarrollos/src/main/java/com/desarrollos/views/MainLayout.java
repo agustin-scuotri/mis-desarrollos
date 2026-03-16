@@ -16,7 +16,9 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.RouterLink;
+import com.vaadin.flow.server.VaadinServletRequest;
 import jakarta.annotation.security.PermitAll;
+import jakarta.servlet.ServletException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -333,11 +335,14 @@ public class MainLayout extends AppLayout {
 				.set("min-width", "36px")
 				.set("min-height", "36px");
 		btnLogout.setVisible(securityEnabled);
-		btnLogout.addClickListener(e ->
-				btnLogout.getElement().executeJs(
-						"window.location.href = '/logout';"
-				)
-		);
+		btnLogout.addClickListener(e -> {
+			try {
+				VaadinServletRequest.getCurrent().getHttpServletRequest().logout();
+			} catch (ServletException ex) {
+				// sesión ya inválida, ignorar
+			}
+			getUI().ifPresent(ui -> ui.getPage().setLocation("/login"));
+		});
 
 		HorizontalLayout header = new HorizontalLayout(toggle, logo, spacer, btnTema, btnLogout);
 		header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
