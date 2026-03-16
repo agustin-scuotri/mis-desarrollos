@@ -45,7 +45,7 @@ public class MainLayout extends AppLayout {
 			// 2. Fuente global Inter
 			"  *, body, html { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important; }" +
 
-			// 3. Sidebar: ítem activo (pill resaltado)
+			// 3. Sidebar: ítem activo (pill resaltado) - modo claro
 			"  a[highlight] {" +
 			"    background-color: rgba(0, 32, 96, 0.10) !important;" +
 			"    color: #002060 !important;" +
@@ -54,6 +54,16 @@ public class MainLayout extends AppLayout {
 			"  a[router-link]:hover:not([highlight]) {" +
 			"    background-color: rgba(0, 32, 96, 0.06) !important;" +
 			"    color: #1e3a6e !important;" +
+			"  }" +
+
+			// 3b. Sidebar: ítem activo - modo oscuro
+			"  [theme~='dark'] a[highlight] {" +
+			"    background-color: rgba(255,255,255,0.12) !important;" +
+			"    color: rgba(255,255,255,0.95) !important;" +
+			"  }" +
+			"  [theme~='dark'] a[router-link]:hover:not([highlight]) {" +
+			"    background-color: rgba(255,255,255,0.07) !important;" +
+			"    color: rgba(255,255,255,0.75) !important;" +
 			"  }" +
 
 			// 4. Etiquetas de campos: alineación en fila (mantener comportamiento existente)
@@ -83,6 +93,10 @@ public class MainLayout extends AppLayout {
 			"    display: inline-block !important; " +
 			"    vertical-align: middle !important; " +
 			"    transform: translateY(1px) !important; " +
+			"  } " +
+			// 5b. Indicador requerido en modo oscuro
+			"  [theme~='dark'] [required]::part(required-indicator)::after { " +
+			"    color: #60a5fa !important; " +
 			"  } " +
 
 			// 6. Campos: ancho máximo 100%
@@ -155,13 +169,13 @@ public class MainLayout extends AppLayout {
 			btnTema.getElement().setAttribute("title",
 				isDark[0] ? "Activar modo claro" : "Activar modo oscuro");
 			if (isDark[0]) {
-				e.getSource().getUI().ifPresent(ui -> ui.getPage().executeJs(
+				btnTema.getElement().executeJs(
 					"document.documentElement.setAttribute('theme','dark');" +
-					"localStorage.setItem('dark-mode','1');"));
+					"localStorage.setItem('dark-mode','1');");
 			} else {
-				e.getSource().getUI().ifPresent(ui -> ui.getPage().executeJs(
+				btnTema.getElement().executeJs(
 					"document.documentElement.removeAttribute('theme');" +
-					"localStorage.removeItem('dark-mode');"));
+					"localStorage.removeItem('dark-mode');");
 			}
 		});
 
