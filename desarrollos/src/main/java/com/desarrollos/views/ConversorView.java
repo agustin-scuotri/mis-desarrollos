@@ -39,8 +39,7 @@ import com.vaadin.flow.component.html.Pre;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant;
+import com.desarrollos.base.Toast;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -524,8 +523,7 @@ public class ConversorView extends FormView {
 		try {
 			Archivo completo = archivoService.buscarPorIdConContenido(archivoSeleccionado.getId());
 			if (completo.getContenido() == null) {
-				Notification.show("El archivo no tiene contenido adjunto")
-						.addThemeVariants(NotificationVariant.LUMO_WARNING);
+				Toast.warning("El archivo no tiene contenido adjunto");
 				return;
 			}
 			StreamResource res = new StreamResource(
@@ -535,8 +533,7 @@ public class ConversorView extends FormView {
 					.getResourceRegistry().registerResource(res);
 			UI.getCurrent().getPage().open(reg.getResourceUri().toString(), "_blank");
 		} catch (Exception ex) {
-			Notification.show("Error al abrir el archivo: " + ex.getMessage())
-					.addThemeVariants(NotificationVariant.LUMO_ERROR);
+			Toast.error("Error al abrir el archivo: " + ex.getMessage());
 		}
 	}
 
@@ -643,8 +640,7 @@ public class ConversorView extends FormView {
 					panelProgreso.setVisible(false);
 					btnConvertir.setEnabled(true);
 					actualizarStepper("completado", "error", "pendiente");
-					Notification.show("La API está saturada. Esperá unos minutos e intentá de nuevo.")
-							.addThemeVariants(NotificationVariant.LUMO_WARNING);
+					Toast.warning("La API está saturada. Esperá unos minutos e intentá de nuevo.");
 				});
 
 			} catch (ArchivoDuplicadoException ex) {
@@ -705,8 +701,7 @@ public class ConversorView extends FormView {
 						panelProgreso.setVisible(false);
 						btnConvertir.setEnabled(true);
 						archivoCombo.refrescar();
-						Notification.show("Error al convertir: " + ex.getMessage())
-								.addThemeVariants(NotificationVariant.LUMO_ERROR);
+						Toast.error("Error al convertir: " + ex.getMessage());
 					});
 				}
 			}
@@ -974,8 +969,7 @@ public class ConversorView extends FormView {
 				"}).catch(() => {});",
 				jsonText
 			);
-			Notification.show("JSON copiado al portapapeles", 2000, Notification.Position.BOTTOM_CENTER)
-					.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+			Toast.success("JSON copiado al portapapeles");
 		});
 		return btnCopiar;
 	}

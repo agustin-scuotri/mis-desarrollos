@@ -16,8 +16,7 @@ import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant;
+import com.desarrollos.base.Toast;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -243,11 +242,9 @@ public class AbmArchivosView extends CrudView<Archivo> implements BeforeEnterObs
                             service.actualizarEstado(archivo, "PENDIENTE", null);
                             actualizarLista();
                             dialog.close();
-                            Notification.show("Archivo marcado como Pendiente. Ya podés intentar convertirlo.")
-                                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                            Toast.success("Archivo marcado como Pendiente. Ya podés intentar convertirlo.");
                         } catch (Exception ex) {
-                            Notification.show("Error al actualizar el estado: " + ex.getMessage())
-                                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                            Toast.error("Error al actualizar el estado: " + ex.getMessage());
                         }
                     });
                     btnReintentar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -337,11 +334,9 @@ public class AbmArchivosView extends CrudView<Archivo> implements BeforeEnterObs
             try {
                 service.borrar(item);
                 actualizarLista();
-                Notification.show(getTranslation("app.borrar.exito"))
-                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                Toast.success(getTranslation("app.borrar.exito"));
             } catch (Exception e) {
-                Notification.show("Error al borrar: " + e.getMessage())
-                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                Toast.error("Error al borrar: " + e.getMessage());
             }
         });
 

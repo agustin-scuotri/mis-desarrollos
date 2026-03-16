@@ -34,8 +34,7 @@ import com.vaadin.flow.component.html.Pre;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant;
+import com.desarrollos.base.Toast;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -127,8 +126,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         try {
             doc = service.buscarCompleto(item.getId());
         } catch (Exception ex) {
-            Notification.show("Error al cargar el documento: " + ex.getMessage())
-                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            Toast.error("Error al cargar el documento: " + ex.getMessage());
             return;
         }
 
@@ -221,8 +219,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         btnCopiar.addClickListener(e -> {
             btnCopiar.getElement().executeJs(
                 "navigator.clipboard.writeText($0).catch(()=>{});", jsonParaCopiar);
-            Notification.show("JSON copiado", 2000, Notification.Position.BOTTOM_CENTER)
-                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            Toast.success("JSON copiado al portapapeles");
         });
 
         HorizontalLayout accionesBotones = new HorizontalLayout(anchorDescarga, btnCopiar);
@@ -335,8 +332,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         try {
             doc = service.buscarCompleto(item.getId());
         } catch (Exception ex) {
-            Notification.show("Error al cargar el documento: " + ex.getMessage())
-                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            Toast.error("Error al cargar el documento: " + ex.getMessage());
             return;
         }
 
@@ -556,8 +552,7 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         btnCopiarJson.addClickListener(e -> {
             btnCopiarJson.getElement().executeJs(
                 "navigator.clipboard.writeText($0).catch(()=>{});", jsonACopiar);
-            Notification.show("JSON copiado al portapapeles", 2000, Notification.Position.BOTTOM_CENTER)
-                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            Toast.success("JSON copiado al portapapeles");
         });
 
         dialog.getFooter().add(anchorDescarga, btnCopiarJson, btnCerrar);
@@ -584,11 +579,9 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
             try {
                 service.borrar(item);
                 actualizarLista();
-                Notification.show(getTranslation("app.borrar.exito"))
-                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                Toast.success(getTranslation("app.borrar.exito"));
             } catch (Exception e) {
-                Notification.show("Error al borrar: " + e.getMessage())
-                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                Toast.error("Error al borrar: " + e.getMessage());
             }
         });
 

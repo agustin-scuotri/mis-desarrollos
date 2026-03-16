@@ -6,6 +6,7 @@ import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.desarrollos.base.FormView;
+import com.desarrollos.base.Toast;
 import com.desarrollos.entities.Archivo;
 import com.desarrollos.services.ArchivoService;
 import com.vaadin.flow.component.HasEnabled;
@@ -136,7 +137,7 @@ public class ArchivoView extends FormView implements HasUrlParameter<String>, Be
                     }
                 }
             } catch (NumberFormatException e) {
-                Notification.show("Error: Formato de ID incorrecto en la URL");
+                Toast.error("Error: Formato de ID incorrecto en la URL");
             }
         } else {
             configurarNuevoRegistro();
@@ -430,7 +431,7 @@ public class ArchivoView extends FormView implements HasUrlParameter<String>, Be
 				mostrarPrevisualizacion(bytes);
 				upload.getElement().executeJs("this.files = [];");
 			} catch (IOException e) {
-				Notification.show("Error de lectura");
+				Toast.error("Error de lectura del archivo");
 			}
 		});
 
@@ -479,8 +480,7 @@ public class ArchivoView extends FormView implements HasUrlParameter<String>, Be
 
 				getUI().ifPresent(ui -> ui.navigate(AbmArchivosView.class));
 			} catch (Exception e) {
-				Notification.show("Error: " + e.getMessage(), 5000, Notification.Position.MIDDLE)
-						.addThemeVariants(NotificationVariant.LUMO_ERROR);
+				Toast.error("Error: " + e.getMessage());
 			}
 		}
 	}
