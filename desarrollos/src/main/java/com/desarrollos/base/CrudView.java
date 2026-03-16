@@ -181,7 +181,8 @@ public abstract class CrudView<T> extends VerticalLayout {
                 "  }" +
                 "  [part~='header-cell'] {" +
                 "    border-bottom: 2px solid rgba(0,32,96,0.12) !important;" +
-                "    background-color: #f8fafc !important;" +
+                "    background-color: var(--grid-header-bg, #f8fafc) !important;" +
+                "    background-image: none !important;" +
                 "    font-weight: 600;" +
                 "    overflow: hidden;" +
                 "    clip-path: inset(0);" +
@@ -199,28 +200,34 @@ public abstract class CrudView<T> extends VerticalLayout {
                 "    border-right: 1px solid rgba(0,32,96,0.06) !important;" +
                 "  }" +
                 "  [part~='row']:hover > [part~='cell'] {" +
-                "    background-color: rgba(0,32,96,0.04) !important;" +
+                "    background-color: var(--grid-hover-bg, rgba(0,32,96,0.04)) !important;" +
+                "    background-image: none !important;" +
                 "  }" +
                 "  [part~='row'][selected] > [part~='cell'] {" +
                 "    background-color: transparent !important;" +
                 "  }" +
                 "  [part~='row'][selected]:hover > [part~='cell'] {" +
-                "    background-color: rgba(0,32,96,0.04) !important;" +
+                "    background-color: var(--grid-hover-bg, rgba(0,32,96,0.04)) !important;" +
+                "    background-image: none !important;" +
                 "  }" +
                 "  [frozen-to-end] {" +
                 "    z-index: 3 !important;" +
-                "    background-color: white;" +
+                "    background-color: var(--grid-frozen-bg, white) !important;" +
+                "    background-image: none !important;" +
                 "    overflow: hidden;" +
                 "    clip-path: inset(0);" +
                 "  }" +
                 "  [part~='row']:hover [frozen-to-end] {" +
-                "    background-color: #f5f6f9 !important;" +
+                "    background-color: var(--grid-frozen-hover-bg, #f5f6f9) !important;" +
+                "    background-image: none !important;" +
                 "  }" +
                 "  [part~='row'][selected] [frozen-to-end] {" +
-                "    background-color: white !important;" +
+                "    background-color: var(--grid-frozen-bg, white) !important;" +
+                "    background-image: none !important;" +
                 "  }" +
                 "  [part~='row'][selected]:hover [frozen-to-end] {" +
-                "    background-color: #f5f6f9 !important;" +
+                "    background-color: var(--grid-frozen-hover-bg, #f5f6f9) !important;" +
+                "    background-image: none !important;" +
                 "  }" +
                 "`;" +
                 "grid.shadowRoot.appendChild(style);");

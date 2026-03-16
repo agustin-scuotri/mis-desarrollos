@@ -228,6 +228,11 @@ public class MainLayout extends AppLayout {
 				"'  --vaadin-grid-cell-background: hsl(214,35%,15%);' +" +
 				"'  --lumo-body-text-color:      hsla(214,96%,96%,0.80);' +" +
 				"'  --lumo-secondary-text-color: hsla(214,96%,96%,0.60);' +" +
+				// Variables usadas por CrudView para los colores hardcodeados convertidos a var()
+				"'  --grid-header-bg:      hsl(214,28%,18%);' +" +
+				"'  --grid-frozen-bg:      hsl(214,35%,15%);' +" +
+				"'  --grid-hover-bg:       hsl(214,35%,22%);' +" +
+				"'  --grid-frozen-hover-bg: hsl(214,35%,22%);' +" +
 				"'} ' +" +
 				"'[part~=\"header-cell\"] { background-color: hsl(214,28%,18%) !important; background-image: none !important; color: hsla(214,96%,96%,0.70) !important; } ' +" +
 				"'[part~=\"footer-cell\"] { background-color: hsl(214,28%,18%) !important; background-image: none !important; } ' +" +
