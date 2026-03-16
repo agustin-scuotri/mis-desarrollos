@@ -142,36 +142,79 @@ public class MainLayout extends AppLayout {
 		addAttachListener((AttachEvent ae) -> {
 			btnTema.getElement().executeJs(
 				"var btn = this;" +
-				"var moonSvg = '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" " +
-				"  fill=\"currentColor\" viewBox=\"0 0 16 16\">" +
-				"  <path d=\"M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 " +
-				"  3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316" +
-				"  .733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71" +
-				"  0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z\"/></svg>';" +
-				"var sunSvg = '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" " +
-				"  fill=\"currentColor\" viewBox=\"0 0 16 16\">" +
-				"  <path d=\"M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" +
-				"  M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 " +
-				"  .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1" +
-				"  0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 " +
-				"  3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414" +
-				"  -1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 " +
-				"  0 0 1-.707-.707l1.414-1.414a.5.5 0 1 1 .707.707zm9.193 2.121a.5.5 0 0 1-.707" +
-				"  0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 " +
-				"  4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 " +
-				"  0 0 1 0 .707z\"/></svg>';" +
+				"var moonSvg = '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z\"/></svg>';" +
+				"var sunSvg = '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 1 1 .707.707zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707z\"/></svg>';" +
+
+				// CSS con todas las variables de color Lumo para dark mode
+				// Se inyecta como <style> al activar y se elimina al desactivar.
+				// Esto garantiza el dark mode aunque Vaadin no haya bundleado el CSS oscuro.
+				"var DARK_CSS = " +
+				"  'html[theme~=\"dark\"] {' +" +
+				"  '  color-scheme: dark;' +" +
+				"  '  --lumo-base-color: hsl(214,35%,15%);' +" +
+				"  '  --lumo-tint-5pct: hsla(214,65%,85%,0.06);' +" +
+				"  '  --lumo-tint-10pct: hsla(214,60%,80%,0.14);' +" +
+				"  '  --lumo-tint-20pct: hsla(214,64%,82%,0.23);' +" +
+				"  '  --lumo-tint-30pct: hsla(214,69%,84%,0.32);' +" +
+				"  '  --lumo-tint-40pct: hsla(214,73%,86%,0.41);' +" +
+				"  '  --lumo-tint-50pct: hsla(214,78%,88%,0.50);' +" +
+				"  '  --lumo-tint-60pct: hsla(214,82%,90%,0.60);' +" +
+				"  '  --lumo-tint-70pct: hsla(214,87%,92%,0.70);' +" +
+				"  '  --lumo-tint-80pct: hsla(214,91%,94%,0.80);' +" +
+				"  '  --lumo-tint-90pct: hsla(214,96%,96%,0.90);' +" +
+				"  '  --lumo-tint: hsl(214,100%,98%);' +" +
+				"  '  --lumo-shade-5pct: hsla(214,0%,0%,0.07);' +" +
+				"  '  --lumo-shade-10pct: hsla(214,4%,2%,0.15);' +" +
+				"  '  --lumo-shade-20pct: hsla(214,8%,4%,0.23);' +" +
+				"  '  --lumo-shade-30pct: hsla(214,12%,6%,0.32);' +" +
+				"  '  --lumo-shade-40pct: hsla(214,16%,8%,0.41);' +" +
+				"  '  --lumo-shade-50pct: hsla(214,20%,10%,0.50);' +" +
+				"  '  --lumo-shade-60pct: hsla(214,24%,12%,0.60);' +" +
+				"  '  --lumo-shade-70pct: hsla(214,28%,13%,0.70);' +" +
+				"  '  --lumo-shade-80pct: hsla(214,32%,13%,0.80);' +" +
+				"  '  --lumo-shade-90pct: hsla(214,33%,13%,0.90);' +" +
+				"  '  --lumo-shade: hsl(214,33%,13%);' +" +
+				"  '  --lumo-contrast-5pct: var(--lumo-tint-5pct);' +" +
+				"  '  --lumo-contrast-10pct: var(--lumo-tint-10pct);' +" +
+				"  '  --lumo-contrast-20pct: var(--lumo-tint-20pct);' +" +
+				"  '  --lumo-contrast-30pct: var(--lumo-tint-30pct);' +" +
+				"  '  --lumo-contrast-40pct: var(--lumo-tint-40pct);' +" +
+				"  '  --lumo-contrast-50pct: var(--lumo-tint-50pct);' +" +
+				"  '  --lumo-contrast-60pct: var(--lumo-tint-60pct);' +" +
+				"  '  --lumo-contrast-70pct: var(--lumo-tint-70pct);' +" +
+				"  '  --lumo-contrast-80pct: var(--lumo-tint-80pct);' +" +
+				"  '  --lumo-contrast-90pct: var(--lumo-tint-90pct);' +" +
+				"  '  --lumo-contrast: var(--lumo-tint);' +" +
+				"  '  --lumo-header-text-color: var(--lumo-contrast-90pct);' +" +
+				"  '  --lumo-body-text-color: var(--lumo-contrast-80pct);' +" +
+				"  '  --lumo-secondary-text-color: var(--lumo-contrast-60pct);' +" +
+				"  '  --lumo-tertiary-text-color: var(--lumo-contrast-50pct);' +" +
+				"  '  --lumo-disabled-text-color: var(--lumo-contrast-30pct);' +" +
+				"  '  --lumo-primary-text-color: hsl(214,90%,77%);' +" +
+				"  '  --lumo-error-text-color: hsl(3,90%,75%);' +" +
+				"  '  --lumo-success-text-color: hsl(145,65%,58%);' +" +
+				"  '  --lumo-link-color: hsl(214,90%,77%);' +" +
+				"  '}' +" +
+				// Fondo del body y partes del app-layout via ::part() para shadow DOM
+				"  'html[theme~=\"dark\"] body { background: hsl(214,35%,15%) !important; color: hsla(214,96%,96%,0.80) !important; }' +" +
+				"  'html[theme~=\"dark\"] vaadin-app-layout::part(content) { background: hsl(214,35%,15%); }' +" +
+				"  'html[theme~=\"dark\"] vaadin-app-layout::part(drawer) { background: hsl(214,33%,13%); }';" +
+
 				"function aplicarTema(dark) {" +
-				"  if (dark) {" +
-				"    document.documentElement.setAttribute('theme', 'dark');" +
-				"    localStorage.setItem('dark-mode', '1');" +
-				"    btn.innerHTML = sunSvg;" +
-				"    btn.title = 'Activar modo claro';" +
-				"  } else {" +
-				"    document.documentElement.removeAttribute('theme');" +
-				"    localStorage.removeItem('dark-mode');" +
-				"    btn.innerHTML = moonSvg;" +
-				"    btn.title = 'Activar modo oscuro';" +
+				"  document.documentElement[dark ? 'setAttribute' : 'removeAttribute']('theme', 'dark');" +
+				"  document.body[dark ? 'setAttribute' : 'removeAttribute']('theme', 'dark');" +
+				"  var existing = document.getElementById('lumo-dark-vars');" +
+				"  if (dark && !existing) {" +
+				"    var s = document.createElement('style');" +
+				"    s.id = 'lumo-dark-vars';" +
+				"    s.textContent = DARK_CSS;" +
+				"    document.head.appendChild(s);" +
+				"  } else if (!dark && existing) {" +
+				"    existing.remove();" +
 				"  }" +
+				"  localStorage[dark ? 'setItem' : 'removeItem']('dark-mode', '1');" +
+				"  btn.innerHTML = dark ? sunSvg : moonSvg;" +
+				"  btn.title = dark ? 'Activar modo claro' : 'Activar modo oscuro';" +
 				"}" +
 				"aplicarTema(localStorage.getItem('dark-mode') === '1');" +
 				"btn.addEventListener('click', function() {" +
