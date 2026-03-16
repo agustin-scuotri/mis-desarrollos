@@ -319,6 +319,9 @@ public abstract class CrudView<T> extends VerticalLayout {
         else if (lower.contains("cuit"))                                vi = VaadinIcon.BUILDING;
         else if (lower.contains("comprobante") || lower.contains("nro.")) vi = VaadinIcon.FILE_TEXT;
         else if (lower.contains("fecha"))                               vi = VaadinIcon.CALENDAR;
+        else if (lower.contains("usuario"))                             vi = VaadinIcon.USER;
+        else if (lower.contains("email"))                               vi = VaadinIcon.ENVELOPE;
+        else if (lower.contains("rol"))                                 vi = VaadinIcon.BAR_CHART;
         else                                                            vi = VaadinIcon.LINES;
         Icon icon = vi.create();
         icon.setSize("13px");

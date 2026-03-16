@@ -6,6 +6,7 @@ import com.desarrollos.entities.Usuario;
 import com.desarrollos.services.UsuarioService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
@@ -36,6 +37,9 @@ public class AbmUsuariosView extends CrudView<Usuario> {
         super(Usuario.class);
         this.usuarioService = usuarioService;
         setTitulo("Usuarios");
+        btnNuevo.setText("Crear usuario");
+        btnNuevo.setIcon(VaadinIcon.PLUS.create());
+        btnNuevo.setIconAfterText(true);
         actualizarLista();
     }
 
