@@ -128,55 +128,56 @@ public class MainLayout extends AppLayout {
 		toggle.getStyle().set("color", "white");
 		toggle.getElement().executeJs("this.shadowRoot.querySelector('[part~=\"icon\"]').style.color = '#001030';");
 
-		// ── Toggle Modo Oscuro ────────────────────────────────────────────────
-		final boolean[] isDark = {false};
-
-		Icon iconoInicial = VaadinIcon.MOON.create();
-		iconoInicial.setSize("18px");
-		iconoInicial.getStyle().set("color", "rgba(255,255,255,0.85)");
-
-		Button btnTema = new Button(iconoInicial);
+		// ── Toggle Modo Oscuro (100% client-side: sin roundtrip al servidor) ──
+		// Sin addClickListener → Vaadin NO re-renderiza el DOM al hacer click
+		// → el menú lateral no pierde el item activo
+		Button btnTema = new Button();
 		btnTema.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-		btnTema.getElement().setAttribute("title", "Activar modo oscuro");
-		btnTema.getStyle().set("cursor", "pointer");
+		btnTema.getStyle()
+				.set("cursor", "pointer")
+				.set("color", "rgba(255,255,255,0.85)")
+				.set("min-width", "36px")
+				.set("min-height", "36px");
 
-		// ── Aplica preferencia guardada en localStorage al cargar ────────────
 		addAttachListener((AttachEvent ae) -> {
-			ae.getUI().getPage().executeJs(
-				"if (localStorage.getItem('dark-mode') === '1') {" +
-				"  document.documentElement.setAttribute('theme','dark');" +
+			btnTema.getElement().executeJs(
+				"var btn = this;" +
+				"var moonSvg = '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" " +
+				"  fill=\"currentColor\" viewBox=\"0 0 16 16\">" +
+				"  <path d=\"M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 " +
+				"  3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316" +
+				"  .733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71" +
+				"  0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z\"/></svg>';" +
+				"var sunSvg = '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" " +
+				"  fill=\"currentColor\" viewBox=\"0 0 16 16\">" +
+				"  <path d=\"M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" +
+				"  M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 " +
+				"  .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1" +
+				"  0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 " +
+				"  3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414" +
+				"  -1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 " +
+				"  0 0 1-.707-.707l1.414-1.414a.5.5 0 1 1 .707.707zm9.193 2.121a.5.5 0 0 1-.707" +
+				"  0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 " +
+				"  4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 " +
+				"  0 0 1 0 .707z\"/></svg>';" +
+				"function aplicarTema(dark) {" +
+				"  if (dark) {" +
+				"    document.documentElement.setAttribute('theme', 'dark');" +
+				"    localStorage.setItem('dark-mode', '1');" +
+				"    btn.innerHTML = sunSvg;" +
+				"    btn.title = 'Activar modo claro';" +
+				"  } else {" +
+				"    document.documentElement.removeAttribute('theme');" +
+				"    localStorage.removeItem('dark-mode');" +
+				"    btn.innerHTML = moonSvg;" +
+				"    btn.title = 'Activar modo oscuro';" +
+				"  }" +
 				"}" +
-				"return localStorage.getItem('dark-mode') === '1';")
-			.then(Boolean.class, dark -> {
-				if (Boolean.TRUE.equals(dark)) {
-					isDark[0] = true;
-					Icon ic = VaadinIcon.SUN_O.create();
-					ic.setSize("18px");
-					ic.getStyle().set("color", "rgba(255,255,255,0.85)");
-					btnTema.setIcon(ic);
-					btnTema.getElement().setAttribute("title", "Activar modo claro");
-				}
-			});
-		});
-
-		// Listener servidor: actualiza ícono y ejecuta el cambio de tema en el cliente
-		btnTema.addClickListener(e -> {
-			isDark[0] = !isDark[0];
-			Icon ic = isDark[0] ? VaadinIcon.SUN_O.create() : VaadinIcon.MOON.create();
-			ic.setSize("18px");
-			ic.getStyle().set("color", "rgba(255,255,255,0.85)");
-			btnTema.setIcon(ic);
-			btnTema.getElement().setAttribute("title",
-				isDark[0] ? "Activar modo claro" : "Activar modo oscuro");
-			if (isDark[0]) {
-				btnTema.getElement().executeJs(
-					"document.documentElement.setAttribute('theme','dark');" +
-					"localStorage.setItem('dark-mode','1');");
-			} else {
-				btnTema.getElement().executeJs(
-					"document.documentElement.removeAttribute('theme');" +
-					"localStorage.removeItem('dark-mode');");
-			}
+				"aplicarTema(localStorage.getItem('dark-mode') === '1');" +
+				"btn.addEventListener('click', function() {" +
+				"  aplicarTema(document.documentElement.getAttribute('theme') !== 'dark');" +
+				"});"
+			);
 		});
 
 		// Spacer para empujar el botón a la derecha
