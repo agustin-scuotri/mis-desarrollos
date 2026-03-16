@@ -206,7 +206,13 @@ public class MainLayout extends AppLayout {
 				"  'html[theme~=\"dark\"] vaadin-grid::part(footer-cell) { background-color: hsl(214,28%,18%) !important; }';" +
 
 				// Inyección directa en shadowRoot de cada vaadin-grid (más confiable que ::part())
-				"var GRID_DARK_CSS = '[part~=\"header-cell\"] { background-color: hsl(214,28%,18%) !important; color: hsla(214,96%,96%,0.70) !important; } [part~=\"footer-cell\"] { background-color: hsl(214,28%,18%) !important; }';" +
+				"var GRID_DARK_CSS = " +
+				"'[part~=\"header-cell\"] { background-color: hsl(214,28%,18%) !important; color: hsla(214,96%,96%,0.70) !important; } ' +" +
+				"'[part~=\"header-cell\"]:hover { background-color: hsl(214,28%,22%) !important; } ' +" +
+				"'[part~=\"footer-cell\"] { background-color: hsl(214,28%,18%) !important; } ' +" +
+				"'[part~=\"body-cell\"] { background-color: hsl(214,35%,15%) !important; color: hsla(214,96%,96%,0.80) !important; } ' +" +
+				"'[part~=\"body-cell\"]:hover { background-color: hsl(214,35%,20%) !important; } ' +" +
+				"'tr:hover [part~=\"body-cell\"] { background-color: hsl(214,35%,20%) !important; }';" +
 				"function aplicarTemaGrid(grid, dark) {" +
 				"  var ex = grid.shadowRoot && grid.shadowRoot.getElementById('lumo-dark-grid');" +
 				"  if (dark && !ex && grid.shadowRoot) {" +
