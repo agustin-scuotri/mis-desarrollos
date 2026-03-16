@@ -198,7 +198,12 @@ public class MainLayout extends AppLayout {
 				// Fondo del body y partes del app-layout via ::part() para shadow DOM
 				"  'html[theme~=\"dark\"] body { background: hsl(214,35%,15%) !important; color: hsla(214,96%,96%,0.80) !important; }' +" +
 				"  'html[theme~=\"dark\"] vaadin-app-layout::part(content) { background: hsl(214,35%,15%); }' +" +
-				"  'html[theme~=\"dark\"] vaadin-app-layout::part(drawer) { background: hsl(214,33%,13%); }';" +
+				"  'html[theme~=\"dark\"] vaadin-app-layout::part(drawer) { background: hsl(214,33%,13%); }' +" +
+				// Grid: las cabeceras usan --vaadin-grid-cell-background dentro del shadow DOM.
+				// Se sobreescribe via ::part() y via la variable CSS custom en el elemento raíz.
+				"  'html[theme~=\"dark\"] vaadin-grid { --vaadin-grid-cell-background: hsl(214,35%,15%); }' +" +
+				"  'html[theme~=\"dark\"] vaadin-grid::part(header-cell) { background-color: hsl(214,28%,18%) !important; color: hsla(214,96%,96%,0.70) !important; }' +" +
+				"  'html[theme~=\"dark\"] vaadin-grid::part(footer-cell) { background-color: hsl(214,28%,18%) !important; }';" +
 
 				"function aplicarTema(dark) {" +
 				"  document.documentElement[dark ? 'setAttribute' : 'removeAttribute']('theme', 'dark');" +
