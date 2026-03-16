@@ -1,10 +1,12 @@
 package com.desarrollos.config;
 
-import com.vaadin.flow.spring.security.VaadinWebSecurity;
+import com.vaadin.flow.spring.security.VaadinSecurityConfigurer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.web.SecurityFilterChain;
 
 /**
  * Configuración de bypass: se activa cuando app.security.enabled=false.
@@ -17,13 +19,14 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 @Configuration
 @EnableWebSecurity
 @ConditionalOnProperty(name = "app.security.enabled", havingValue = "false")
-public class SecurityBypassConfig extends VaadinWebSecurity {
+public class SecurityBypassConfig {
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        // Primero configurar la infraestructura de Vaadin (CSRF, Push, etc.)
-        super.configure(http);
-        // Luego sobreescribir con permiso total — sin login requerido
-        http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // Configurar infraestructura de Vaadin (CSRF, Push, etc.) y permitir todo sin login
+        http.with(VaadinSecurityConfigurer.vaadin(), configurer ->
+            configurer.anyRequest(auth -> auth.permitAll())
+        );
+        return http.build();
     }
 }
