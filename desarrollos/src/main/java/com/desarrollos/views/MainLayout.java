@@ -126,8 +126,7 @@ public class MainLayout extends AppLayout {
 		btnTema.getElement().setAttribute("title", "Activar modo oscuro");
 		btnTema.getStyle().set("cursor", "pointer");
 
-		// ── Toggle manejado 100% client-side (sin round-trip) ────────────────
-		// Aplica preferencia de localStorage y adjunta el toggle al botón
+		// ── Aplica preferencia guardada en localStorage al cargar ────────────
 		addAttachListener((AttachEvent ae) -> {
 			ae.getUI().getPage().executeJs(
 				"if (localStorage.getItem('dark-mode') === '1') {" +
@@ -144,22 +143,9 @@ public class MainLayout extends AppLayout {
 					btnTema.getElement().setAttribute("title", "Activar modo claro");
 				}
 			});
-			// Listener JS nativo: cambia el tema sin esperar al servidor
-			btnTema.getElement().executeJs(
-				"this.addEventListener('click', () => {" +
-				"  const html = document.documentElement;" +
-				"  const dark = html.getAttribute('theme') !== 'dark';" +
-				"  if (dark) {" +
-				"    html.setAttribute('theme','dark');" +
-				"    localStorage.setItem('dark-mode','1');" +
-				"  } else {" +
-				"    html.removeAttribute('theme');" +
-				"    localStorage.removeItem('dark-mode');" +
-				"  }" +
-				"}, true);");
 		});
 
-		// Listener servidor: solo actualiza el ícono
+		// Listener servidor: actualiza ícono y ejecuta el cambio de tema en el cliente
 		btnTema.addClickListener(e -> {
 			isDark[0] = !isDark[0];
 			Icon ic = isDark[0] ? VaadinIcon.SUN_O.create() : VaadinIcon.MOON.create();
@@ -168,6 +154,15 @@ public class MainLayout extends AppLayout {
 			btnTema.setIcon(ic);
 			btnTema.getElement().setAttribute("title",
 				isDark[0] ? "Activar modo claro" : "Activar modo oscuro");
+			if (isDark[0]) {
+				e.getSource().getUI().ifPresent(ui -> ui.getPage().executeJs(
+					"document.documentElement.setAttribute('theme','dark');" +
+					"localStorage.setItem('dark-mode','1');"));
+			} else {
+				e.getSource().getUI().ifPresent(ui -> ui.getPage().executeJs(
+					"document.documentElement.removeAttribute('theme');" +
+					"localStorage.removeItem('dark-mode');"));
+			}
 		});
 
 		// Spacer para empujar el botón a la derecha
