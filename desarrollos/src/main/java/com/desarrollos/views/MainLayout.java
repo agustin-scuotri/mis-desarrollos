@@ -16,18 +16,23 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.RouterLink;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 public class MainLayout extends AppLayout {
 
 	private final ArchivoService archivoService;
+	private final boolean securityEnabled;
 	private Span badgePendientes;
 
 	@Autowired
-	public MainLayout(ArchivoService archivoService) {
+	public MainLayout(ArchivoService archivoService,
+	                  @Value("${app.security.enabled:true}") boolean securityEnabled) {
 		this.archivoService = archivoService;
+		this.securityEnabled = securityEnabled;
 		crearCabecera();
 		crearMenuLateral();
 
@@ -313,11 +318,27 @@ public class MainLayout extends AppLayout {
 			);
 		});
 
-		// Spacer para empujar el botón a la derecha
+		// Spacer para empujar los botones a la derecha
 		HorizontalLayout spacer = new HorizontalLayout();
 		spacer.setFlexGrow(1, spacer);
 
-		HorizontalLayout header = new HorizontalLayout(toggle, logo, spacer, btnTema);
+		// ── Botón Logout (solo visible cuando security está activo) ───────────
+		Button btnLogout = new Button(VaadinIcon.SIGN_OUT.create());
+		btnLogout.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+		btnLogout.setTooltipText("Cerrar sesión");
+		btnLogout.getStyle()
+				.set("cursor", "pointer")
+				.set("color", "rgba(255,255,255,0.75)")
+				.set("min-width", "36px")
+				.set("min-height", "36px");
+		btnLogout.setVisible(securityEnabled);
+		btnLogout.addClickListener(e ->
+				btnLogout.getElement().executeJs(
+						"window.location.href = '/logout';"
+				)
+		);
+
+		HorizontalLayout header = new HorizontalLayout(toggle, logo, spacer, btnTema, btnLogout);
 		header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
 		header.setWidthFull();
 		header.setHeight("60px");

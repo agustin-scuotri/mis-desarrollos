@@ -30,9 +30,11 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.router.Route;
+import jakarta.annotation.security.PermitAll;
 
 @PageTitle("Inicio")
 @Route(value = "", layout = MainLayout.class)
+@PermitAll
 public class InicioView extends VerticalLayout {
 
     private final ArchivoService archivoService;

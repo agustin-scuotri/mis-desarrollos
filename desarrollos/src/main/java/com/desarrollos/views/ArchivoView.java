@@ -45,9 +45,11 @@ import com.vaadin.flow.router.WildcardParameter;
 import com.vaadin.flow.server.StreamRegistration;
 import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.server.VaadinSession;
+import jakarta.annotation.security.PermitAll;
 
 @PageTitle("Detalle de Archivo")
 @Route(value = "archivo-detalle", layout = MainLayout.class)
+@PermitAll
 public class ArchivoView extends FormView implements HasUrlParameter<String>, BeforeLeaveObserver {
 
 	private final ArchivoService service;

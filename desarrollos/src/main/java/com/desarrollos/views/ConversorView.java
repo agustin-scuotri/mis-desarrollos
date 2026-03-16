@@ -50,9 +50,11 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamRegistration;
 import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.server.VaadinSession;
+import jakarta.annotation.security.PermitAll;
 
 @Route(value = "conversor", layout = MainLayout.class)
 @PageTitle("Conversor de Facturas")
+@PermitAll
 public class ConversorView extends FormView {
 
 	private final ArchivoService archivoService;
