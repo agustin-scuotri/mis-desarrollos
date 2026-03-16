@@ -131,7 +131,7 @@ public class AbmUsuariosView extends VerticalLayout {
             confirm.setConfirmButtonTheme("error primary");
             confirm.addConfirmListener(ev -> {
                 usuarioService.eliminar(u.getId());
-                Toast.show(getUI().orElse(null), "Usuario eliminado");
+                Toast.success("Usuario eliminado");
                 cargarDatos();
             });
             confirm.open();
@@ -238,14 +238,14 @@ public class AbmUsuariosView extends VerticalLayout {
                 nuevo.setRol(cmbRol.getValue());
                 nuevo.setHabilitado(chkHabilitado.getValue());
                 usuarioService.guardar(nuevo);
-                Toast.show(getUI().orElse(null), "Usuario creado exitosamente");
+                Toast.success("Usuario creado exitosamente");
             } else {
                 usuarioEditar.setUsername(username);
                 usuarioEditar.setEmail(email);
                 usuarioEditar.setRol(cmbRol.getValue());
                 usuarioEditar.setHabilitado(chkHabilitado.getValue());
                 usuarioService.actualizar(usuarioEditar, password.isBlank() ? null : password);
-                Toast.show(getUI().orElse(null), "Usuario actualizado");
+                Toast.success("Usuario actualizado");
             }
             dialog.close();
             cargarDatos();
