@@ -203,7 +203,13 @@ public class MainLayout extends AppLayout {
 				// Se sobreescribe via ::part() y via la variable CSS custom en el elemento raíz.
 				"  'html[theme~=\"dark\"] vaadin-grid { --vaadin-grid-cell-background: hsl(214,35%,15%); }' +" +
 				"  'html[theme~=\"dark\"] vaadin-grid::part(header-cell) { background-color: hsl(214,28%,18%) !important; color: hsla(214,96%,96%,0.70) !important; }' +" +
-				"  'html[theme~=\"dark\"] vaadin-grid::part(footer-cell) { background-color: hsl(214,28%,18%) !important; }';" +
+				"  'html[theme~=\"dark\"] vaadin-grid::part(footer-cell) { background-color: hsl(214,28%,18%) !important; }' +" +
+				// Scrollbar global en dark mode
+				"  'html[theme~=\"dark\"] ::-webkit-scrollbar { width: 8px; height: 8px; }' +" +
+				"  'html[theme~=\"dark\"] ::-webkit-scrollbar-track { background: hsl(214,35%,11%); border-radius: 4px; }' +" +
+				"  'html[theme~=\"dark\"] ::-webkit-scrollbar-thumb { background: hsl(214,20%,32%); border-radius: 4px; border: 2px solid hsl(214,35%,11%); }' +" +
+				"  'html[theme~=\"dark\"] ::-webkit-scrollbar-thumb:hover { background: hsl(214,20%,46%); }' +" +
+				"  'html[theme~=\"dark\"] { scrollbar-color: hsl(214,20%,32%) hsl(214,35%,11%); scrollbar-width: thin; }';" +
 
 				// Inyección directa en shadowRoot de cada vaadin-grid (más confiable que ::part())
 				// :host sobreescribe las vars Lumo DENTRO del shadow DOM (donde el componente las redefine).
@@ -236,8 +242,14 @@ public class MainLayout extends AppLayout {
 				"'} ' +" +
 				"'[part~=\"header-cell\"] { background-color: hsl(214,28%,18%) !important; background-image: none !important; color: hsla(214,96%,96%,0.70) !important; } ' +" +
 				"'[part~=\"footer-cell\"] { background-color: hsl(214,28%,18%) !important; background-image: none !important; } ' +" +
-				"'[part~=\"body-cell\"]   { background-color: hsl(214,35%,15%) !important; background-image: none !important; color: hsla(214,96%,96%,0.80) !important; } ' +" +
-				"'[part~=\"body-cell\"]:hover, tr:hover [part~=\"body-cell\"] { background-color: hsl(214,35%,22%) !important; background-image: none !important; }';" +
+				"'[part~=\"body-cell\"]   { background-color: hsl(214,35%,15%) !important; background-image: none !important; color: hsla(214,96%,96%,0.80) !important; transition: background-color 120ms ease !important; } ' +" +
+				"'[part~=\"body-cell\"]:hover, tr:hover [part~=\"body-cell\"] { background-color: hsl(214,35%,22%) !important; background-image: none !important; } ' +" +
+				// Scrollbar interno del grid en dark mode
+				"'::-webkit-scrollbar { width: 8px; height: 8px; } ' +" +
+				"'::-webkit-scrollbar-track { background: hsl(214,35%,11%); border-radius: 4px; } ' +" +
+				"'::-webkit-scrollbar-thumb { background: hsl(214,20%,32%); border-radius: 4px; border: 2px solid hsl(214,35%,11%); } ' +" +
+				"'::-webkit-scrollbar-thumb:hover { background: hsl(214,20%,46%); } ' +" +
+				"'* { scrollbar-color: hsl(214,20%,32%) hsl(214,35%,11%); scrollbar-width: thin; }';" +
 				"function aplicarTemaGrid(grid, dark) {" +
 				"  var ex = grid.shadowRoot && grid.shadowRoot.getElementById('lumo-dark-grid');" +
 				"  if (dark && !ex && grid.shadowRoot) {" +
@@ -267,7 +279,16 @@ public class MainLayout extends AppLayout {
 				"});" +
 				"gridObserver.observe(document.body, { childList: true, subtree: true });" +
 
-				"function aplicarTema(dark) {" +
+				// Estilo de transición: se activa solo durante el toggle, no en carga inicial
+				"if (!document.getElementById('lumo-trans-base')) {" +
+				"  var _ts = document.createElement('style');" +
+				"  _ts.id = 'lumo-trans-base';" +
+				"  _ts.textContent = 'html.theme-transitioning * { transition: background-color 320ms ease, color 280ms ease, border-color 280ms ease !important; }';" +
+				"  document.head.appendChild(_ts);" +
+				"}" +
+
+				"function aplicarTema(dark, animate) {" +
+				"  if (animate) document.documentElement.classList.add('theme-transitioning');" +
 				"  document.documentElement[dark ? 'setAttribute' : 'removeAttribute']('theme', 'dark');" +
 				"  document.body[dark ? 'setAttribute' : 'removeAttribute']('theme', 'dark');" +
 				"  var existing = document.getElementById('lumo-dark-vars');" +
@@ -283,10 +304,11 @@ public class MainLayout extends AppLayout {
 				"  localStorage[dark ? 'setItem' : 'removeItem']('dark-mode', '1');" +
 				"  btn.innerHTML = dark ? sunSvg : moonSvg;" +
 				"  btn.title = dark ? 'Activar modo claro' : 'Activar modo oscuro';" +
+				"  if (animate) setTimeout(function() { document.documentElement.classList.remove('theme-transitioning'); }, 400);" +
 				"}" +
-				"aplicarTema(localStorage.getItem('dark-mode') === '1');" +
+				"aplicarTema(localStorage.getItem('dark-mode') === '1', false);" +
 				"btn.addEventListener('click', function() {" +
-				"  aplicarTema(document.documentElement.getAttribute('theme') !== 'dark');" +
+				"  aplicarTema(document.documentElement.getAttribute('theme') !== 'dark', true);" +
 				"});"
 			);
 		});

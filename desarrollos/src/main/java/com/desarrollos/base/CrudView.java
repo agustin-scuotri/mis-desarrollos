@@ -199,6 +199,9 @@ public abstract class CrudView<T> extends VerticalLayout {
                 "  [part~='cell']:not([part~='header-cell']) {" +
                 "    border-right: 1px solid rgba(0,32,96,0.06) !important;" +
                 "  }" +
+                "  [part~='cell'] {" +
+                "    transition: background-color 120ms ease !important;" +
+                "  }" +
                 "  [part~='row']:hover > [part~='cell'] {" +
                 "    background-color: var(--grid-hover-bg, rgba(0,32,96,0.04)) !important;" +
                 "    background-image: none !important;" +
@@ -216,6 +219,7 @@ public abstract class CrudView<T> extends VerticalLayout {
                 "    background-image: none !important;" +
                 "    overflow: hidden;" +
                 "    clip-path: inset(0);" +
+                "    transition: background-color 120ms ease !important;" +
                 "  }" +
                 "  [part~='row']:hover [frozen-to-end] {" +
                 "    background-color: var(--grid-frozen-hover-bg, #f5f6f9) !important;" +
