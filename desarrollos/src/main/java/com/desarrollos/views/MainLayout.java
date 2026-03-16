@@ -206,13 +206,33 @@ public class MainLayout extends AppLayout {
 				"  'html[theme~=\"dark\"] vaadin-grid::part(footer-cell) { background-color: hsl(214,28%,18%) !important; }';" +
 
 				// Inyección directa en shadowRoot de cada vaadin-grid (más confiable que ::part())
+				// :host sobreescribe las vars Lumo DENTRO del shadow DOM (donde el componente las redefine).
+				// background-image:none neutraliza el linear-gradient que Lumo usa para el hover.
 				"var GRID_DARK_CSS = " +
-				"'[part~=\"header-cell\"] { background-color: hsl(214,28%,18%) !important; color: hsla(214,96%,96%,0.70) !important; } ' +" +
-				"'[part~=\"header-cell\"]:hover { background-color: hsl(214,28%,22%) !important; } ' +" +
-				"'[part~=\"footer-cell\"] { background-color: hsl(214,28%,18%) !important; } ' +" +
-				"'[part~=\"body-cell\"] { background-color: hsl(214,35%,15%) !important; color: hsla(214,96%,96%,0.80) !important; } ' +" +
-				"'[part~=\"body-cell\"]:hover { background-color: hsl(214,35%,20%) !important; } ' +" +
-				"'tr:hover [part~=\"body-cell\"] { background-color: hsl(214,35%,20%) !important; }';" +
+				"':host {' +" +
+				"'  --lumo-base-color: hsl(214,35%,21%);' +" +
+				"'  --lumo-contrast-5pct:  hsla(214,60%,80%,0.06);' +" +
+				"'  --lumo-contrast-10pct: hsla(214,60%,80%,0.14);' +" +
+				"'  --lumo-contrast-20pct: hsla(214,64%,82%,0.23);' +" +
+				"'  --lumo-contrast-30pct: hsla(214,69%,84%,0.32);' +" +
+				"'  --lumo-contrast-40pct: hsla(214,73%,86%,0.41);' +" +
+				"'  --lumo-contrast-50pct: hsla(214,78%,88%,0.50);' +" +
+				"'  --lumo-contrast-60pct: hsla(214,82%,90%,0.60);' +" +
+				"'  --lumo-contrast-70pct: hsla(214,87%,92%,0.70);' +" +
+				"'  --lumo-contrast-80pct: hsla(214,91%,94%,0.80);' +" +
+				"'  --lumo-contrast-90pct: hsla(214,96%,96%,0.90);' +" +
+				"'  --lumo-contrast:       hsl(214,100%,98%);' +" +
+				"'  --lumo-tint-5pct:  hsla(214,65%,85%,0.06);' +" +
+				"'  --lumo-tint-10pct: hsla(214,60%,80%,0.14);' +" +
+				"'  --lumo-shade: hsl(214,33%,13%);' +" +
+				"'  --vaadin-grid-cell-background: hsl(214,35%,15%);' +" +
+				"'  --lumo-body-text-color:      hsla(214,96%,96%,0.80);' +" +
+				"'  --lumo-secondary-text-color: hsla(214,96%,96%,0.60);' +" +
+				"'} ' +" +
+				"'[part~=\"header-cell\"] { background-color: hsl(214,28%,18%) !important; background-image: none !important; color: hsla(214,96%,96%,0.70) !important; } ' +" +
+				"'[part~=\"footer-cell\"] { background-color: hsl(214,28%,18%) !important; background-image: none !important; } ' +" +
+				"'[part~=\"body-cell\"]   { background-color: hsl(214,35%,15%) !important; background-image: none !important; color: hsla(214,96%,96%,0.80) !important; } ' +" +
+				"'[part~=\"body-cell\"]:hover, tr:hover [part~=\"body-cell\"] { background-color: hsl(214,35%,22%) !important; background-image: none !important; }';" +
 				"function aplicarTemaGrid(grid, dark) {" +
 				"  var ex = grid.shadowRoot && grid.shadowRoot.getElementById('lumo-dark-grid');" +
 				"  if (dark && !ex && grid.shadowRoot) {" +
