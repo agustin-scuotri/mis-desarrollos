@@ -39,11 +39,33 @@ public class UsuarioService implements UserDetailsService {
     }
 
     // ── CRUD ──────────────────────────────────────────────────────────────────
+    public List<Usuario> listarTodos() { return repo.findAll(); }
+
     public Usuario guardar(Usuario usuario) {
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
         return repo.save(usuario);
     }
 
+    /** Actualiza un usuario existente. Si nuevaPassword no está vacía, la re-encodea. */
+    public Usuario actualizar(Usuario usuario, String nuevaPassword) {
+        if (nuevaPassword != null && !nuevaPassword.isBlank()) {
+            usuario.setPassword(passwordEncoder.encode(nuevaPassword));
+        }
+        return repo.save(usuario);
+    }
+
+    public void eliminar(Long id) { repo.deleteById(id); }
+
+    public java.util.Optional<Usuario> buscarPorId(Long id) { return repo.findById(id); }
+
     public boolean existeUsername(String username) { return repo.existsByUsername(username); }
     public boolean existeEmail(String email)       { return repo.existsByEmail(email); }
+    public boolean existeEmailParaOtroUsuario(String email, Long idActual) {
+        return repo.findAll().stream()
+                .anyMatch(u -> u.getEmail().equalsIgnoreCase(email) && !u.getId().equals(idActual));
+    }
+    public boolean existeUsernameParaOtroUsuario(String username, Long idActual) {
+        return repo.findAll().stream()
+                .anyMatch(u -> u.getUsername().equalsIgnoreCase(username) && !u.getId().equals(idActual));
+    }
 }

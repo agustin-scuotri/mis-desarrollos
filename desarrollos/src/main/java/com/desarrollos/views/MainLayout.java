@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @PermitAll
 public class MainLayout extends AppLayout {
@@ -391,18 +392,29 @@ public class MainLayout extends AppLayout {
 		badgePendientes.setVisible(false);
 		linkArchivos.add(badgePendientes);
 
+		// Ítem Usuarios solo visible para ADMIN
+		boolean esAdmin = SecurityContextHolder.getContext().getAuthentication()
+				.getAuthorities().stream()
+				.anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+		RouterLink linkUsuarios = crearItemMenu("Usuarios", VaadinIcon.USERS, AbmUsuariosView.class);
+		linkUsuarios.setVisible(esAdmin);
+
 		Map<RouterLink, String> itemsMenu = new LinkedHashMap<>();
 		itemsMenu.put(linkInicio,     getTranslation("app.inicio").toLowerCase());
 		itemsMenu.put(linkArchivos,   getTranslation("app.archivos").toLowerCase());
 		itemsMenu.put(linkConversor,  getTranslation("app.conversor").toLowerCase());
 		itemsMenu.put(linkDocumentos, "lista de jsons");
+		itemsMenu.put(linkUsuarios,   "usuarios");
 
 		buscadorMenu.addValueChangeListener(e -> {
 			String filtro = e.getValue().trim().toLowerCase();
-			itemsMenu.forEach((link, label) -> link.setVisible(filtro.isEmpty() || label.contains(filtro)));
+			itemsMenu.forEach((link, label) -> {
+				if (link == linkUsuarios && !esAdmin) return;
+				link.setVisible(filtro.isEmpty() || label.contains(filtro));
+			});
 		});
 
-		opcionesContainer.add(linkInicio, linkArchivos, linkConversor, linkDocumentos);
+		opcionesContainer.add(linkInicio, linkArchivos, linkConversor, linkDocumentos, linkUsuarios);
 
 		VerticalLayout menuCompleto = new VerticalLayout(buscadorMenu, opcionesContainer);
 		menuCompleto.setPadding(false);
