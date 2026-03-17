@@ -637,12 +637,12 @@ public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> 
         lbl.getStyle()
                 .set("font-size", destacado ? "1rem" : "0.875rem")
                 .set("font-weight", destacado ? "700" : "500")
-                .set("color", destacado ? "#0c4a6e" : "var(--lumo-body-text-color, #475569)");
+                .set("color", destacado ? "var(--section-title-color, #0c4a6e)" : "var(--lumo-body-text-color, #475569)");
         com.vaadin.flow.component.html.Span val = new com.vaadin.flow.component.html.Span(valor);
         val.getStyle()
                 .set("font-size", destacado ? "1.1rem" : "0.875rem")
                 .set("font-weight", "700")
-                .set("color", destacado ? "#002060" : "var(--lumo-header-text-color, #1e293b)");
+                .set("color", destacado ? "var(--section-title-color, #002060)" : "var(--lumo-header-text-color, #1e293b)");
         HorizontalLayout row = new HorizontalLayout(lbl, val);
         row.setWidthFull();
         row.setSpacing(false);

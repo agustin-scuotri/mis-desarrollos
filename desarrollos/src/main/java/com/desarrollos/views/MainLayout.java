@@ -203,6 +203,11 @@ public class MainLayout extends AppLayout {
 				"  '  --lumo-error-text-color: hsl(3,90%,75%);' +" +
 				"  '  --lumo-success-text-color: hsl(145,65%,58%);' +" +
 				"  '  --lumo-link-color: hsl(214,90%,77%);' +" +
+				"  '  --section-title-color: hsl(214,90%,77%);' +" +
+				"  '  --panel-info-bg: hsl(214,35%,19%);' +" +
+				"  '  --panel-info-border: hsl(214,30%,30%);' +" +
+				"  '  --panel-info-label: hsl(204,80%,68%);' +" +
+				"  '  --panel-info-value: hsl(214,90%,80%);' +" +
 				"  '}' +" +
 				// Fondo del body y partes del app-layout via ::part() para shadow DOM
 				"  'html[theme~=\"dark\"] body { background: hsl(214,35%,15%) !important; color: hsla(214,96%,96%,0.80) !important; }' +" +

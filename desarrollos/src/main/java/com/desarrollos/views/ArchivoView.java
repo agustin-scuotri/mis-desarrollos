@@ -256,14 +256,16 @@ public class ArchivoView extends FormView implements HasUrlParameter<String>, Be
 			final StreamRegistration reg = VaadinSession.getCurrent().getResourceRegistry().registerResource(res);
 			String pdfUrl = reg.getResourceUri().toString();
 
+			com.vaadin.flow.dom.Element iframe = new com.vaadin.flow.dom.Element("iframe");
+			iframe.setAttribute("src", pdfUrl);
+			iframe.getStyle()
+					.set("width", "100%")
+					.set("height", "500px")
+					.set("border", "none")
+					.set("border-radius", "8px");
 			Div pdfEmbed = new Div();
 			pdfEmbed.setWidthFull();
-			pdfEmbed.getStyle().set("height", "500px");
-			pdfEmbed.getElement().executeJs(
-				"this.innerHTML = '<iframe src=\"" + pdfUrl + "\" " +
-				"style=\"width:100%;height:500px;border:none;border-radius:8px;\" " +
-				"title=\"Vista previa PDF\"></iframe>';"
-			);
+			pdfEmbed.getElement().appendChild(iframe);
 
 			galeriaContainer.add(new H3("Vista Previa del PDF"), pdfEmbed);
 			galeriaContainer.setVisible(true);

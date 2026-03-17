@@ -324,8 +324,8 @@ public class ConversorView extends FormView {
 		panelDatos.setWidthFull();
 		panelDatos.setSpacing(false);
 		panelDatos.getStyle()
-				.set("background-color", "#f0f9ff")
-				.set("border", "1px solid #bae6fd")
+				.set("background-color", "var(--panel-info-bg, #f0f9ff)")
+				.set("border", "1px solid var(--panel-info-border, #bae6fd)")
 				.set("border-radius", "10px")
 				.set("padding", "14px 18px")
 				.set("display", "flex")
@@ -368,7 +368,7 @@ public class ConversorView extends FormView {
 
 		// ── Grid productos/conceptos ──────────────────────────────────────────
 		H4 tituloProductos = new H4("Productos / Conceptos");
-		tituloProductos.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
+		tituloProductos.getStyle().set("color", "var(--section-title-color, #002060)").set("margin", "16px 0 4px 0");
 		Grid<ProductoConcepto> gridProductos = new Grid<>(ProductoConcepto.class, false);
 		gridProductos.addColumn(ProductoConcepto::getSku).setHeader("SKU").setWidth("130px").setFlexGrow(0);
 		gridProductos.addColumn(ProductoConcepto::getDescripcion).setHeader("Descripción").setFlexGrow(1);
@@ -391,7 +391,7 @@ public class ConversorView extends FormView {
 
 		// ── Grid netos gravados ───────────────────────────────────────────────
 		H4 tituloNetos = new H4("Netos Gravados e IVA");
-		tituloNetos.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
+		tituloNetos.getStyle().set("color", "var(--section-title-color, #002060)").set("margin", "16px 0 4px 0");
 		Grid<NetoGravado> gridNetosGravados = new Grid<>(NetoGravado.class, false);
 		gridNetosGravados.addColumn(NetoGravado::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
 		gridNetosGravados.addColumn(n -> formatImporte(n.getImporteNetoGravado())).setHeader("Importe Neto Gravado").setFlexGrow(1);
@@ -405,7 +405,7 @@ public class ConversorView extends FormView {
 
 		// ── Grid percepciones IIBB ────────────────────────────────────────────
 		H4 tituloPercepcionesIIBB = new H4("Percepciones IIBB");
-		tituloPercepcionesIIBB.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
+		tituloPercepcionesIIBB.getStyle().set("color", "var(--section-title-color, #002060)").set("margin", "16px 0 4px 0");
 		Grid<PercepcionIIBB> gridPercepcionesIIBB = new Grid<>(PercepcionIIBB.class, false);
 		gridPercepcionesIIBB.addColumn(PercepcionIIBB::getProvincia).setHeader("Provincia").setFlexGrow(1);
 		gridPercepcionesIIBB.addColumn(PercepcionIIBB::getAlicuota).setHeader("Alícuota").setWidth("110px").setFlexGrow(0);
@@ -419,7 +419,7 @@ public class ConversorView extends FormView {
 
 		// ── Grid percepciones IVA ─────────────────────────────────────────────
 		H4 tituloPercepcionesIVA = new H4("Percepciones IVA");
-		tituloPercepcionesIVA.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
+		tituloPercepcionesIVA.getStyle().set("color", "var(--section-title-color, #002060)").set("margin", "16px 0 4px 0");
 		Grid<PercepcionIVA> gridPercepcionesIVA = new Grid<>(PercepcionIVA.class, false);
 		gridPercepcionesIVA.addColumn(PercepcionIVA::getAlicuota).setHeader("Alícuota").setWidth("150px").setFlexGrow(0);
 		gridPercepcionesIVA.addColumn(p -> formatImporte(p.getImporte())).setHeader("Importe").setFlexGrow(1);
@@ -432,7 +432,7 @@ public class ConversorView extends FormView {
 
 		// ── Grid vencimientos ─────────────────────────────────────────────────
 		H4 tituloVencimientos = new H4("Vencimientos");
-		tituloVencimientos.getStyle().set("color", "#002060").set("margin", "16px 0 4px 0");
+		tituloVencimientos.getStyle().set("color", "var(--section-title-color, #002060)").set("margin", "16px 0 4px 0");
 		Grid<Vencimiento> gridVencimientos = new Grid<>(Vencimiento.class, false);
 		gridVencimientos.addColumn(Vencimiento::getFecha).setHeader("Fecha").setWidth("150px").setFlexGrow(0);
 		gridVencimientos.addColumn(v -> formatImporte(v.getImporte())).setHeader("Importe").setFlexGrow(1);
@@ -983,12 +983,12 @@ public class ConversorView extends FormView {
 		Span lbl = new Span(etiqueta);
 		lbl.getStyle()
 				.set("font-size", "0.72rem").set("font-weight", "600")
-				.set("color", "#0369a1").set("text-transform", "uppercase")
+				.set("color", "var(--panel-info-label, #0369a1)").set("text-transform", "uppercase")
 				.set("letter-spacing", "0.05em");
 		Span val = new Span(valor);
 		val.getStyle()
 				.set("font-size", "1rem").set("font-weight", "700")
-				.set("color", "#0c4a6e");
+				.set("color", "var(--panel-info-value, #0c4a6e)");
 		VerticalLayout campo = new VerticalLayout(lbl, val);
 		campo.setPadding(false);
 		campo.setSpacing(false);

@@ -78,12 +78,12 @@ public class ArchivoCombo extends HorizontalLayout {
         // ── Botón lupa ────────────────────────────────────────────────────────
         btnBuscar.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         btnBuscar.getStyle()
-                .set("color", "#002060")
+                .set("color", "var(--section-title-color, #002060)")
                 .set("cursor", "pointer");
         btnBuscar.getElement().addEventListener("mouseover",
                 e -> btnBuscar.getStyle().set("color", "#00aaff"));
         btnBuscar.getElement().addEventListener("mouseout",
-                e -> btnBuscar.getStyle().set("color", "#002060"));
+                e -> btnBuscar.getStyle().set("color", "var(--section-title-color, #002060)"));
         btnBuscar.addClickListener(e -> abrirDialogoBusqueda());
 
         wrapperLupa.getStyle()
