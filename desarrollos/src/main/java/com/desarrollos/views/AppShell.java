@@ -1,5 +1,6 @@
 package com.desarrollos.views;
 
+import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.component.page.Push;
 
@@ -11,5 +12,6 @@ import com.vaadin.flow.component.page.Push;
  * El modo oscuro se maneja inyectando las variables CSS de Lumo desde MainLayout.
  */
 @Push
+@CssImport(value = "./styles/email-field-fix.css", themeFor = "vaadin-email-field")
 public class AppShell implements AppShellConfigurator {
 }
