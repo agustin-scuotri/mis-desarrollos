@@ -642,7 +642,11 @@ public class ConversorView extends FormView {
 					panelProgreso.setVisible(false);
 					btnConvertir.setEnabled(true);
 					actualizarStepper("completado", "error", "pendiente");
-					Toast.warning("La API está saturada. Esperá unos minutos e intentá de nuevo.");
+					Toast.warningWithLink(
+						"Los servicios de Anthropic están en mantenimiento. Pronto se resolverán los inconvenientes.",
+						"Consultá el estado en status.anthropic.com",
+						"https://status.anthropic.com"
+					);
 				});
 
 			} catch (ArchivoDuplicadoException ex) {
