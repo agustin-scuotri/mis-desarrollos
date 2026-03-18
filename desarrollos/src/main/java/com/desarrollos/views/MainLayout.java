@@ -16,27 +16,18 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.RouterLink;
-import com.vaadin.flow.server.VaadinServletRequest;
-import jakarta.annotation.security.PermitAll;
-import jakarta.servlet.ServletException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.context.SecurityContextHolder;
 
-@PermitAll
 public class MainLayout extends AppLayout {
 
 	private final ArchivoService archivoService;
-	private final boolean securityEnabled;
 	private Span badgePendientes;
 
 	@Autowired
-	public MainLayout(ArchivoService archivoService,
-	                  @Value("${app.security.enabled:true}") boolean securityEnabled) {
+	public MainLayout(ArchivoService archivoService) {
 		this.archivoService = archivoService;
-		this.securityEnabled = securityEnabled;
 		crearCabecera();
 		crearMenuLateral();
 
@@ -331,26 +322,7 @@ public class MainLayout extends AppLayout {
 		HorizontalLayout spacer = new HorizontalLayout();
 		spacer.setFlexGrow(1, spacer);
 
-		// ── Botón Logout (solo visible cuando security está activo) ───────────
-		Button btnLogout = new Button(VaadinIcon.SIGN_OUT.create());
-		btnLogout.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-		btnLogout.setTooltipText("Cerrar sesión");
-		btnLogout.getStyle()
-				.set("cursor", "pointer")
-				.set("color", "rgba(255,255,255,0.75)")
-				.set("min-width", "36px")
-				.set("min-height", "36px");
-		btnLogout.setVisible(securityEnabled);
-		btnLogout.addClickListener(e -> {
-			try {
-				VaadinServletRequest.getCurrent().getHttpServletRequest().logout();
-			} catch (ServletException ex) {
-				// sesión ya inválida, ignorar
-			}
-			getUI().ifPresent(ui -> ui.getPage().setLocation("/login"));
-		});
-
-		HorizontalLayout header = new HorizontalLayout(toggle, logo, spacer, btnTema, btnLogout);
+		HorizontalLayout header = new HorizontalLayout(toggle, logo, spacer, btnTema);
 		header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
 		header.setWidthFull();
 		header.setHeight("60px");
@@ -397,29 +369,20 @@ public class MainLayout extends AppLayout {
 		badgePendientes.setVisible(false);
 		linkArchivos.add(badgePendientes);
 
-		// Ítem Usuarios solo visible para ADMIN
-		boolean esAdmin = SecurityContextHolder.getContext().getAuthentication()
-				.getAuthorities().stream()
-				.anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-		RouterLink linkUsuarios = crearItemMenu("Usuarios", VaadinIcon.USERS, AbmUsuariosView.class);
-		linkUsuarios.setVisible(esAdmin);
-
 		Map<RouterLink, String> itemsMenu = new LinkedHashMap<>();
 		itemsMenu.put(linkInicio,     getTranslation("app.inicio").toLowerCase());
 		itemsMenu.put(linkArchivos,   getTranslation("app.archivos").toLowerCase());
 		itemsMenu.put(linkConversor,  getTranslation("app.conversor").toLowerCase());
 		itemsMenu.put(linkDocumentos, "lista de jsons");
-		itemsMenu.put(linkUsuarios,   "usuarios");
 
 		buscadorMenu.addValueChangeListener(e -> {
 			String filtro = e.getValue().trim().toLowerCase();
-			itemsMenu.forEach((link, label) -> {
-				if (link == linkUsuarios && !esAdmin) return;
-				link.setVisible(filtro.isEmpty() || label.contains(filtro));
-			});
+			itemsMenu.forEach((link, label) ->
+				link.setVisible(filtro.isEmpty() || label.contains(filtro))
+			);
 		});
 
-		opcionesContainer.add(linkInicio, linkArchivos, linkConversor, linkDocumentos, linkUsuarios);
+		opcionesContainer.add(linkInicio, linkArchivos, linkConversor, linkDocumentos);
 
 		VerticalLayout menuCompleto = new VerticalLayout(buscadorMenu, opcionesContainer);
 		menuCompleto.setPadding(false);

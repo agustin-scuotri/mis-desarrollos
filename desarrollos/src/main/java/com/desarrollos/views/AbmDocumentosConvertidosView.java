@@ -42,11 +42,8 @@ import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
-import jakarta.annotation.security.PermitAll;
-
 @PageTitle("Lista de JSONs")
 @Route(value = "lista-jsons", layout = MainLayout.class)
-@PermitAll
 public class AbmDocumentosConvertidosView extends CrudView<DocumentoConvertido> {
 
     private final DocumentoConvertidoService service;

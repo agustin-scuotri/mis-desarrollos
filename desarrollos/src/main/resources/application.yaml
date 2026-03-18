@@ -36,12 +36,6 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
-# ── Seguridad ────────────────────────────────────────────────────────────────
-# Cambiar a false durante el desarrollo para entrar sin login (reiniciar app)
-app:
-  security:
-    enabled: true
-
 # Configuración Claude (Anthropic)
 claude:
   api:
