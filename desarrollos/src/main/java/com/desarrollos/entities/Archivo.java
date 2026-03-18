@@ -3,6 +3,8 @@ package com.desarrollos.entities;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "archivos")
@@ -15,6 +17,10 @@ public class Archivo {
     @Column(unique = true)
     private String codigo;
 
+    @org.hibernate.annotations.Formula("CAST(codigo AS INTEGER)")
+    private Integer codigoNumerico;
+
+    @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
 
     @Column(length = 1000)
@@ -32,9 +38,18 @@ public class Archivo {
 
     private boolean convertido;
 
-    // ── Relación con DocumentoConvertido ──────────────────────────────────────
-    @OneToOne(mappedBy = "archivo", cascade = CascadeType.ALL, orphanRemoval = true)
-    private DocumentoConvertido documentoConvertido;
+    @Column(name = "estado_conversion")
+    private String estadoConversion = "PENDIENTE";
+
+    @Column(name = "mensaje_error", length = 2000)
+    private String mensajeError;
+
+    @Column(name = "hash_contenido", length = 64)
+    private String hashContenido;
+
+    // ── Relación con DocumentoConvertido (un archivo puede tener múltiples facturas) ──
+    @OneToMany(mappedBy = "archivo", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DocumentoConvertido> documentosConvertidos = new ArrayList<>();
 
     public Archivo() {
         this.fechaCreacion = LocalDateTime.now();
@@ -58,6 +73,12 @@ public class Archivo {
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
     public boolean isConvertido() { return convertido; }
     public void setConvertido(boolean convertido) { this.convertido = convertido; }
-    public DocumentoConvertido getDocumentoConvertido() { return documentoConvertido; }
-    public void setDocumentoConvertido(DocumentoConvertido documentoConvertido) { this.documentoConvertido = documentoConvertido; }
+    public String getEstadoConversion() { return estadoConversion; }
+    public void setEstadoConversion(String estadoConversion) { this.estadoConversion = estadoConversion; }
+    public String getMensajeError() { return mensajeError; }
+    public void setMensajeError(String mensajeError) { this.mensajeError = mensajeError; }
+    public String getHashContenido() { return hashContenido; }
+    public void setHashContenido(String hashContenido) { this.hashContenido = hashContenido; }
+    public List<DocumentoConvertido> getDocumentosConvertidos() { return documentosConvertidos; }
+    public void setDocumentosConvertidos(List<DocumentoConvertido> documentosConvertidos) { this.documentosConvertidos = documentosConvertidos; }
 }
