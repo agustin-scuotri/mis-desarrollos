@@ -87,8 +87,8 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
                 .set("text-align", "center");
 
         // ── LoginForm de Vaadin ───────────────────────────────────────────────
-        // El action "login" apunta al endpoint de Spring Security (POST /login)
-        loginForm.setAction("login");
+        // El action apunta al endpoint de Spring Security (POST /api/auth/login)
+        loginForm.setAction("api/auth/login");
         loginForm.setForgotPasswordButtonVisible(false);
         loginForm.getStyle()
                 .set("width", "100%")

@@ -27,11 +27,15 @@ public class SecurityConfig {
         http.with(VaadinSecurityConfigurer.vaadin(), configurer ->
             configurer.loginView(LoginView.class)
         );
-        // Garantiza que /login sea accesible sin autenticación a nivel HTTP.
-        // Sin esto, Spring Security puede crear un redirect loop: bloquea /login
-        // porque requiere autenticación, y redirige a /login indefinidamente.
+        // formLogin maneja la autenticación POST.
+        // loginProcessingUrl DEBE ser diferente de "/login" para no interceptar
+        // los POST UIDL que Vaadin envía a la URL actual de la página (/login).
+        // Si ambos usan "/login", el UsernamePasswordAuthenticationFilter captura
+        // los UIDL de Vaadin, intenta autenticar con credenciales vacías, falla,
+        // y la página queda cargando infinitamente.
         http.formLogin(form -> form
             .loginPage("/login")
+            .loginProcessingUrl("/api/auth/login")
             .permitAll()
         );
         return http.build();
