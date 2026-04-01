@@ -18,6 +18,11 @@ spring:
           lob:
             non_contextual_creation: true
 
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=30s
+
   # CONFIGURACIÓN CRÍTICA PARA SUBIDA DE ARCHIVOS
   servlet:
     multipart:
@@ -31,9 +36,9 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
-# Configuración Gemini
-groq:
+# Configuración Claude (Anthropic)
+claude:
   api:
-    key: ${GROQ_API_KEY}
-    url: https://api.groq.com/openai/v1/chat/completions
-    model: meta-llama/llama-4-scout-17b-16e-instruct
+    key: ${ANTHROPIC_API_KEY}
+    url: https://api.anthropic.com/v1/messages
+    model: claude-opus-4-6

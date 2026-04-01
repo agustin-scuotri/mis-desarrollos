@@ -6,7 +6,7 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.orderedlayout.FlexComponent; // Necesario para alineación
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 
 public abstract class FormView extends VerticalLayout {
 
@@ -15,52 +15,57 @@ public abstract class FormView extends VerticalLayout {
     protected Button btnGuardar;
     protected Button btnCancelar;
     protected HorizontalLayout barraBotones;
-    protected HorizontalLayout cabecera; // Nuevo contenedor superior
+    protected HorizontalLayout cabecera;
 
     public FormView() {
         setSizeFull();
         setPadding(true);
         setSpacing(true);
-        getStyle().set("font-family", "Verdana, sans-serif");
+        getStyle().set("background-color", "var(--lumo-contrast-5pct, #f8fafc)");
 
         configurarEstructuraBase();
     }
 
     private void configurarEstructuraBase() {
-        // 1. Configurar Título
+        // 1. Título
         tituloFormulario = new H2();
         tituloFormulario.getStyle()
-            .set("color", "#002060")
-            .set("margin", "0"); // Quitamos margen para que alinee bien
+            .set("color", "var(--lumo-header-text-color, #1e293b)")
+            .set("font-size", "1.4rem")
+            .set("font-weight", "700")
+            .set("letter-spacing", "-0.3px")
+            .set("margin", "0");
 
-        // 2. Configurar Botones
+        // 2. Botones
         btnGuardar = new Button(getTranslation("app.guardar"), VaadinIcon.CHECK.create());
         btnGuardar.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
-        btnGuardar.getStyle().set("font-family", "Verdana, sans-serif");
         btnGuardar.addClickListener(e -> accionGuardar());
 
         btnCancelar = new Button(getTranslation("app.cancelar"), VaadinIcon.ARROW_LEFT.create());
-        btnCancelar.getStyle().set("font-family", "Verdana, sans-serif");
         btnCancelar.addClickListener(e -> accionCancelar());
 
-        // 3. Barra de botones (ahora sin ancho completo para que quepa al lado del título)
+        // 3. Barra de botones
         barraBotones = new HorizontalLayout(btnCancelar, btnGuardar);
         barraBotones.setSpacing(true);
 
-        // 4. CABECERA: Aquí unimos título (izquierda) y botones (derecha)
+        // 4. Cabecera: título (izquierda) + botones (derecha)
         cabecera = new HorizontalLayout(tituloFormulario, barraBotones);
         cabecera.setWidthFull();
-        cabecera.setAlignItems(FlexComponent.Alignment.CENTER); // Alineación vertical centrada
-        cabecera.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN); // Título a la izq, Botones a la der
+        cabecera.setAlignItems(FlexComponent.Alignment.CENTER);
+        cabecera.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         cabecera.setPadding(false);
 
-        // 5. Contenido Principal (el centro del formulario)
+        // 5. Contenido principal con estilo de card
         contenidoPrincipal = new VerticalLayout();
         contenidoPrincipal.setPadding(false);
         contenidoPrincipal.setSpacing(true);
         contenidoPrincipal.setWidthFull();
+        contenidoPrincipal.getStyle()
+                .set("background", "var(--lumo-base-color, white)")
+                .set("border-radius", "14px")
+                .set("box-shadow", "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05)")
+                .set("padding", "24px");
 
-        // Agregamos a la vista en orden: Cabecera primero, luego contenido
         add(cabecera, contenidoPrincipal);
     }
 

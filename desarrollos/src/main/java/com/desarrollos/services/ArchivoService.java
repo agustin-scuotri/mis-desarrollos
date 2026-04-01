@@ -1,8 +1,15 @@
 package com.desarrollos.services;
 
+import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,59 +24,122 @@ public class ArchivoService {
 
     public String obtenerProximoCodigo() {
         String ultimo = repository.findUltimoCodigo();
-        
+
         if (ultimo == null || ultimo.trim().isEmpty()) {
             return "1";
         }
-        
+
         try {
             int proximo = Integer.parseInt(ultimo) + 1;
-            return String.valueOf(proximo); 
+            return String.valueOf(proximo);
         } catch (NumberFormatException e) {
             return ultimo + "-1";
         }
     }
-    
+
     public List<Archivo> listarTodos() {
-        return repository.findAll(); // Trae todo lo que viste en tu base de datos
+        return repository.findAll();
     }
-    
- // En ArchivoService.java
+
     public Archivo buscarPorId(Long id) {
         return repository.findById(id).orElseThrow(() -> new RuntimeException("Archivo no encontrado"));
     }
-    
+
     @Transactional
+    @CacheEvict(value = "archivos-pendientes", allEntries = true)
     public void borrar(Archivo entidad) {
-        // Podrías agregar validaciones aquí, por ejemplo:
-        // si el archivo está siendo usado en otro proceso, no dejar borrar.
         repository.delete(entidad);
     }
 
     @Transactional
+    @CacheEvict(value = "archivos-pendientes", allEntries = true)
     public Archivo guardar(Archivo entidad) throws Exception {
-        // Validamos que el código no sea nulo (Lógica que pediste)
         if (entidad.getCodigo() == null || entidad.getCodigo().trim().isEmpty()) {
-            throw new Exception("ERROR_CODIGO_NULO"); 
+            throw new Exception("ERROR_CODIGO_NULO");
         }
 
-        // Validamos si el código está disponible
         if (entidad.getId() == null && repository.existsByCodigo(entidad.getCodigo())) {
             throw new Exception("ERROR_CODIGO_EN_USO");
         }
 
         return repository.save(entidad);
     }
-    
-    public List<Archivo> listarNoConvertidos() {
-        return repository.findByConvertidoFalse();
+
+    public java.util.Optional<Archivo> buscarPorHashProcesado(String hash) {
+        return repository.findFirstByHashContenidoAndEstadoConversion(hash, "PROCESADO");
     }
-    
+
+    @Cacheable("archivos-pendientes")
+    public List<Archivo> listarNoConvertidos() {
+        return repository.findByEstadoConversion("PENDIENTE");
+    }
+
+    @Transactional
+    @CacheEvict(value = "archivos-pendientes", allEntries = true)
+    public void actualizarEstado(Archivo archivo, String estado) {
+        actualizarEstado(archivo, estado, null);
+    }
+
+    @Transactional
+    @CacheEvict(value = "archivos-pendientes", allEntries = true)
+    public void actualizarEstado(Archivo archivo, String estado, String mensajeError) {
+        Archivo managed = repository.findById(archivo.getId())
+                .orElseThrow(() -> new RuntimeException("Archivo no encontrado"));
+        managed.setEstadoConversion(estado);
+        managed.setMensajeError(mensajeError);
+        repository.save(managed);
+    }
+
+    // ── Paginación server-side para AbmArchivosView ───────────────────────────
+    public List<Archivo> listarPaginado(int page, int size, String codigo, String nombre, String estado, Sort sort) {
+        Pageable pageable = PageRequest.of(page, Math.max(size, 1), sort);
+        return repository.findFiltrado(
+                codigo != null ? codigo : "",
+                nombre != null ? nombre.toLowerCase() : "",
+                estado != null ? estado : "",
+                pageable);
+    }
+
+    public long contarFiltrado(String codigo, String nombre, String estado) {
+        return repository.countFiltrado(
+                codigo != null ? codigo : "",
+                nombre != null ? nombre.toLowerCase() : "",
+                estado != null ? estado : "");
+    }
+
+    // ── Para timeline ────────────────────────────────────────────────────────
+    public List<Archivo> obtenerRecientes(int n) {
+        return repository.findTop10ByOrderByFechaCreacionDesc().stream().limit(n).toList();
+    }
+
+    public List<Archivo> obtenerErroresRecientes(int n) {
+        return repository.findByEstadoConversionOrderByFechaCreacionDesc(
+                "PROCESADO_ERROR", PageRequest.of(0, n));
+    }
+
+    // ── Para comparativa mes anterior ────────────────────────────────────────
+    public long contarCreadosEnMes(YearMonth mes) {
+        LocalDateTime desde = mes.atDay(1).atStartOfDay();
+        LocalDateTime hasta = mes.atEndOfMonth().atTime(23, 59, 59);
+        return repository.countByFechaCreacionBetween(desde, hasta);
+    }
+
+    public long contarProcesadosEnMes(YearMonth mes) {
+        LocalDateTime desde = mes.atDay(1).atStartOfDay();
+        LocalDateTime hasta = mes.atEndOfMonth().atTime(23, 59, 59);
+        return repository.countByEstadoConversionAndFechaCreacionBetween("PROCESADO", desde, hasta);
+    }
+
+    public long contarErroresEnMes(YearMonth mes) {
+        LocalDateTime desde = mes.atDay(1).atStartOfDay();
+        LocalDateTime hasta = mes.atEndOfMonth().atTime(23, 59, 59);
+        return repository.countByEstadoConversionAndFechaCreacionBetween("PROCESADO_ERROR", desde, hasta);
+    }
+
     @Transactional
     public Archivo buscarPorIdConContenido(Long id) {
         Archivo archivo = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Archivo no encontrado"));
-        // Forzamos la carga del contenido
         if (archivo.getContenido() != null) {
             int len = archivo.getContenido().length;
         }
